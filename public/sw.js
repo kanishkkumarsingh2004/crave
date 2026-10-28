@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crave-pwa-v2'
+const CACHE_NAME = 'crave-pwa-v3'
 const OFFLINE_URL = '/offline.html'
 
 const STATIC_ASSETS = [
@@ -43,7 +43,7 @@ self.addEventListener('activate', (event) => {
   )
 })
 
-// Fetch event - offline fallback and asset caching
+// Fetch event - offline fallback and selective asset caching
 self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
@@ -53,11 +53,19 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Never intercept API endpoints, websockets, or Next.js dev server hot reloads
+  // CRITICAL: NEVER intercept cross-origin requests.
+  // External map tiles (CartoCDN, OpenStreetMap), remote images (Unsplash),
+  // CDNs, payment gateways, and telemetry should be handled directly by the browser.
+  if (url.origin !== self.location.origin) {
+    return
+  }
+
+  // Never intercept API endpoints, websockets, Next.js dev server / HMR, or MapLibre workers
   if (
     url.pathname.startsWith('/api/') ||
     url.pathname.startsWith('/__ws') ||
-    url.pathname.startsWith('/_next/')
+    url.pathname.startsWith('/_next/') ||
+    url.pathname.startsWith('/maplibre-gl-')
   ) {
     return
   }
@@ -78,52 +86,33 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Static assets (Next static scripts, styles, icons, images): Cache-first or Stale-While-Revalidate
+  // Local PWA static shell assets (icons, manifest): Stale-While-Revalidate
   if (
-    url.pathname.startsWith('/_next/static/') ||
     url.pathname.startsWith('/icons/') ||
-    url.pathname.endsWith('.png') ||
-    url.pathname.endsWith('.svg') ||
-    url.pathname.endsWith('.woff2')
+    url.pathname === '/icon.svg' ||
+    url.pathname === '/favicon.svg' ||
+    url.pathname === '/offline.html'
   ) {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {
-        if (cachedResponse) {
-          // Fetch updated version in background to keep cache fresh
-          fetch(request)
-            .then((networkResponse) => {
-              if (networkResponse && networkResponse.status === 200) {
-                caches.open(CACHE_NAME).then((cache) => cache.put(request, networkResponse))
-              }
-            })
-            .catch(() => {})
-          return cachedResponse
-        }
-
-        return fetch(request)
+        const fetchPromise = fetch(request)
           .then((networkResponse) => {
-            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-              return networkResponse
+            if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+              const responseToCache = networkResponse.clone()
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, responseToCache))
             }
-            const responseToCache = networkResponse.clone()
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseToCache)
-            })
             return networkResponse
           })
           .catch(() => cachedResponse)
+
+        return cachedResponse || fetchPromise
       })
     )
     return
   }
 
-  // Default: Network with cache fallback
-  event.respondWith(
-    fetch(request).catch(async () => {
-      const cached = await caches.match(request)
-      return cached || new Response(null, { status: 404 })
-    })
-  )
+  // For all other local requests, allow standard browser network handling
+  // Do NOT hijack with artificial 404 responses.
 })
 
 // Display standards-based Web Push notifications while the PWA is in the background.

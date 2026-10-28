@@ -1,6 +1,5 @@
 'use client'
 
-import CraveLogo from '@/components/CraveLogo'
 import { useCart } from '@/lib/cart-context'
 import {
   CRAVEXP_DARK_STORE_ID,
@@ -10,13 +9,14 @@ import {
 } from '@/lib/cravexp-grocery-catalog'
 import { useWebSocket } from '@/lib/websocket'
 import {
-  Apple,
+  Apple as AppleIcon,
   ArrowRight,
   Check,
-  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
   Coffee,
   Cookie,
-  Flame,
   Layers,
   MapPin,
   Milk,
@@ -27,76 +27,70 @@ import {
   Search,
   ShieldCheck,
   ShoppingBag,
-  ShoppingCart,
-  SlidersHorizontal,
   Sparkles,
-  Wheat,
   X,
   Zap,
 } from 'lucide-react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 export type GroceryItem = CraveXPGroceryItem
 
-/** Map arbitrary category string to a modern Lucide vector icon */
-function getCategoryIcon(category: string): React.ElementType {
-  const c = (category || '').toLowerCase()
-  if (
-    c.includes('dairy') ||
-    c.includes('milk') ||
-    c.includes('egg') ||
-    c.includes('butter') ||
-    c.includes('cheese')
-  ) {
-    return Milk
-  }
-  if (
-    c.includes('fruit') ||
-    c.includes('veggie') ||
-    c.includes('vegetable') ||
-    c.includes('fresh')
-  ) {
-    return Apple
-  }
-  if (c.includes('snack') || c.includes('munch') || c.includes('biscuit') || c.includes('chips')) {
-    return Cookie
-  }
-  if (
-    c.includes('drink') ||
-    c.includes('juice') ||
-    c.includes('beverage') ||
-    c.includes('coffee') ||
-    c.includes('tea') ||
-    c.includes('soda')
-  ) {
-    return Coffee
-  }
-  if (
-    c.includes('bakery') ||
-    c.includes('bread') ||
-    c.includes('cake') ||
-    c.includes('toast') ||
-    c.includes('breakfast')
-  ) {
-    return Wheat
-  }
-  if (
-    c.includes('instant') ||
-    c.includes('staple') ||
-    c.includes('atta') ||
-    c.includes('rice') ||
-    c.includes('dal') ||
-    c.includes('oil')
-  ) {
-    return Package
-  }
-  if (c.includes('clean') || c.includes('household') || c.includes('care') || c.includes('wash')) {
-    return ShieldCheck
-  }
-  return Sparkles
+/** Canonical CraveXP category definition — single source of truth shared by tabs AND category cards */
+export interface CraveXPCategory {
+  id: string
+  label: string
+  icon: React.ElementType
+  image: string
 }
+
+export const CANONICAL_CATEGORY_ORDER = [
+  'Dairy, Bread & Eggs',
+  'Fruits & Veggies',
+  'Snacks & Munchies',
+  'Cold Drinks & Juices',
+  'Instant Food & Noodles',
+  'Sweet Tooth & Ice Creams',
+]
+
+export const CRAVEXP_CATEGORIES: CraveXPCategory[] = [
+  {
+    id: 'Dairy, Bread & Eggs',
+    label: 'Dairy, Bread & Eggs',
+    icon: Milk,
+    image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400',
+  },
+  {
+    id: 'Fruits & Veggies',
+    label: 'Fruits & Vegetables',
+    icon: AppleIcon,
+    image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400',
+  },
+  {
+    id: 'Snacks & Munchies',
+    label: 'Snacks & Munchies',
+    icon: Cookie,
+    image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400',
+  },
+  {
+    id: 'Cold Drinks & Juices',
+    label: 'Cold Drinks & Juices',
+    icon: Coffee,
+    image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400',
+  },
+  {
+    id: 'Instant Food & Noodles',
+    label: 'Instant Food',
+    icon: Package,
+    image: 'https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400',
+  },
+  {
+    id: 'Sweet Tooth & Ice Creams',
+    label: 'Ice Creams & Sweets',
+    icon: Sparkles,
+    image: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400',
+  },
+]
 
 export default function CraveXPStore() {
   const {
@@ -109,19 +103,54 @@ export default function CraveXPStore() {
 
   const [selectedCategory, setSelectedCategory] = useState<string>('All Items')
   const [searchQuery, setSearchQuery] = useState('')
+  const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [inStockOnly, setInStockOnly] = useState(false)
-  const [sortBy, setSortBy] = useState<'featured' | 'price_low' | 'price_high' | 'discount'>(
-    'featured'
-  )
+  const [vegOnly, setVegOnly] = useState(false)
   const [groceryItems, setGroceryItems] = useState<CraveXPGroceryItem[]>([])
   const [isLoadingItems, setIsLoadingItems] = useState(true)
 
-  // Load the database-backed catalog through the server API.
+  // Rotating search placeholder state (matching Zepto)
+  const placeholderPhrases = useMemo(
+    () => ['"cheese slices"', '"milk & bread"', '"chilled coke"', '"maggi noodles"', '"farm eggs"', '"ice cream"'],
+    []
+  )
+  const [currentPlaceholderIdx, setCurrentPlaceholderIdx] = useState(0)
+
+  // Quick View Modal
+  const [activeQuickViewItem, setActiveQuickViewItem] = useState<CraveXPGroceryItem | null>(null)
+
+  // Location text from cache / storage
+  const [deliveryLocation, setDeliveryLocation] = useState('Select Location')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('crave_selected_address')
+      if (saved) {
+        setDeliveryLocation(saved.split(',')[0] || saved)
+      } else {
+        setDeliveryLocation('Kanakapura Rd, Bengaluru')
+      }
+    }
+  }, [])
+
+  // Cycle animated search placeholder
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentPlaceholderIdx((prev) => (prev + 1) % placeholderPhrases.length)
+    }, 2800)
+    return () => clearInterval(interval)
+  }, [placeholderPhrases])
+
+  // Load items from database API
   const loadCatalog = useCallback(async () => {
     try {
       setIsLoadingItems(true)
       const items = await fetchCraveXPGroceryItems()
-      setGroceryItems(items)
+      // Filter out any paan items
+      const nonPaanItems = items.filter(
+        (i) => !i.category?.toLowerCase().includes('paan') && !i.name.toLowerCase().includes('paan')
+      )
+      setGroceryItems(nonPaanItems)
     } catch (err) {
       console.error('Failed to load CraveXP catalog:', err)
     } finally {
@@ -129,12 +158,11 @@ export default function CraveXPStore() {
     }
   }, [])
 
-  // Initial load
   useEffect(() => {
     void loadCatalog()
   }, [loadCatalog])
 
-  // Live real-time WebSocket sync: listen for vendor console & database catalog updates
+  // Real-time WebSocket sync
   useWebSocket({
     channels: ['cravexp_products'],
     onMessage: (msg) => {
@@ -144,510 +172,750 @@ export default function CraveXPStore() {
     },
   })
 
-  // Dynamically extract categories from loaded DB items (zero mismatches)
-  const categories = useMemo(() => {
-    const set = new Set<string>()
-    groceryItems.forEach((i) => {
-      if (i.category && i.category.trim()) {
-        set.add(i.category.trim())
-      }
-    })
-    const distinct = Array.from(set).sort()
-
-    return [
-      {
-        id: 'All Items',
-        name: 'All Items',
-        icon: Layers,
-        count: groceryItems.length,
-      },
-      ...distinct.map((catName) => ({
-        id: catName,
-        name: catName,
-        icon: getCategoryIcon(catName),
-        count: groceryItems.filter(
-          (i) => i.category?.trim().toLowerCase() === catName.toLowerCase()
-        ).length,
-      })),
-    ]
-  }, [groceryItems])
-
-  // Filter & sort items
+  // Filter items
   const filteredItems = useMemo(() => {
     const q = searchQuery.toLowerCase().trim()
 
-    let result = groceryItems.filter((i) => {
-      // Category filter
+    return groceryItems.filter((i) => {
       const matchesCategory =
         selectedCategory === 'All Items' ||
         (i.category && i.category.trim().toLowerCase() === selectedCategory.toLowerCase())
 
-      // Search query filter
       const matchesSearch =
         !q ||
         i.name.toLowerCase().includes(q) ||
         (i.category && i.category.toLowerCase().includes(q)) ||
-        (i.unit && i.unit.toLowerCase().includes(q)) ||
-        (i.skuCode && i.skuCode.toLowerCase().includes(q))
+        (i.unit && i.unit.toLowerCase().includes(q))
 
-      // In stock filter
       const matchesStock = !inStockOnly || i.inStock
+      const matchesVeg = !vegOnly || i.isVeg !== false
 
-      return matchesCategory && matchesSearch && matchesStock
+      return matchesCategory && matchesSearch && matchesStock && matchesVeg
     })
+  }, [groceryItems, selectedCategory, searchQuery, inStockOnly, vegOnly])
 
-    // Sorting
-    if (sortBy === 'price_low') {
-      result = [...result].sort((a, b) => a.price - b.price)
-    } else if (sortBy === 'price_high') {
-      result = [...result].sort((a, b) => b.price - a.price)
-    } else if (sortBy === 'discount') {
-      result = [...result].sort((a, b) => {
-        const discA = a.mrp > a.price ? (a.mrp - a.price) / a.mrp : 0
-        const discB = b.mrp > b.price ? (b.mrp - b.price) / b.mrp : 0
-        return discB - discA
-      })
-    }
+  // Real-time instant search suggestions
+  const searchSuggestions = useMemo(() => {
+    if (!searchQuery.trim()) return []
+    const q = searchQuery.toLowerCase().trim()
+    return groceryItems
+      .filter((i) => i.name.toLowerCase().includes(q) || (i.category && i.category.toLowerCase().includes(q)))
+      .slice(0, 5)
+  }, [groceryItems, searchQuery])
 
-    return result
-  }, [groceryItems, selectedCategory, searchQuery, inStockOnly, sortBy])
+  // Distinct categories available in items (excluding Paan), sorted by canonical priority
+  const distinctCategories = useMemo(() => {
+    const set = new Set<string>()
+    groceryItems.forEach((i) => {
+      if (i.category && !i.category.toLowerCase().includes('paan')) {
+        set.add(i.category.trim())
+      }
+    })
+    return Array.from(set).sort((a, b) => {
+      const idxA = CANONICAL_CATEGORY_ORDER.indexOf(a)
+      const idxB = CANONICAL_CATEGORY_ORDER.indexOf(b)
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB
+      if (idxA !== -1) return -1
+      if (idxB !== -1) return 1
+      return a.localeCompare(b)
+    })
+  }, [groceryItems])
 
-  // Subtotal in cart
-  const cartSubtotal = useMemo(
-    () => globalCartItems.reduce((sum, c) => sum + c.price * c.qty, 0),
+  // Cart helper functions
+  const getItemQty = useCallback(
+    (id: string) => {
+      const cartItem = globalCartItems.find((ci) => ci.id === id)
+      return cartItem ? cartItem.qty : 0
+    },
     [globalCartItems]
   )
 
-  const getItemQty = (id: string) => {
-    return globalCartItems.find((c) => c.id === id)?.qty || 0
-  }
+  const updateItemQty = useCallback(
+    (item: CraveXPGroceryItem, delta: number) => {
+      const current = getItemQty(item.id)
 
-  const updateItemQty = (item: CraveXPGroceryItem, delta: number) => {
-    const currentQty = getItemQty(item.id)
-    if (currentQty === 0 && delta > 0) {
-      addItem({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        qty: 1,
-        image: item.image,
-        detail: item.unit,
-        restaurantName: CRAVEXP_DARK_STORE_INFO.name,
-        restaurantId: CRAVEXP_DARK_STORE_ID,
-        vendorId: CRAVEXP_DARK_STORE_ID,
-      })
-    } else {
-      updateGlobalQty(item.id, delta)
+      if (current === 0 && delta > 0) {
+        addItem({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          qty: 1,
+          restaurantId: CRAVEXP_DARK_STORE_ID,
+          restaurantName: CRAVEXP_DARK_STORE_INFO.name,
+          image: item.image,
+          detail: item.unit,
+          veg: item.isVeg,
+        })
+      } else {
+        updateGlobalQty(item.id, delta)
+      }
+    },
+    [addItem, getItemQty, updateGlobalQty]
+  )
+
+  // Subtotal for CraveXP items
+  const cartSubtotal = useMemo(() => {
+    return globalCartItems
+      .filter((i) => i.restaurantId === CRAVEXP_DARK_STORE_ID)
+      .reduce((sum, item) => sum + item.price * item.qty, 0)
+  }, [globalCartItems])
+
+  // Free delivery progress (Threshold: ₹199)
+  const freeDeliveryThreshold = 199
+  const amountForFreeDelivery = Math.max(0, freeDeliveryThreshold - cartSubtotal)
+  const freeDeliveryProgress = Math.min(100, (cartSubtotal / freeDeliveryThreshold) * 100)
+
+  // Scroll helper for horizontal carousels
+  const scrollRail = (railId: string, direction: 'left' | 'right') => {
+    const el = document.getElementById(railId)
+    if (el) {
+      const scrollAmount = direction === 'left' ? -380 : 380
+      el.scrollBy({ left: scrollAmount, behavior: 'smooth' })
     }
   }
 
+  // Smooth scroll to category rail on the page with header offset
+  const scrollToCategory = useCallback((catId: string) => {
+    const targetId = `rail_section_${catId.replace(/[^a-zA-Z0-9]/g, '_')}`
+    const el = document.getElementById(targetId)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } else {
+      setSelectedCategory(catId)
+    }
+  }, [])
+
   return (
-    <div className="min-h-screen bg-[#f7f8f5] dark:bg-[#0c100e] text-[#18201c] dark:text-white pb-36 transition-colors duration-200">
-      {/* ULTRA-PREMIUM CRAVEXP OBSIDIAN HERO SECTION */}
-      <section className="mx-auto max-w-[1240px] px-3 sm:px-6 pt-3 sm:pt-6">
-        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#0a0f0d] via-[#121a15] to-[#070b09] p-4 sm:p-7 lg:p-9 text-white shadow-2xl border border-white/10">
-          {/* Ambient Lighting & Mesh Glows */}
-          <div className="absolute -right-24 -top-24 size-80 rounded-full bg-[#d9f447]/15 blur-3xl pointer-events-none" />
-          <div className="absolute -left-20 -bottom-20 size-72 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
-          <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none opacity-40" />
-
-          <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            {/* Left Content */}
-            <div className="max-w-2xl">
-              <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-2.5">
-                <CraveLogo variant="cravexp" size="lg" theme="light" />
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[9px] sm:text-[10px] font-black tracking-wider text-emerald-400 uppercase shadow-xs">
-                  <span className="size-1.5 sm:size-2 rounded-full bg-emerald-400 animate-pulse" />
-                  10-MIN DISPATCH
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#d9f447]/10 border border-[#d9f447]/20 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-[#d9f447]">
-                  <Flame className="size-3 text-[#d9f447]" />
-                  Live Store
-                </span>
-              </div>
-
-              <h1 className="text-xl xs:text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
-                Fresh Groceries &amp; Daily Essentials in 10 Minutes
-              </h1>
-              <p className="mt-1 sm:mt-1.5 text-xs sm:text-sm text-gray-300 max-w-xl font-normal leading-relaxed">
-                Direct fulfillment from our automated micro-warehouse. Chilled, packed, and
-                delivered to your doorstep.
-              </p>
-
-              {/* Dark Store Hub Location Pill */}
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-                <div className="inline-flex items-center gap-1.5 rounded-xl bg-white/5 border border-white/10 px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-gray-300">
-                  <MapPin className="size-3 sm:size-3.5 text-[#d9f447] shrink-0" />
-                  <span className="truncate max-w-[240px] sm:max-w-none">
-                    {CRAVEXP_DARK_STORE_INFO.address}
-                  </span>
-                </div>
-                <span className="text-xs font-bold text-emerald-400">Verified Hub</span>
-              </div>
-
-              {/* Service Badges */}
-              <div className="mt-3 flex flex-wrap items-center gap-3 sm:gap-4 pt-2.5 border-t border-white/10 text-gray-300 text-[10px] sm:text-xs font-bold">
-                <div className="flex items-center gap-1">
-                  <Zap className="size-3 sm:size-3.5 text-[#d9f447] shrink-0" />
-                  <span>~3.8m Dispatch</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <ShieldCheck className="size-3 sm:size-3.5 text-emerald-400 shrink-0" />
-                  <span>100% Cold-Chain</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Package className="size-3 sm:size-3.5 text-[#d9f447] shrink-0" />
-                  <span>Tamper Proof</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Card: Quick Cart Button (Desktop) */}
-            <div className="hidden lg:flex items-center shrink-0">
-              <button
-                onClick={() => router.push('/user/cart')}
-                className="flex items-center justify-center gap-2.5 rounded-2xl bg-[#d9f447] hover:bg-[#cbf026] px-6 py-3.5 text-xs font-black text-[#0d1410] shadow-xl shadow-[#d9f447]/20 hover:shadow-[#d9f447]/35 ring-1 ring-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
-              >
-                <ShoppingCart className="size-4" />
-                <span>{cartTotalItems > 0 ? `Cart (${cartTotalItems})` : 'View Cart'}</span>
-                {cartSubtotal > 0 && <span className="font-extrabold">· ₹{cartSubtotal}</span>}
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SEARCH, SORT & FILTER BAR */}
-      <section className="mx-auto max-w-[1240px] px-3 sm:px-6 pt-3 sm:pt-5">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
-          {/* Instant Search Bar */}
-          <div className="relative flex-1 flex items-center rounded-2xl border border-gray-200/90 dark:border-white/10 bg-white dark:bg-[#141b17] px-3.5 py-2.5 sm:py-3 shadow-xs focus-within:border-[#86a018] dark:focus-within:border-[#d9f447] transition">
-            <Search className="size-4 text-gray-400 mr-2 shrink-0" />
+    <div className="min-h-screen bg-white text-[#1A1A1A] pb-28 font-sans antialiased selection:bg-[#8B1EEF]/20 selection:text-[#8B1EEF]">
+      {/* ── STICKY SUB-HEADER: search + category tabs only (logo/cart/nav come from app layout) ── */}
+      <div className="sticky top-[60px] z-40 bg-white border-b border-gray-100 shadow-xs">
+        {/* Search row */}
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 py-2.5">
+          <div className="relative flex items-center rounded-xl bg-white border border-gray-200 px-3.5 py-2.5 focus-within:border-[#8B1EEF] focus-within:ring-2 focus-within:ring-[#8B1EEF]/20 transition-all">
+            <Search className="size-4 text-gray-400 mr-2.5 shrink-0" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search milk, bread, eggs, apples, essentials..."
-              className="w-full bg-transparent text-xs font-bold outline-none placeholder:text-gray-400 text-[#18201c] dark:text-white"
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setTimeout(() => setIsSearchFocused(false), 250)}
+              placeholder={`Search for ${placeholderPhrases[currentPlaceholderIdx]}`}
+              className="w-full bg-transparent text-xs sm:text-[13px] font-medium outline-none placeholder:text-gray-400 text-[#1A1A1A]"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="grid size-5 place-items-center rounded-full bg-gray-100 dark:bg-white/10 text-gray-500 hover:text-gray-700 dark:hover:text-white transition cursor-pointer"
-                title="Clear search"
+                className="grid size-5 place-items-center rounded-full bg-gray-100 text-gray-500 hover:text-black transition cursor-pointer"
+                title="Clear"
               >
                 <X className="size-3" />
               </button>
             )}
           </div>
 
-          {/* Quick Filters - Clean single row on mobile */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* In-Stock Toggle */}
+          {/* Instant Search Suggestions Dropdown */}
+          {isSearchFocused && searchQuery.trim().length > 0 && (
+            <div className="absolute left-4 right-4 sm:left-6 sm:right-6 mt-2 z-50 rounded-2xl bg-white border border-gray-100 shadow-2xl p-3 text-[#1A1A1A] animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-gray-400 pb-2 border-b border-gray-100">
+                <span>Matching Products ({searchSuggestions.length})</span>
+                <span>Instant Add</span>
+              </div>
+
+              {searchSuggestions.length === 0 ? (
+                <p className="text-xs text-gray-400 py-4 text-center">
+                  No products found.
+                </p>
+              ) : (
+                <div className="divide-y divide-gray-50 mt-1">
+                  {searchSuggestions.map((item) => {
+                    const qty = getItemQty(item.id)
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between py-2.5 px-2 hover:bg-gray-50 rounded-xl transition"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="size-11 rounded-lg object-contain bg-white border border-gray-100 shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold truncate max-w-[190px] sm:max-w-xs text-[#1A1A1A]">
+                              {item.name}
+                            </p>
+                            <p className="text-[11px] text-gray-400 font-medium mt-0.5">
+                              {item.unit} &bull; <span className="font-black text-[#1A1A1A]">₹{item.price}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        {qty === 0 ? (
+                          <button
+                            onMouseDown={(e) => { e.preventDefault(); updateItemQty(item, 1) }}
+                            className="rounded-lg border border-[#FF3269] text-[#FF3269] bg-white hover:bg-[#FFF0F4] active:scale-95 px-3.5 py-1 text-xs font-black uppercase transition shadow-xs cursor-pointer"
+                          >
+                            ADD
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-1.5 rounded-lg bg-[#FF3269] px-2 py-0.5 text-white">
+                            <button onMouseDown={(e) => { e.preventDefault(); updateItemQty(item, -1) }} className="size-4 grid place-items-center cursor-pointer">
+                              <Minus className="size-2.5" />
+                            </button>
+                            <span className="text-xs font-black px-1">{qty}</span>
+                            <button onMouseDown={(e) => { e.preventDefault(); updateItemQty(item, 1) }} className="size-4 grid place-items-center cursor-pointer">
+                              <Plus className="size-2.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Category tabs */}
+        <div className="border-t border-gray-100 bg-white">
+          <div className="mx-auto flex max-w-[1280px] items-center gap-6 sm:gap-8 px-4 sm:px-6 overflow-x-auto scrollbar-none text-xs sm:text-[13px] font-bold">
             <button
-              onClick={() => setInStockOnly((v) => !v)}
-              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-2xl px-3 py-2.5 sm:py-3 text-xs font-bold border transition cursor-pointer ${
-                inStockOnly
-                  ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-xs'
-                  : 'bg-white dark:bg-[#141b17] border-gray-200/90 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'
+              onClick={() => { setSelectedCategory('All Items'); setSearchQuery('') }}
+              className={`flex items-center gap-1.5 py-2.5 sm:py-3 border-b-2 whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+                selectedCategory === 'All Items'
+                  ? 'border-[#8B1EEF] text-[#8B1EEF] font-black'
+                  : 'border-transparent text-gray-600 hover:text-[#1A1A1A]'
               }`}
             >
-              <Check className={`size-3.5 ${inStockOnly ? 'text-emerald-600' : 'text-gray-400'}`} />
-              <span>In Stock</span>
+              <ShoppingBag className="size-4 shrink-0" />
+              <span>All</span>
             </button>
-
-            {/* Sort Dropdown */}
-            <div className="relative flex-1 sm:flex-initial">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                aria-label="Sort products"
-                className="w-full appearance-none rounded-2xl border border-gray-200/90 dark:border-white/10 bg-white dark:bg-[#141b17] px-3.5 py-2.5 sm:py-3 pr-7 text-xs font-bold text-gray-700 dark:text-gray-300 outline-none hover:bg-gray-50 dark:hover:bg-white/5 transition cursor-pointer"
-              >
-                <option value="featured">Featured</option>
-                <option value="price_low">Price: Low to High</option>
-                <option value="price_high">Price: High to Low</option>
-                <option value="discount">Biggest Discount</option>
-              </select>
-              <SlidersHorizontal className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3 text-gray-400" />
-            </div>
-          </div>
-        </div>
-
-        {/* DYNAMIC CATEGORY PILLS BAR (Synced with DB Categories) */}
-        <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {categories.map((cat) => {
-            const Icon = cat.icon
-            const isActive = selectedCategory === cat.id
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-extrabold transition shrink-0 cursor-pointer ${
-                  isActive
-                    ? 'bg-[#18201c] dark:bg-[#d9f447] text-[#d9f447] dark:text-[#18201c] shadow-md shadow-black/10'
-                    : 'bg-white dark:bg-[#141b17] text-[#18201c] dark:text-gray-300 border border-gray-200/80 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5'
-                }`}
-              >
-                <Icon
-                  className={`size-3.5 ${
+            {CRAVEXP_CATEGORIES.map((cat) => {
+              const Icon = cat.icon
+              const isActive = selectedCategory === cat.id
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => { setSelectedCategory(cat.id); setSearchQuery('') }}
+                  className={`flex items-center gap-1.5 py-2.5 sm:py-3 border-b-2 whitespace-nowrap transition-all cursor-pointer shrink-0 ${
                     isActive
-                      ? 'text-[#d9f447] dark:text-[#18201c]'
-                      : 'text-gray-500 dark:text-gray-400'
-                  }`}
-                />
-                <span>{cat.name}</span>
-                <span
-                  className={`rounded-full px-1.5 py-0.2 text-[10px] font-black ${
-                    isActive
-                      ? 'bg-white/20 dark:bg-black/20 text-inherit'
-                      : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400'
+                      ? 'border-[#8B1EEF] text-[#8B1EEF] font-black'
+                      : 'border-transparent text-gray-600 hover:text-[#1A1A1A]'
                   }`}
                 >
-                  {cat.count}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      </section>
-
-      {/* PRODUCT GRID CONTAINER */}
-      <main className="mx-auto max-w-[1240px] px-3 sm:px-6 pt-6 pb-28 sm:pb-24">
-        {/* Header row */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-base sm:text-lg font-black text-[#18201c] dark:text-white">
-              {selectedCategory}
-            </h2>
-            <span className="rounded-full bg-gray-100 dark:bg-white/10 px-2.5 py-0.5 text-xs font-bold text-gray-600 dark:text-gray-300">
-              {filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}
-            </span>
+                  <Icon className="size-4 shrink-0" />
+                  <span>{cat.label}</span>
+                </button>
+              )
+            })}
           </div>
         </div>
+      </div>
 
-        {/* LOADING SKELETON */}
+      {/* ── 3. HERO PROMO BANNER (CYAN/TEAL GROCERY THEME - NO PAAN) ────────── */}
+      {selectedCategory === 'All Items' && !searchQuery && (
+        <section className="mx-auto max-w-[1280px] px-4 sm:px-6 pt-4 sm:pt-6">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#D7F5F7] via-[#E4FAF9] to-[#C9F3F6] border border-[#BCE8EB] p-6 sm:p-8 lg:p-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+            {/* Left Content */}
+            <div className="z-10 max-w-xl text-center md:text-left">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#005C6E] tracking-tight uppercase">
+                CraveXP Grocery Hub
+              </h1>
+              <p className="mt-2 text-sm sm:text-base font-semibold text-[#026E80] leading-relaxed">
+                Get farm-fresh produce, chilled dairy, snacks &amp; daily essentials delivered in 10 minutes!
+              </p>
+              <div className="mt-5 flex items-center justify-center md:justify-start gap-3">
+                <button
+                  onClick={() => {
+                    const el = document.getElementById('shop-by-category')
+                    el?.scrollIntoView({ behavior: 'smooth' })
+                  }}
+                  className="rounded-full bg-[#0C1A1E] hover:bg-black text-white font-black text-xs sm:text-sm px-6 py-3 shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <span>Order now</span>
+                  <ChevronRight className="size-4 stroke-[3]" />
+                </button>
+                <div className="flex items-center gap-1.5 rounded-full bg-white/70 px-3.5 py-2 text-xs font-bold text-[#005C6E] border border-white/60">
+                  <Zap className="size-3.5 fill-[#FF9500] text-[#FF9500]" />
+                  <span>Free delivery above ₹199</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Side: High-res Product Pack Arrangement */}
+            <div className="relative z-10 flex items-center gap-2 sm:gap-3 shrink-0">
+              <div className="size-24 sm:size-32 rounded-2xl overflow-hidden bg-white/80 p-2 shadow-sm border border-white/60">
+                <img
+                  src="https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400"
+                  alt="Fresh Milk"
+                  className="size-full object-cover rounded-xl"
+                />
+              </div>
+              <div className="size-28 sm:size-36 rounded-2xl overflow-hidden bg-white/80 p-2 shadow-md border border-white/60 -translate-y-2">
+                <img
+                  src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400"
+                  alt="Fresh Fruits"
+                  className="size-full object-cover rounded-xl"
+                />
+              </div>
+              <div className="size-24 sm:size-32 rounded-2xl overflow-hidden bg-white/80 p-2 shadow-sm border border-white/60">
+                <img
+                  src="https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400"
+                  alt="Cold Drinks"
+                  className="size-full object-cover rounded-xl"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── SHOP BY CATEGORY GRID (uses CRAVEXP_CATEGORIES — single source of truth) ── */}
+      {selectedCategory === 'All Items' && !searchQuery && (
+        <section id="shop-by-category" className="mx-auto max-w-[1280px] px-4 sm:px-6 pt-6 sm:pt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg sm:text-xl font-black text-[#1A1A1A] tracking-tight">
+              Shop by Category
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4">
+            {CRAVEXP_CATEGORIES.map((cat) => (
+              <div
+                key={cat.id}
+                onClick={() => scrollToCategory(cat.id)}
+                className="group rounded-2xl bg-[#F4F6FB] hover:bg-[#EEF1F8] border border-gray-100 p-3 sm:p-4 flex flex-col items-center justify-between text-center transition-all duration-200 cursor-pointer hover:shadow-md hover:-translate-y-1"
+              >
+                <div className="size-20 sm:size-24 rounded-2xl overflow-hidden bg-white p-2 shadow-xs group-hover:scale-105 transition-transform duration-300">
+                  <img
+                    src={cat.image}
+                    alt={cat.label}
+                    className="size-full object-cover rounded-xl"
+                  />
+                </div>
+                <h3 className="mt-3 text-xs sm:text-[13px] font-bold text-[#1A1A1A] group-hover:text-[#8B1EEF] transition-colors line-clamp-2 leading-tight">
+                  {cat.label}
+                </h3>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── PRODUCT RAILS & CAROUSELS ── */}
+      <main className="mx-auto max-w-[1280px] px-4 sm:px-6 pt-6 sm:pt-8">
         {isLoadingItems ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 sm:gap-4">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5 sm:gap-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
               <div
                 key={n}
-                className="h-72 rounded-3xl bg-gray-200/70 dark:bg-white/5 animate-pulse border border-gray-200/60 dark:border-white/5"
+                className="h-64 rounded-2xl bg-gray-100 animate-pulse border border-gray-200"
               />
             ))}
           </div>
         ) : filteredItems.length === 0 ? (
-          /* EMPTY / NO ITEMS STATE (NEVER SHOW MOCK ITEMS) */
-          <div className="rounded-3xl bg-white dark:bg-[#141b17] p-8 sm:p-14 text-center border border-gray-200/80 dark:border-white/10 shadow-sm">
-            <div className="mx-auto grid size-16 place-items-center rounded-3xl bg-[#d9f447]/20 text-[#18201c] dark:text-[#d9f447] mb-4 shadow-xs">
-              <Sparkles className="size-8 text-[#86a018] dark:text-[#d9f447]" />
-            </div>
-
-            {searchQuery ? (
-              <>
-                <h3 className="text-lg sm:text-xl font-black text-[#18201c] dark:text-white">
-                  No products found for &ldquo;{searchQuery}&rdquo;
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2 max-w-md mx-auto leading-relaxed">
-                  Try searching for a different product or clear your search to explore all
-                  groceries.
-                </p>
-                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="inline-flex items-center gap-2 rounded-2xl bg-[#18201c] dark:bg-[#d9f447] px-6 py-3 text-xs font-black text-white dark:text-[#18201c] shadow-md hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer"
-                  >
-                    <RotateCcw className="size-3.5" />
-                    <span>Clear Search Filter</span>
-                  </button>
-                </div>
-              </>
-            ) : groceryItems.length === 0 ? (
-              <>
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 px-3.5 py-1 text-[11px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-2.5">
-                  <span className="size-1.5 rounded-full bg-amber-500 animate-ping" />
-                  <span>Shelves Restocking In Progress</span>
-                </div>
-                <h3 className="text-lg sm:text-xl font-black text-[#18201c] dark:text-white">
-                  Fresh Inventory Arriving Shortly
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-2 max-w-md mx-auto leading-relaxed">
-                  Our fulfillment center is actively restocking fresh groceries and daily
-                  essentials.
-                </p>
-                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                  <Link
-                    href="/user/explore"
-                    className="inline-flex items-center gap-2 rounded-2xl bg-[#18201c] dark:bg-[#d9f447] px-6 py-3 text-xs font-black text-white dark:text-[#18201c] shadow-md hover:scale-[1.02] active:scale-[0.98] transition"
-                  >
-                    <span>Explore Kitchens &amp; Food</span>
-                    <ArrowRight className="size-4" />
-                  </Link>
-                </div>
-              </>
-            ) : (
-              <>
-                <h3 className="text-lg sm:text-xl font-black text-[#18201c] dark:text-white">
-                  No items in &ldquo;{selectedCategory}&rdquo;
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2 max-w-md mx-auto leading-relaxed">
-                  We are restocking this section. Switch to another category or browse all available
-                  products.
-                </p>
-                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                  <button
-                    onClick={() => setSelectedCategory('All Items')}
-                    className="inline-flex items-center gap-2 rounded-2xl bg-[#18201c] dark:bg-[#d9f447] px-6 py-3 text-xs font-black text-white dark:text-[#18201c] shadow-md hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer"
-                  >
-                    <span>View All {groceryItems.length} Items</span>
-                    <ArrowRight className="size-4" />
-                  </button>
-                </div>
-              </>
-            )}
+          /* Empty State */
+          <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-xs">
+            <h3 className="text-lg font-bold text-[#1A1A1A]">
+              {searchQuery
+                ? `No products found for "${searchQuery}"`
+                : `No items in "${selectedCategory}"`}
+            </h3>
+            <p className="text-xs text-gray-500 mt-1">
+              Try switching categories or clearing search keywords.
+            </p>
+            <button
+              onClick={() => {
+                setSearchQuery('')
+                setSelectedCategory('All Items')
+              }}
+              className="mt-4 rounded-full bg-[#8B1EEF] text-white font-bold text-xs px-5 py-2.5 shadow-sm hover:bg-[#7818cf] transition"
+            >
+              Reset Filters
+            </button>
           </div>
-        ) : (
-          /* REDESIGNED PRODUCT GRID */
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 sm:gap-4">
-            {filteredItems.map((item) => {
-              const qty = getItemQty(item.id)
-              const hasDiscount = item.mrp > item.price
+        ) : selectedCategory === 'All Items' && !searchQuery ? (
+          /* ── ALL CATEGORIES AS SEPARATE HORIZONTAL RAILS ── */
+          <div className="space-y-8 sm:space-y-10">
+            {distinctCategories.map((catName) => {
+              const catItems = groceryItems.filter((i) => i.category === catName)
+              if (catItems.length === 0) return null
+              const railId = `rail_${catName.replace(/[^a-zA-Z0-9]/g, '_')}`
+              const sectionId = `rail_section_${catName.replace(/[^a-zA-Z0-9]/g, '_')}`
 
               return (
-                <div
-                  key={item.id}
-                  className="group relative flex flex-col justify-between rounded-3xl bg-white dark:bg-[#141b17] p-3.5 sm:p-4 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 border border-gray-200/80 dark:border-white/10 hover:border-[#86a018]/50 dark:hover:border-[#d9f447]/40"
-                >
-                  {/* Top Status & Offers */}
-                  <div className="flex items-center justify-between gap-1 mb-2">
-                    <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">
-                      10 MINS
-                    </span>
-                    {item.discount ? (
-                      <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">
-                        {item.discount}
-                      </span>
-                    ) : hasDiscount ? (
-                      <span className="text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400">
-                        Save ₹{item.mrp - item.price}
-                      </span>
-                    ) : null}
-                  </div>
+                <div key={catName} id={sectionId} className="relative scroll-mt-36">
+                  {/* Category Rail Header */}
+                  <div className="flex items-center justify-between mb-3.5">
+                    <h2 className="text-base sm:text-lg font-black text-[#1A1A1A] tracking-tight">
+                      {catName}
+                    </h2>
 
-                  {/* Product Image Container */}
-                  <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-[#1a221e] mb-2.5">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      onError={(e) => {
-                        // Fallback image if broken
-                        const target = e.target as HTMLImageElement
-                        target.src =
-                          'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500'
-                      }}
-                    />
-                  </div>
-
-                  {/* Product Details */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-extrabold text-gray-400 dark:text-gray-400 uppercase tracking-wider truncate">
-                        {item.unit}
-                      </span>
-                      {item.category && (
-                        <>
-                          <span className="text-gray-300 dark:text-gray-600">&bull;</span>
-                          <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-400 truncate">
-                            {item.category}
-                          </span>
-                        </>
-                      )}
-                    </div>
-
-                    <h3 className="mt-1 text-xs sm:text-sm font-bold text-[#18201c] dark:text-white line-clamp-2 leading-snug min-h-[34px]">
-                      {item.name}
-                    </h3>
-                  </div>
-
-                  {/* Pricing & Add/Stepper Button Row */}
-                  <div className="mt-3 flex items-center justify-between pt-2.5 border-t border-gray-100 dark:border-white/10">
-                    <div>
-                      {hasDiscount && (
-                        <span className="block text-[10px] text-gray-400 line-through leading-none mb-0.5">
-                          ₹{item.mrp}
-                        </span>
-                      )}
-                      <span className="text-sm sm:text-base font-black text-[#18201c] dark:text-white">
-                        ₹{item.price}
-                      </span>
-                    </div>
-
-                    {qty === 0 ? (
+                    <div className="flex items-center gap-3">
                       <button
-                        onClick={() => updateItemQty(item, 1)}
-                        className="rounded-xl border-2 border-[#18201c] dark:border-[#d9f447] bg-white dark:bg-[#141b17] px-3.5 py-1.5 text-xs font-black text-[#18201c] dark:text-[#d9f447] shadow-xs hover:bg-[#18201c] hover:text-[#d9f447] dark:hover:bg-[#d9f447] dark:hover:text-[#18201c] active:scale-95 transition-all duration-150 cursor-pointer"
+                        onClick={() => setSelectedCategory(catName)}
+                        className="text-xs font-black text-[#FF3269] hover:underline flex items-center gap-0.5 cursor-pointer"
                       >
-                        + ADD
+                        <span>See All</span>
+                        <ChevronRight className="size-3.5 stroke-[3]" />
                       </button>
-                    ) : (
-                      <div className="flex items-center gap-1.5 rounded-xl bg-[#18201c] dark:bg-[#d9f447] px-2 py-1 text-[#d9f447] dark:text-[#18201c] shadow-md">
+
+                      {/* Rail Left/Right Scroll Arrows (Zepto Style) */}
+                      <div className="hidden sm:flex items-center gap-1.5">
                         <button
-                          onClick={() => updateItemQty(item, -1)}
-                          className="grid size-5 place-items-center hover:bg-white/20 dark:hover:bg-black/20 rounded-md transition cursor-pointer"
-                          aria-label="Decrease quantity"
+                          onClick={() => scrollRail(railId, 'left')}
+                          className="grid size-7 place-items-center rounded-full bg-black text-white hover:bg-gray-800 transition active:scale-90 cursor-pointer shadow-xs"
+                          aria-label="Scroll left"
                         >
-                          <Minus className="size-3 text-white dark:text-[#18201c]" />
+                          <ChevronLeft className="size-4 stroke-[2.5]" />
                         </button>
-                        <span className="text-xs font-black px-1.5 text-white dark:text-[#18201c]">
-                          {qty}
-                        </span>
                         <button
-                          onClick={() => updateItemQty(item, 1)}
-                          className="grid size-5 place-items-center hover:bg-white/20 dark:hover:bg-black/20 rounded-md transition cursor-pointer"
-                          aria-label="Increase quantity"
+                          onClick={() => scrollRail(railId, 'right')}
+                          className="grid size-7 place-items-center rounded-full bg-black text-white hover:bg-gray-800 transition active:scale-90 cursor-pointer shadow-xs"
+                          aria-label="Scroll right"
                         >
-                          <Plus className="size-3 text-white dark:text-[#18201c]" />
+                          <ChevronRight className="size-4 stroke-[2.5]" />
                         </button>
                       </div>
-                    )}
+                    </div>
+                  </div>
+
+                  {/* Horizontal Scrollable Product Track */}
+                  <div
+                    id={railId}
+                    className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto pb-2 scrollbar-none scroll-smooth"
+                  >
+                    {catItems.map((item) => (
+                      <CraveXPProductCard
+                        key={item.id}
+                        item={item}
+                        qty={getItemQty(item.id)}
+                        onUpdateQty={(delta) => updateItemQty(item, delta)}
+                        onQuickView={() => setActiveQuickViewItem(item)}
+                      />
+                    ))}
                   </div>
                 </div>
               )
             })}
           </div>
+        ) : (
+          /* ── FILTERED OR SEARCHED GRID VIEW ── */
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base sm:text-lg font-black text-[#1A1A1A]">
+                {selectedCategory} ({filteredItems.length})
+              </h2>
+              {selectedCategory !== 'All Items' && (
+                <button
+                  onClick={() => setSelectedCategory('All Items')}
+                  className="text-xs font-bold text-[#8B1EEF] hover:underline cursor-pointer"
+                >
+                  &larr; Back to all categories
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+              {filteredItems.map((item) => (
+                <CraveXPProductCard
+                  key={item.id}
+                  item={item}
+                  qty={getItemQty(item.id)}
+                  onUpdateQty={(delta) => updateItemQty(item, delta)}
+                  onQuickView={() => setActiveQuickViewItem(item)}
+                />
+              ))}
+            </div>
+          </div>
         )}
       </main>
 
-      {/* FLOATING GLASS BOTTOM CART DRAWER */}
-      {cartTotalItems > 0 && (
-        <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] left-3 right-3 sm:left-auto sm:right-6 sm:w-[420px] z-[70] animate-in fade-in slide-in-from-bottom-4 duration-200">
-          <div className="flex items-center justify-between rounded-2xl sm:rounded-3xl bg-[#0a0f0d]/95 dark:bg-[#070b09]/95 backdrop-blur-2xl p-2.5 sm:p-3.5 text-white shadow-2xl border border-white/15">
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              <div className="grid size-9 sm:size-11 place-items-center rounded-xl sm:rounded-2xl bg-[#d9f447] text-[#18201c] shadow-md shadow-[#d9f447]/20 shrink-0">
-                <ShoppingBag className="size-4 sm:size-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-[#d9f447] truncate">
-                  {cartTotalItems} {cartTotalItems === 1 ? 'ITEM' : 'ITEMS'} IN CART
-                </p>
-                <p className="text-sm sm:text-base font-black text-white leading-tight">
-                  ₹{cartSubtotal}
-                </p>
+      {/* ── PRODUCT QUICK-VIEW MODAL ── */}
+      {activeQuickViewItem && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in duration-150"
+          onClick={() => setActiveQuickViewItem(null)}
+        >
+          <div
+            className="w-full max-w-md overflow-hidden rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl border border-gray-100 max-h-[90vh] flex flex-col animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Image */}
+            <div className="relative aspect-square max-h-[280px] w-full bg-gray-50 flex items-center justify-center p-6">
+              <img
+                src={activeQuickViewItem.image}
+                alt={activeQuickViewItem.name}
+                className="size-full object-contain"
+              />
+              <button
+                onClick={() => setActiveQuickViewItem(null)}
+                className="absolute top-4 right-4 grid size-8 place-items-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+              >
+                <X className="size-4" />
+              </button>
+              <div className="absolute bottom-3 left-4 flex items-center gap-2">
+                <span className="rounded bg-[#00B259] text-white text-[11px] font-black px-2 py-0.5">
+                  ⚡ 10 Mins Delivery
+                </span>
+                <span className="rounded bg-gray-200 text-gray-700 text-[11px] font-bold px-2 py-0.5">
+                  {activeQuickViewItem.category}
+                </span>
               </div>
             </div>
 
-            <button
-              onClick={() => router.push('/user/cart')}
-              className="flex items-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl bg-[#d9f447] hover:bg-[#cbf026] px-3.5 sm:px-5 py-2.5 sm:py-3 text-xs font-black text-[#18201c] shadow-lg shadow-[#d9f447]/25 hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer shrink-0"
-            >
-              <span>Checkout</span>
-              <ArrowRight className="size-3.5 sm:size-4" />
-            </button>
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-3.5">
+              <div>
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  {activeQuickViewItem.unit}
+                </span>
+                <h2 className="text-base sm:text-lg font-black text-[#1A1A1A] mt-0.5 leading-snug">
+                  {activeQuickViewItem.name}
+                </h2>
+              </div>
+
+              {/* Price Row */}
+              <div className="flex items-center gap-2">
+                <span className="rounded bg-[#00B259] text-white text-base font-black px-2 py-0.5">
+                  ₹{activeQuickViewItem.price}
+                </span>
+                {activeQuickViewItem.mrp > activeQuickViewItem.price && (
+                  <span className="text-sm text-gray-400 line-through">
+                    ₹{activeQuickViewItem.mrp}
+                  </span>
+                )}
+              </div>
+
+              {/* Description */}
+              {activeQuickViewItem.description && (
+                <p className="text-xs text-gray-600 leading-relaxed font-medium bg-gray-50 p-3 rounded-xl border border-gray-100">
+                  {activeQuickViewItem.description}
+                </p>
+              )}
+
+              {/* Guarantee */}
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-50 p-2.5 rounded-xl border border-emerald-100">
+                <ShieldCheck className="size-4 shrink-0 text-emerald-600" />
+                <span>100% Quality Assured &bull; Direct from Hub</span>
+              </div>
+
+              {/* Cart CTA */}
+              <div className="pt-2">
+                {getItemQty(activeQuickViewItem.id) === 0 ? (
+                  <button
+                    onClick={() => updateItemQty(activeQuickViewItem, 1)}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl border border-[#FF3269] bg-[#FF3269] hover:bg-[#e0265c] text-white py-3 text-sm font-black uppercase shadow-md active:scale-95 transition cursor-pointer"
+                  >
+                    <Plus className="size-4 stroke-[3]" />
+                    <span>ADD TO CART &bull; ₹{activeQuickViewItem.price}</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center justify-between rounded-xl bg-[#FF3269] p-2 text-white">
+                    <span className="text-xs font-black ml-3">Item in Cart</span>
+                    <div className="flex items-center gap-3 bg-white/20 rounded-lg px-3 py-1">
+                      <button
+                        onClick={() => updateItemQty(activeQuickViewItem, -1)}
+                        className="grid size-6 place-items-center hover:bg-white/20 rounded-md transition cursor-pointer"
+                      >
+                        <Minus className="size-3.5 stroke-[2.5]" />
+                      </button>
+                      <span className="text-sm font-black px-1">
+                        {getItemQty(activeQuickViewItem.id)}
+                      </span>
+                      <button
+                        onClick={() => updateItemQty(activeQuickViewItem, 1)}
+                        className="grid size-6 place-items-center hover:bg-white/20 rounded-md transition cursor-pointer"
+                      >
+                        <Plus className="size-3.5 stroke-[2.5]" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
+
+      {/* ── STICKY FLOATING CART BAR ── */}
+      {cartTotalItems > 0 && (
+        <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-[460px] z-50 animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <div className="flex flex-col rounded-2xl bg-[#2B0054] text-white shadow-2xl border border-purple-400/30 p-3 sm:p-4">
+            {/* Free Delivery Meter */}
+            {amountForFreeDelivery > 0 ? (
+              <div className="mb-2 flex items-center justify-between text-[11px] font-bold text-purple-200">
+                <span>Add ₹{amountForFreeDelivery} more for FREE Delivery</span>
+                <div className="w-24 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#00D26A] transition-all duration-300"
+                    style={{ width: `${freeDeliveryProgress}%` }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="mb-2 flex items-center gap-1.5 text-[11px] font-black text-[#00D26A] uppercase tracking-wider">
+                <Check className="size-3 stroke-[3]" />
+                <span>Unlocked FREE Delivery!</span>
+              </div>
+            )}
+
+            {/* Cart Row */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="grid size-9 place-items-center rounded-xl bg-white/10 text-white shrink-0">
+                  <ShoppingBag className="size-5" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-purple-200">
+                    {cartTotalItems} {cartTotalItems === 1 ? 'ITEM' : 'ITEMS'} IN CART
+                  </p>
+                  <p className="text-base font-black text-white leading-tight">
+                    ₹{cartSubtotal}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => router.push('/user/cart')}
+                className="flex items-center gap-1.5 rounded-xl bg-[#00D26A] hover:bg-[#00ba5e] px-5 py-2.5 text-xs font-black text-[#0E0616] shadow-lg active:scale-95 transition cursor-pointer shrink-0 uppercase tracking-wide"
+              >
+                <span>VIEW CART</span>
+                <ArrowRight className="size-4 stroke-[3]" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** ── CRAVEXP PRODUCT CARD ── */
+interface CraveXPProductCardProps {
+  item: CraveXPGroceryItem
+  qty: number
+  onUpdateQty: (delta: number) => void
+  onQuickView: () => void
+}
+
+function CraveXPProductCard({ item, qty, onUpdateQty, onQuickView }: CraveXPProductCardProps) {
+  const hasDiscount = item.mrp > item.price
+  const discountPercent = hasDiscount
+    ? Math.round(((item.mrp - item.price) / item.mrp) * 100)
+    : 0
+
+  return (
+    <div className="group relative flex flex-col justify-between rounded-2xl bg-white p-3 border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all duration-300 min-w-[170px] sm:min-w-[195px] max-w-[210px] shrink-0">
+      <div>
+        {/* Top Badges: Veg indicator & 10 Mins Delivery */}
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-1.5">
+            {/* Indian Food Veg/Non-Veg symbol */}
+            <span
+              className={`inline-flex items-center justify-center size-3.5 rounded-sm border ${
+                item.isVeg !== false ? 'border-emerald-600 bg-white' : 'border-red-600 bg-white'
+              }`}
+              title={item.isVeg !== false ? 'Vegetarian' : 'Non-Vegetarian'}
+            >
+              <span
+                className={`size-1.5 rounded-full ${
+                  item.isVeg !== false ? 'bg-emerald-600' : 'bg-red-600'
+                }`}
+              />
+            </span>
+            <span className="text-[10px] font-black tracking-wider text-gray-400 uppercase">
+              10 MINS
+            </span>
+          </div>
+
+          {/* Discount Tag */}
+          {hasDiscount && discountPercent > 0 && (
+            <span className="rounded bg-[#00B259]/10 text-[#008A44] text-[10px] font-black px-1.5 py-0.5 leading-none">
+              {discountPercent}% OFF
+            </span>
+          )}
+        </div>
+
+        {/* Product Image Frame with Floating ADD Button */}
+        <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-white flex items-center justify-center p-2 mb-2 cursor-pointer">
+          <img
+            src={item.image}
+            alt={item.name}
+            loading="lazy"
+            onClick={onQuickView}
+            className="size-full object-contain transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.src = 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400'
+            }}
+          />
+
+          {/* Floating Zepto ADD / Stepper Button */}
+          <div className="absolute bottom-1.5 right-1.5 z-10">
+            {qty === 0 ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onUpdateQty(1)
+                }}
+                className="rounded-lg border-2 border-[#FF3269] text-[#FF3269] bg-white hover:bg-[#FF3269] hover:text-white active:scale-95 px-3.5 py-1 text-xs font-black uppercase transition-all shadow-sm cursor-pointer tracking-wider"
+              >
+                ADD
+              </button>
+            ) : (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1.5 rounded-lg bg-[#FF3269] px-2 py-0.5 text-white shadow-md animate-in zoom-in-95 duration-100"
+              >
+                <button
+                  onClick={() => onUpdateQty(-1)}
+                  className="size-4 grid place-items-center hover:bg-white/20 rounded transition cursor-pointer"
+                  aria-label="Decrease"
+                >
+                  <Minus className="size-2.5 stroke-[3]" />
+                </button>
+                <span className="text-xs font-black px-1">{qty}</span>
+                <button
+                  onClick={() => onUpdateQty(1)}
+                  className="size-4 grid place-items-center hover:bg-white/20 rounded transition cursor-pointer"
+                  aria-label="Increase"
+                >
+                  <Plus className="size-2.5 stroke-[3]" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Price & MRP Row */}
+        <div className="flex items-baseline gap-1.5 mt-1">
+          <span className="text-sm sm:text-base font-black text-[#1A1A1A]">
+            ₹{item.price}
+          </span>
+          {hasDiscount && (
+            <span className="text-xs text-gray-400 line-through font-medium">
+              ₹{item.mrp}
+            </span>
+          )}
+        </div>
+
+        {/* Product Title */}
+        <h3
+          onClick={onQuickView}
+          className="mt-1 text-xs sm:text-[13px] font-bold text-[#1A1A1A] line-clamp-2 leading-snug group-hover:text-[#8B1EEF] transition-colors cursor-pointer min-h-[34px]"
+        >
+          {item.name}
+        </h3>
+      </div>
+
+      {/* Unit / Pack Size */}
+      <div className="mt-2 pt-1.5 border-t border-gray-50 flex items-center justify-between text-[11px] text-gray-500 font-medium">
+        <span className="truncate">{item.unit || '1 pack'}</span>
+      </div>
     </div>
   )
 }

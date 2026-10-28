@@ -294,7 +294,32 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
       setLoadFailed(false)
       setIsLoaded(true)
     }
-    const loadHandler = () => setIsLoaded(true)
+    const loadHandler = () => {
+      setLoadFailed(false)
+      setIsLoaded(true)
+    }
+
+    let fallbackAttempted = false
+    const errorHandler = (e: any) => {
+      const errorMsg = e?.error?.message || e?.message || ''
+      if (
+        !fallbackAttempted &&
+        (errorMsg.includes('style') ||
+          errorMsg.includes('403') ||
+          errorMsg.includes('404') ||
+          errorMsg.includes('Failed to fetch') ||
+          !map.isStyleLoaded())
+      ) {
+        fallbackAttempted = true
+        console.warn('Map style load issue detected, switching to raster fallback style:', errorMsg)
+        try {
+          map.setStyle(createRasterFallbackStyle(resolvedThemeRef.current))
+        } catch (fallbackErr) {
+          console.error('Fallback map style failed:', fallbackErr)
+          setLoadFailed(true)
+        }
+      }
+    }
 
     const handleMove = () => {
       onViewportChangeRef.current?.(getViewport(map))
@@ -306,6 +331,7 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
 
     map.on('load', loadHandler)
     map.on('style.load', styleLoadHandler)
+    map.on('error', errorHandler)
     map.on('move', handleMove)
     map.on('click', handleClick)
     setMapInstance(map)
@@ -314,10 +340,19 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
     const resizeObserver = new ResizeObserver(resize)
     resizeObserver.observe(containerRef.current)
 
+    // Settle canvas in animated modals, drawers, or mobile viewport expansions
+    const t1 = setTimeout(resize, 100)
+    const t2 = setTimeout(resize, 350)
+    const t3 = setTimeout(resize, 800)
+
     return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+      clearTimeout(t3)
       resizeObserver.disconnect()
       map.off('load', loadHandler)
       map.off('style.load', styleLoadHandler)
+      map.off('error', errorHandler)
       map.off('move', handleMove)
       map.off('click', handleClick)
       map.remove()

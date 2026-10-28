@@ -169,13 +169,13 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
             className={`flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto no-scrollbar transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'p-2.5' : 'p-4'}`}
           >
             {/* Sidebar Top Header */}
-            <div className="flex items-center justify-between border-b border-[#e2e8e3] dark:border-white/10 pb-4 pt-1">
+            <div className="flex items-center justify-between border-b border-black/[0.06] dark:border-white/[0.06] pb-4 pt-1">
               <Link
                 href="/driver/dashboard"
                 className="flex items-center gap-2.5 group min-w-0"
                 title={sidebarCollapsed ? 'crave. Driver' : undefined}
               >
-                <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#121815] shadow-sm shrink-0 transition-transform duration-300 group-hover:scale-105">
+                <span className="grid size-9 place-items-center rounded-xl bg-[#1D1D1F] dark:bg-white text-white dark:text-[#1D1D1F] shadow-sm shrink-0 transition-transform duration-300 group-hover:scale-105">
                   <Bike className="size-5" />
                 </span>
                 <div
@@ -186,14 +186,14 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                   }`}
                 >
                   <CraveLogo variant="full" size="sm" />
-                  <span className="text-xs font-extrabold uppercase text-emerald-600 dark:text-emerald-400">
+                  <span className="text-xs font-bold uppercase text-emerald-600 dark:text-emerald-400">
                     Driver
                   </span>
                 </div>
               </Link>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="grid size-7 place-items-center rounded-lg bg-black/5 dark:bg-white/10 text-gray-700 dark:text-white lg:hidden hover:bg-black/10 dark:hover:bg-white/20 transition"
+                className="grid size-7 place-items-center rounded-lg bg-black/5 dark:bg-white/10 text-stone-700 dark:text-white lg:hidden hover:bg-black/10 dark:hover:bg-white/20 transition"
               >
                 <X className="size-4" />
               </button>
@@ -205,8 +205,10 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
               title={sidebarCollapsed ? (isOnline ? 'Duty Online' : 'Duty Offline') : undefined}
               className={`flex items-center ${
                 sidebarCollapsed ? 'justify-center p-2.5' : 'justify-between px-3.5 py-2.5'
-              } rounded-xl text-xs font-bold transition shadow-sm ${
-                isOnline ? 'bg-[#d9f447] text-[#121815]' : 'bg-gray-800 text-white'
+              } rounded-xl text-xs font-bold transition shadow-xs ${
+                isOnline
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-stone-200 dark:bg-white/10 text-stone-700 dark:text-stone-300'
               }`}
             >
               <span className="flex items-center gap-2">
@@ -254,13 +256,13 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                         : 'justify-between px-3.5 py-2.5'
                     } rounded-xl text-xs font-semibold transition-all duration-300 ease-in-out ${
                       isActive
-                        ? 'bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] font-bold shadow-xs'
-                        : 'text-[#44554b] dark:text-white/70 hover:bg-[#ebf0ec] dark:hover:bg-white/10 hover:text-[#121815] dark:hover:text-white'
+                        ? 'bg-[#1D1D1F] text-white dark:bg-white dark:text-[#1D1D1F] font-bold shadow-xs'
+                        : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-white/10 hover:text-black dark:hover:text-white'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <Icon
-                        className={`size-4 shrink-0 transition-transform duration-300 ${isActive ? 'text-white dark:text-[#121815] scale-105' : 'text-[#5e8210] dark:text-[#d9f447]'}`}
+                        className={`size-4 shrink-0 transition-transform duration-300 ${isActive ? 'text-white dark:text-[#1D1D1F] scale-105' : 'text-stone-500 dark:text-stone-400'}`}
                       />
                       <span
                         className={`truncate transition-all duration-300 ease-in-out whitespace-nowrap ${
@@ -275,7 +277,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                     {item.badge && !sidebarCollapsed && (
                       <span
                         className={`text-[10px] font-bold shrink-0 ${
-                          isActive ? 'text-white' : 'text-[#5e8210] dark:text-[#d9f447]'
+                          isActive ? 'text-white dark:text-[#1D1D1F]' : 'text-emerald-600 dark:text-emerald-400'
                         }`}
                       >
                         {item.badge}
@@ -340,9 +342,9 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
               </span>
               <span className="transition-transform duration-300 ease-in-out">
                 {sidebarCollapsed ? (
-                  <ChevronRight className="size-4 text-[#5e8210] dark:text-[#d9f447]" />
+                  <ChevronRight className="size-4 text-stone-500 dark:text-stone-400" />
                 ) : (
-                  <ChevronLeft className="size-4 text-[#5e8210] dark:text-[#d9f447]" />
+                  <ChevronLeft className="size-4 text-stone-500 dark:text-stone-400" />
                 )}
               </span>
             </button>
@@ -352,17 +354,17 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
 
       {/* MAIN CONTENT AREA */}
       <div
-        className={`flex-1 flex flex-col min-w-0 bg-[#f8f9f7] dark:bg-[#121815] transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}
+        className={`flex-1 flex flex-col min-w-0 bg-[#fafbfa] dark:bg-[#0c100e] transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}
       >
         {/* Top Header Bar for Driver */}
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#e2e8e3] dark:border-[#202923] bg-white/90 dark:bg-[#121815]/95 px-4 py-3.5 sm:px-6 lg:px-8 backdrop-blur-md text-[#18201c] dark:text-white">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-black/[0.06] dark:border-white/[0.08] bg-white/90 dark:bg-[#161617]/95 px-4 py-3.5 sm:px-6 lg:px-8 backdrop-blur-md text-[#1D1D1F] dark:text-white">
           <div>
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-[#18201c] dark:text-white capitalize flex items-center gap-2">
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-[#1D1D1F] dark:text-white capitalize flex items-center gap-2">
               Driver Cockpit — {pageTitle}
             </h1>
-            <p className="text-xs text-[#607367] dark:text-[#a0ab9f]">
+            <p className="text-xs text-stone-500 dark:text-stone-400">
               Vehicle:{' '}
-              <span className="font-semibold text-[#5e8210] dark:text-[#d9f447]">
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
                 {user?.vehicleType || 'Commercial EV Scooter'}
               </span>
             </p>
@@ -439,9 +441,9 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                   <button
                     type="button"
                     onClick={requestMobileGps}
-                    className="flex items-center gap-1.5 rounded-full bg-[#d9f447] px-4 py-2 text-xs font-extrabold text-[#121815] shadow-md hover:bg-[#c2dc3a] transition shrink-0 active:scale-95"
+                    className="flex items-center justify-center gap-1.5 rounded-full bg-[#1D1D1F] dark:bg-white text-white dark:text-[#1D1D1F] hover:bg-[#2C2C2E] dark:hover:bg-stone-200 px-4 py-2 text-xs font-semibold shadow-xs transition shrink-0 active:scale-95"
                   >
-                    <MapPin className="size-3.5 text-[#121815]" />
+                    <MapPin className="size-3.5" />
                     <span>Allow GPS Access</span>
                   </button>
                 </div>
@@ -450,39 +452,39 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
 
             {/* Top 2 KPI Overview Cards (Rendered across all Driver pages) */}
             <div className="mb-6 sm:mb-8 grid gap-3 grid-cols-2">
-              <div className="rounded-2xl sm:rounded-3xl border border-[#dfe4dc] dark:border-[#2d3b32] bg-white dark:bg-[#1c2620] p-3.5 sm:p-5 shadow-xs dark:shadow-lg flex flex-col justify-between hover:border-[#86a018] dark:hover:border-[#b5de28] transition">
+              <div className="rounded-2xl sm:rounded-3xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] p-3.5 sm:p-5 shadow-xs flex flex-col justify-between transition">
                 <div>
                   <div className="flex items-center justify-between gap-1">
-                    <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-[#a0ab9f] truncate">
+                    <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400 truncate">
                       Today's Earnings
                     </p>
-                    <span className="grid size-7 sm:size-9 place-items-center rounded-xl bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-[#d9f447] border border-emerald-200 dark:border-emerald-500/30 font-bold shrink-0">
+                    <span className="grid size-7 sm:size-9 place-items-center rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 font-bold shrink-0">
                       <DollarSign className="size-3.5 sm:size-5" />
                     </span>
                   </div>
-                  <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-extrabold text-[#18201c] dark:text-[#d9f447]">
+                  <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-extrabold text-[#1D1D1F] dark:text-white">
                     ₹{totalEarningsToday}
                   </p>
                 </div>
                 <Link
                   href="/driver/wallet"
-                  className="mt-2 text-[11px] sm:text-xs font-bold text-[#5e8210] dark:text-[#d9f447] hover:underline flex items-center gap-1"
+                  className="mt-2 text-[11px] sm:text-xs font-semibold text-stone-600 dark:text-stone-300 hover:text-black dark:hover:text-white flex items-center gap-1"
                 >
                   <Wallet className="size-3 sm:size-3.5" /> Instant Cashout
                 </Link>
               </div>
 
-              <div className="rounded-2xl sm:rounded-3xl border border-[#dfe4dc] dark:border-[#2d3b32] bg-white dark:bg-[#1c2620] p-3.5 sm:p-5 shadow-xs dark:shadow-lg flex flex-col justify-between hover:border-[#86a018] dark:hover:border-[#b5de28] transition">
+              <div className="rounded-2xl sm:rounded-3xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] p-3.5 sm:p-5 shadow-xs flex flex-col justify-between transition">
                 <div>
                   <div className="flex items-center justify-between gap-1">
-                    <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-[#a0ab9f] truncate">
+                    <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400 truncate">
                       Completed Drops
                     </p>
-                    <span className="grid size-7 sm:size-9 place-items-center rounded-xl bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-bold shrink-0">
+                    <span className="grid size-7 sm:size-9 place-items-center rounded-xl bg-stone-100 text-stone-800 dark:bg-white/10 dark:text-stone-200 border border-black/[0.06] dark:border-white/[0.06] font-bold shrink-0">
                       <CheckCircle2 className="size-3.5 sm:size-5" />
                     </span>
                   </div>
-                  <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-extrabold text-[#18201c] dark:text-white">
+                  <p className="mt-1 sm:mt-2 text-xl sm:text-3xl font-extrabold text-[#1D1D1F] dark:text-white">
                     {completedTrips.length}
                   </p>
                 </div>
@@ -498,127 +500,127 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
         </main>
 
         {/* MOBILE BOTTOM NAVIGATION BAR (lg:hidden) */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 flex items-center justify-around border-t border-[#e2e8e3] dark:border-[#24302a] bg-white/95 dark:bg-[#121815]/95 backdrop-blur-md px-2 py-1.5 pb-safe-nav text-[#18201c] dark:text-white shadow-2xl">
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 flex items-center justify-around border-t border-black/[0.08] dark:border-white/[0.08] bg-white/95 dark:bg-[#161617]/95 backdrop-blur-md px-2 py-1.5 pb-safe text-[#1D1D1F] dark:text-white shadow-lg">
           <Link
             href="/driver/dashboard"
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition ${
+            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 min-h-[44px] rounded-xl transition ${
               pathname === '/driver/dashboard' || pathname === '/driver'
-                ? 'text-[#5e8210] dark:text-[#d9f447] font-bold'
-                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                ? 'text-[#1D1D1F] dark:text-white font-bold'
+                : 'text-stone-400 dark:text-stone-500 hover:text-black dark:hover:text-white'
             }`}
           >
             <Navigation className="size-4" />
-            <span className="text-[9px]">Map</span>
+            <span className="text-[10px]">Map</span>
           </Link>
 
           <Link
             href="/driver/orders"
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition ${
+            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 min-h-[44px] rounded-xl transition ${
               pathname === '/driver/orders'
-                ? 'text-[#5e8210] dark:text-[#d9f447] font-bold'
-                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                ? 'text-[#1D1D1F] dark:text-white font-bold'
+                : 'text-stone-400 dark:text-stone-500 hover:text-black dark:hover:text-white'
             }`}
           >
             <PackageCheck className="size-4" />
-            <span className="text-[9px]">Orders</span>
+            <span className="text-[10px]">Orders</span>
           </Link>
 
           <Link
             href="/driver/history"
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition ${
+            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 min-h-[44px] rounded-xl transition ${
               pathname === '/driver/history'
-                ? 'text-[#5e8210] dark:text-[#d9f447] font-bold'
-                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                ? 'text-[#1D1D1F] dark:text-white font-bold'
+                : 'text-stone-400 dark:text-stone-500 hover:text-black dark:hover:text-white'
             }`}
           >
             <History className="size-4" />
-            <span className="text-[9px]">History</span>
+            <span className="text-[10px]">History</span>
           </Link>
 
           <Link
             href="/driver/wallet"
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition ${
+            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 min-h-[44px] rounded-xl transition ${
               pathname === '/driver/wallet'
-                ? 'text-[#5e8210] dark:text-[#d9f447] font-bold'
-                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                ? 'text-[#1D1D1F] dark:text-white font-bold'
+                : 'text-stone-400 dark:text-stone-500 hover:text-black dark:hover:text-white'
             }`}
           >
             <Wallet className="size-4" />
-            <span className="text-[9px]">Wallet</span>
+            <span className="text-[10px]">Wallet</span>
           </Link>
 
           <Link
             href="/driver/settings"
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition ${
+            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 min-h-[44px] rounded-xl transition ${
               pathname === '/driver/settings'
-                ? 'text-[#5e8210] dark:text-[#d9f447] font-bold'
-                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                ? 'text-[#1D1D1F] dark:text-white font-bold'
+                : 'text-stone-400 dark:text-stone-500 hover:text-black dark:hover:text-white'
             }`}
           >
             <Settings className="size-4" />
-            <span className="text-[9px]">UPI</span>
+            <span className="text-[10px]">Settings</span>
           </Link>
         </nav>
       </div>
 
       {/* NEW ORDER REQUEST BROADCAST POPUP MODAL */}
       {broadcastOffer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#121815]/80 p-4 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-sm rounded-3xl border-2 border-[#d9f447] bg-[#121815] p-5 text-white shadow-2xl relative overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-sm rounded-3xl border border-black/[0.1] dark:border-white/[0.1] bg-white dark:bg-[#161617] p-5 text-[#1D1D1F] dark:text-white shadow-2xl relative overflow-hidden">
             {/* Top Timer Bar */}
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gray-800">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-stone-100 dark:bg-white/10">
               <div
                 style={{ width: `${(offerTimer / 15) * 100}%` }}
-                className="h-full bg-[#d9f447] transition-all duration-1000 ease-linear"
+                className="h-full bg-emerald-500 transition-all duration-1000 ease-linear"
               />
             </div>
 
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <div className="flex items-center justify-between border-b border-black/[0.06] dark:border-white/[0.06] pb-3">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-[#d9f447]">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                   New Delivery Offer ({offerTimer}s)
                 </span>
               </div>
-              <span className="text-xs font-mono font-bold text-white/60">
+              <span className="text-xs font-mono font-bold text-stone-500 dark:text-stone-400">
                 {broadcastOffer.orderNumber}
               </span>
             </div>
 
             <div className="mt-3 flex flex-col gap-2.5">
               <div>
-                <span className="text-[9px] font-bold uppercase text-amber-400">
+                <span className="text-[9px] font-bold uppercase text-amber-500">
                   Pickup Kitchen
                 </span>
-                <h3 className="text-base font-bold text-white">{broadcastOffer.restaurantName}</h3>
-                <p className="text-xs text-white/70 flex items-center gap-1 mt-0.5">
-                  <MapPin className="size-3 text-amber-400" /> {broadcastOffer.restaurantAddress}
+                <h3 className="text-base font-bold text-[#1D1D1F] dark:text-white">{broadcastOffer.restaurantName}</h3>
+                <p className="text-xs text-stone-500 dark:text-stone-400 flex items-center gap-1 mt-0.5">
+                  <MapPin className="size-3 text-amber-500" /> {broadcastOffer.restaurantAddress}
                 </p>
               </div>
 
-              <div className="border-t border-white/10 pt-2">
-                <span className="text-[9px] font-bold uppercase text-blue-400">
+              <div className="border-t border-black/[0.06] dark:border-white/[0.06] pt-2">
+                <span className="text-[9px] font-bold uppercase text-blue-500">
                   Customer Delivery Zone
                 </span>
-                <p className="text-xs text-white/90 font-semibold mt-0.5">
+                <p className="text-xs text-[#1D1D1F] dark:text-white font-semibold mt-0.5">
                   {broadcastOffer.customerAddress}
                 </p>
-                <p className="text-[10px] text-white/60 mt-0.5">
+                <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-0.5">
                   Distance: {broadcastOffer.distance}
                 </p>
               </div>
 
-              <div className="rounded-2xl bg-white/10 p-3 border border-white/10 space-y-2">
+              <div className="rounded-2xl bg-stone-50 dark:bg-white/5 p-3.5 border border-black/[0.06] dark:border-white/[0.06] space-y-2">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-[#d9f447]">
-                      Actual Driver Earning for this Order
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                      Driver Earning for this Order
                     </p>
-                    <p className="text-2xl font-extrabold text-emerald-400">
+                    <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
                       ₹{broadcastOffer.basePayout + broadcastOffer.surgeBonus + broadcastOffer.tip}
                     </p>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs font-bold text-[#d9f447] bg-[#1d2722] px-2 py-0.5 rounded-md border border-[#303f37]">
+                    <span className="text-xs font-semibold text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-white/10 px-2.5 py-1 rounded-full border border-black/[0.06] dark:border-white/[0.06]">
                       ~18 mins total
                     </span>
                   </div>
@@ -629,13 +631,13 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
             <div className="mt-5 grid grid-cols-2 gap-2.5">
               <button
                 onClick={() => setBroadcastOffer(null)}
-                className="rounded-full border border-white/20 bg-white/5 py-2.5 text-xs font-bold text-white hover:bg-white/10 transition"
+                className="rounded-full border border-black/[0.1] dark:border-white/[0.1] bg-stone-100 dark:bg-white/10 min-h-[44px] text-xs font-semibold text-[#1D1D1F] dark:text-white hover:bg-stone-200 dark:hover:bg-white/20 transition cursor-pointer"
               >
                 Reject / Skip
               </button>
               <button
                 onClick={acceptBroadcastOffer}
-                className="rounded-full bg-[#d9f447] py-2.5 text-xs font-extrabold text-[#121815] shadow-lg hover:bg-[#c2dc3a] transition"
+                className="rounded-full bg-[#1D1D1F] dark:bg-white text-white dark:text-[#1D1D1F] hover:bg-[#2C2C2E] dark:hover:bg-stone-200 min-h-[44px] text-xs font-bold shadow-md transition cursor-pointer"
               >
                 ACCEPT ORDER
               </button>

@@ -54,7 +54,7 @@ function mapItem(item: any): CraveXPGroceryItem {
     price,
     mrp,
     image: safeImage,
-    category: item.category || 'Grocery Essentials',
+    category: item.category || 'Fruits & Veggies',
     inStock: item.in_stock !== false && Number(item.stock_count ?? 0) > 0,
     restaurantId: CRAVEXP_DARK_STORE_ID,
     restaurantName: CRAVEXP_DARK_STORE_INFO.name,
@@ -62,6 +62,8 @@ function mapItem(item: any): CraveXPGroceryItem {
     skuCode: item.sku_code || item.id,
     barcode: item.barcode || undefined,
     discount: mrp > price ? `${Math.round(((mrp - price) / mrp) * 100)}% OFF` : undefined,
+    description: item.description || '',
+    isVeg: item.is_veg !== false,
   }
 }
 

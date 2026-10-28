@@ -60,21 +60,21 @@ export function UserDropdown({
       </button>
 
       {showDropdown && (
-        <div className="absolute right-0 top-11 z-50 w-56 rounded-2xl border border-[#e2e6df] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-2 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute right-0 top-11 z-50 w-56 rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] p-2 shadow-xl animate-in fade-in zoom-in-95 duration-150">
           {/* User info header */}
-          <div className="border-b border-[#eff2ed] dark:border-[#27342d] px-3 py-2.5">
-            <p className="text-xs font-bold text-[#18201c] dark:text-white">{user.name}</p>
-            <p className="text-[11px] text-[#78827c] dark:text-gray-400 truncate">{user.email}</p>
+          <div className="border-b border-black/[0.06] dark:border-white/[0.06] px-3 py-2.5">
+            <p className="text-xs font-bold text-[#1D1D1F] dark:text-white">{user.name}</p>
+            <p className="text-[11px] text-stone-500 dark:text-stone-400 truncate">{user.email}</p>
             <span
-              className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ${
+              className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${
                 isCustomer
-                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                  : (roleDetails[user.role as UserRole]?.bg || 'bg-gray-100') +
+                  ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                  : (roleDetails[user.role as UserRole]?.bg || 'bg-stone-100 dark:bg-white/10') +
                     ' ' +
-                    (roleDetails[user.role as UserRole]?.color || 'text-gray-700')
+                    (roleDetails[user.role as UserRole]?.color || 'text-stone-700 dark:text-stone-300')
               }`}
             >
-              {isCustomer ? 'Customer View' : `${user.role} Account`}
+              {isCustomer ? 'Customer' : `${user.role} Account`}
             </span>
           </div>
 
@@ -84,15 +84,15 @@ export function UserDropdown({
               <Link
                 href="/user/explore"
                 onClick={() => setShowDropdown(false)}
-                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] mt-1"
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-[#1D1D1F] dark:text-white hover:bg-stone-100 dark:hover:bg-white/10 transition mt-1"
               >
-                <Compass className="size-4 text-[#b5de28]" />
+                <Compass className="size-4 text-stone-500 dark:text-stone-400" />
                 Explore Kitchens
               </Link>
               <Link
                 href="/user/cravexp"
                 onClick={() => setShowDropdown(false)}
-                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/15 transition"
               >
                 <Zap className="size-4 text-emerald-600 fill-emerald-600" />
                 craveXP Instamart (10 Min)
@@ -100,25 +100,25 @@ export function UserDropdown({
               <Link
                 href="/user/orders"
                 onClick={() => setShowDropdown(false)}
-                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-[#1D1D1F] dark:text-white hover:bg-stone-100 dark:hover:bg-white/10 transition"
               >
-                <ShoppingBag className="size-4 text-[#b5de28]" />
+                <ShoppingBag className="size-4 text-stone-500 dark:text-stone-400" />
                 My Orders
               </Link>
               <Link
                 href="/user/track"
                 onClick={() => setShowDropdown(false)}
-                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-[#1D1D1F] dark:text-white hover:bg-stone-100 dark:hover:bg-white/10 transition"
               >
-                <Bike className="size-4 text-[#b5de28]" />
+                <Bike className="size-4 text-stone-500 dark:text-stone-400" />
                 Track Order
               </Link>
               <Link
                 href="/user/profile"
                 onClick={() => setShowDropdown(false)}
-                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-[#1D1D1F] dark:text-white hover:bg-stone-100 dark:hover:bg-white/10 transition"
               >
-                <User className="size-4 text-[#b5de28]" />
+                <User className="size-4 text-stone-500 dark:text-stone-400" />
                 My Profile Settings
               </Link>
             </>
@@ -127,16 +127,16 @@ export function UserDropdown({
               <Link
                 href={currentDashboardLink}
                 onClick={() => setShowDropdown(false)}
-                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] mt-1"
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-[#1D1D1F] dark:text-white hover:bg-stone-100 dark:hover:bg-white/10 transition mt-1"
               >
-                <LayoutDashboard className="size-4 text-[#b5de28]" />
+                <LayoutDashboard className="size-4 text-stone-500 dark:text-stone-400" />
                 Go to Dashboard
               </Link>
               {(normalizedRole === 'cravexp_store_vendor' || normalizedRole === 'admin') && (
                 <Link
                   href="/vendor/crave-ep"
                   onClick={() => setShowDropdown(false)}
-                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/15 transition"
                 >
                   <Store className="size-4 text-emerald-600" />
                   craveXP. Console
@@ -146,7 +146,7 @@ export function UserDropdown({
           )}
 
           {/* Language switcher row */}
-          <div className="border-t border-[#eff2ed] dark:border-[#27342d] mt-1 pt-2 px-1">
+          <div className="border-t border-black/[0.06] dark:border-white/[0.06] mt-1 pt-2 px-1">
             <LanguageSwitcher variant="menu" />
           </div>
 
@@ -156,9 +156,9 @@ export function UserDropdown({
               setShowDropdown(false)
               window.dispatchEvent(new CustomEvent('trigger-pwa-install'))
             }}
-            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-[#1D1D1F] dark:text-white hover:bg-stone-100 dark:hover:bg-white/10 transition cursor-pointer"
           >
-            <Download className="size-4 text-[#b5de28]" />
+            <Download className="size-4 text-stone-500 dark:text-stone-400" />
             Install Crave App
           </button>
 
@@ -168,7 +168,7 @@ export function UserDropdown({
               setShowDropdown(false)
               await onLogout()
             }}
-            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-t border-[#eff2ed] dark:border-[#27342d] mt-1 pt-2"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 border-t border-black/[0.06] dark:border-white/[0.06] mt-1 pt-2 transition cursor-pointer"
           >
             <LogOut className="size-4" />
             Sign Out

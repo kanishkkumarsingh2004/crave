@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Edit, Trash2, Utensils } from 'lucide-react'
 import { MenuItemRecord } from './types'
 
@@ -11,6 +12,8 @@ interface DishCardProps {
 }
 
 export default function DishCard({ item, onToggleStock, onEdit, onDelete }: DishCardProps) {
+  const [imgFailed, setImgFailed] = useState(false)
+
   return (
     <div
       className={`group rounded-3xl border p-4 sm:p-4.5 bg-white dark:bg-[#161617] shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between overflow-hidden ${
@@ -22,10 +25,11 @@ export default function DishCard({ item, onToggleStock, onEdit, onDelete }: Dish
       <div>
         {/* Media Frame */}
         <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl mb-3.5 bg-stone-100 dark:bg-white/5">
-          {item.image ? (
+          {item.image && !imgFailed ? (
             <img
               src={item.image}
               alt={item.name}
+              onError={() => setImgFailed(true)}
               className={`size-full object-cover group-hover:scale-105 transition-transform duration-500 ${
                 !item.in_stock ? 'grayscale opacity-60' : ''
               }`}

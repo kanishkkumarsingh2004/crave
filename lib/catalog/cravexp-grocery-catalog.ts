@@ -24,6 +24,8 @@ export interface CraveXPGroceryItem {
   skuCode: string
   barcode?: string
   discount?: string
+  description?: string
+  isVeg?: boolean
 }
 
 export async function fetchCraveXPGroceryItems(): Promise<CraveXPGroceryItem[]> {

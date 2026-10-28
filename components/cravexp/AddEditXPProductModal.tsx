@@ -1,8 +1,19 @@
 'use client'
 
-import { Camera, CheckCircle2, PackageOpen, X } from 'lucide-react'
+import { Camera, CheckCircle2, ImageIcon, PackageOpen, Upload, X } from 'lucide-react'
 import type React from 'react'
+import { useRef, useState } from 'react'
 import type { emptyProductForm } from './admin-types'
+
+/** Canonical CraveXP categories — must match CRAVEXP_CATEGORIES in CraveXPStore.tsx */
+export const CRAVEXP_PRODUCT_CATEGORIES = [
+  'Fruits & Veggies',
+  'Dairy, Bread & Eggs',
+  'Cold Drinks & Juices',
+  'Snacks & Munchies',
+  'Instant Food & Noodles',
+  'Sweet Tooth & Ice Creams',
+] as const
 
 interface AddEditXPProductModalProps {
   isOpen: boolean
@@ -27,7 +38,64 @@ export default function AddEditXPProductModal({
   onOpenBarcodeScanner,
   onSubmit,
 }: AddEditXPProductModalProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploadError, setUploadError] = useState('')
+  const [isUploading, setIsUploading] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState(productForm.image || '')
+
   if (!isOpen) return null
+
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select a valid image file (PNG, JPG, WebP…)')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('Image must be smaller than 5 MB')
+      return
+    }
+
+    setUploadError('')
+    setIsUploading(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const { url } = (await response.json()) as { url: string }
+        setPreviewUrl(url)
+        setProductForm((current) => ({ ...current, image: url }))
+      } else {
+        throw new Error('upload-endpoint-missing')
+      }
+    } catch {
+      // Graceful fallback: convert to data-URI for preview
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string
+        setPreviewUrl(dataUrl)
+        setProductForm((current) => ({ ...current, image: dataUrl }))
+      }
+      reader.readAsDataURL(file)
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  function handleUrlChange(url: string) {
+    setProductForm((current) => ({ ...current, image: url }))
+    setPreviewUrl(url)
+    setUploadError('')
+  }
 
   return (
     <div
@@ -40,6 +108,7 @@ export default function AddEditXPProductModal({
       }}
     >
       <div className="w-full max-w-2xl overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl dark:border-[#27342d] dark:bg-[#18201c]">
+        {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-gray-100 bg-gray-50/80 px-5 py-4 dark:border-white/5 dark:bg-[#121815] sm:px-6">
           <div className="flex items-start gap-3">
             <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#d9f447] text-[#121815] shadow-sm">
@@ -53,8 +122,8 @@ export default function AddEditXPProductModal({
                 {editingProductId ? 'Edit XP Product' : 'Add XP Product'}
               </h3>
               <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                Products added here show directly on the customer&apos;s `/user/cravexp` grocery
-                storefront.
+                Products added here show directly on the customer&apos;s{' '}
+                <code className="font-mono">/user/cravexp</code> grocery storefront.
               </p>
             </div>
           </div>
@@ -71,6 +140,7 @@ export default function AddEditXPProductModal({
 
         <form onSubmit={onSubmit} className="max-h-[75vh] overflow-y-auto p-5 sm:p-6">
           <div className="grid gap-4 sm:grid-cols-2">
+            {/* Item Name */}
             <label className="block text-xs font-bold sm:col-span-2">
               Item name
               <input
@@ -85,6 +155,7 @@ export default function AddEditXPProductModal({
               />
             </label>
 
+            {/* Category — exact canonical CraveXP category IDs */}
             <label className="block text-xs font-bold">
               Category
               <select
@@ -94,15 +165,7 @@ export default function AddEditXPProductModal({
                 }
                 className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 p-2.5 text-xs font-medium outline-none transition focus:border-[#86a018] dark:border-[#27342d] dark:bg-[#121815]"
               >
-                {[
-                  'Grocery Essentials',
-                  'Dairy & Breakfast',
-                  'Snacks & Munchies',
-                  'Instant & Frozen Food',
-                  'Beverages & Drinks',
-                  'Personal Care',
-                  'Household & Cleaning',
-                ].map((category) => (
+                {CRAVEXP_PRODUCT_CATEGORIES.map((category) => (
                   <option key={category} value={category}>
                     {category}
                   </option>
@@ -110,6 +173,7 @@ export default function AddEditXPProductModal({
               </select>
             </label>
 
+            {/* Pack unit */}
             <label className="block text-xs font-bold">
               Pack unit
               <input
@@ -124,6 +188,7 @@ export default function AddEditXPProductModal({
               />
             </label>
 
+            {/* Catalog SKU */}
             <label className="block text-xs font-bold sm:col-span-2">
               Catalog SKU (system generated)
               <input
@@ -137,6 +202,7 @@ export default function AddEditXPProductModal({
               </span>
             </label>
 
+            {/* Selling price */}
             <label className="block text-xs font-bold">
               Selling price (₹)
               <input
@@ -153,6 +219,7 @@ export default function AddEditXPProductModal({
               />
             </label>
 
+            {/* MRP */}
             <label className="block text-xs font-bold">
               MRP (₹)
               <input
@@ -168,6 +235,7 @@ export default function AddEditXPProductModal({
               />
             </label>
 
+            {/* Stock count */}
             <label className="block text-xs font-bold">
               Stock count
               <input
@@ -184,19 +252,82 @@ export default function AddEditXPProductModal({
               />
             </label>
 
-            <label className="block text-xs font-bold">
-              Image URL
+            {/* Product image — upload photo OR paste URL */}
+            <div className="sm:col-span-2 space-y-2">
+              <span className="block text-xs font-bold">Product image</span>
+
+              {/* Preview */}
+              {previewUrl && (
+                <div className="relative w-full aspect-[3/1] rounded-xl overflow-hidden border border-gray-200 bg-gray-50 dark:border-[#27342d] dark:bg-[#121815]">
+                  <img
+                    src={previewUrl}
+                    alt="Product preview"
+                    className="size-full object-contain p-2"
+                    onError={() => setPreviewUrl('')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPreviewUrl('')
+                      setProductForm((c) => ({ ...c, image: '' }))
+                    }}
+                    className="absolute top-2 right-2 grid size-6 place-items-center rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition"
+                    aria-label="Remove image"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {/* Upload button */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={handleFileChange}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#86a018]/40 bg-[#d9f447]/10 px-3 py-3 text-xs font-bold text-[#52660b] transition hover:bg-[#d9f447]/20 disabled:opacity-50 dark:text-[#d9f447]"
+              >
+                {isUploading ? (
+                  <>
+                    <Upload className="size-4 animate-bounce" />
+                    Uploading…
+                  </>
+                ) : (
+                  <>
+                    <ImageIcon className="size-4" />
+                    {previewUrl ? 'Replace photo' : 'Upload product photo'}
+                  </>
+                )}
+              </button>
+
+              {uploadError && (
+                <p className="text-[10px] font-bold text-red-500">{uploadError}</p>
+              )}
+
+              {/* OR paste URL divider */}
+              <div className="flex items-center gap-2">
+                <div className="h-px flex-1 bg-gray-200 dark:bg-white/10" />
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  or paste URL
+                </span>
+                <div className="h-px flex-1 bg-gray-200 dark:bg-white/10" />
+              </div>
               <input
                 type="text"
                 value={productForm.image}
-                onChange={(event) =>
-                  setProductForm((current) => ({ ...current, image: event.target.value }))
-                }
+                onChange={(event) => handleUrlChange(event.target.value)}
                 placeholder="https://…"
-                className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs font-medium outline-none transition focus:border-[#86a018] dark:border-[#27342d] dark:bg-[#121815]"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs font-medium outline-none transition focus:border-[#86a018] dark:border-[#27342d] dark:bg-[#121815]"
               />
-            </label>
+            </div>
 
+            {/* Barcode */}
             <label className="block text-xs font-bold sm:col-span-2">
               Barcode
               <div className="mt-1.5 flex gap-2">
@@ -230,6 +361,7 @@ export default function AddEditXPProductModal({
               </span>
             </label>
 
+            {/* Available toggle */}
             <label className="flex items-center gap-2 self-end rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 text-xs font-bold dark:border-[#27342d] dark:bg-[#121815] sm:col-span-2">
               <input
                 type="checkbox"

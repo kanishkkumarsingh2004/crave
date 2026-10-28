@@ -38,7 +38,7 @@ export const emptyStoreForm = {
 
 export const emptyProductForm = {
   name: '',
-  category: 'Grocery Essentials',
+  category: 'Fruits & Veggies',
   unit: '1 Pack',
   price: '',
   mrp: '',

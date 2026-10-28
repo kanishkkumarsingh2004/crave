@@ -230,41 +230,41 @@ export default function RestaurantProfileView({
           </h1>
 
           {/* Swiggy Tabs: Order Online vs Dineout */}
-          <div className="mt-3 flex items-center gap-8 border-b border-stone-200 dark:border-[#223026]">
+          <div className="mt-3 flex items-center gap-8 border-b border-black/[0.08] dark:border-white/[0.08]">
             <button
               type="button"
               onClick={() => setActiveTab('order_online')}
-              className={`pb-3 text-sm sm:text-base font-extrabold transition relative cursor-pointer ${
+              className={`pb-3 text-sm sm:text-base font-bold transition relative cursor-pointer ${
                 activeTab === 'order_online'
-                  ? 'text-[#121815] dark:text-white'
-                  : 'text-stone-400 dark:text-gray-500 hover:text-stone-700 dark:hover:text-gray-300'
+                  ? 'text-[#1D1D1F] dark:text-white'
+                  : 'text-stone-400 dark:text-stone-500 hover:text-black dark:hover:text-white'
               }`}
             >
               Order Online
               {activeTab === 'order_online' && (
-                <span className="absolute bottom-0 left-0 right-0 h-1 rounded-full bg-[#f97316] dark:bg-[#d9f447]" />
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[#1D1D1F] dark:bg-white" />
               )}
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('dineout')}
-              className={`pb-3 text-sm sm:text-base font-extrabold transition relative cursor-pointer ${
+              className={`pb-3 text-sm sm:text-base font-bold transition relative cursor-pointer ${
                 activeTab === 'dineout'
-                  ? 'text-[#121815] dark:text-white'
-                  : 'text-stone-400 dark:text-gray-500 hover:text-stone-700 dark:hover:text-gray-300'
+                  ? 'text-[#1D1D1F] dark:text-white'
+                  : 'text-stone-400 dark:text-stone-500 hover:text-black dark:hover:text-white'
               }`}
             >
               Dineout
               {activeTab === 'dineout' && (
-                <span className="absolute bottom-0 left-0 right-0 h-1 rounded-full bg-[#f97316] dark:bg-[#d9f447]" />
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[#1D1D1F] dark:bg-white" />
               )}
             </button>
           </div>
         </div>
 
         {/* Hero Food Photo Banner */}
-        <div className="relative w-full h-56 sm:h-80 rounded-2xl sm:rounded-3xl overflow-hidden shadow-md group">
+        <div className="relative w-full h-56 sm:h-80 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs group">
           <img
             src={
               restaurant.image ||
@@ -287,7 +287,7 @@ export default function RestaurantProfileView({
 
           <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
             <div className="text-white">
-              <span className="text-xs uppercase tracking-widest font-black text-[#d9f447]">
+              <span className="text-xs uppercase tracking-widest font-bold text-white/90">
                 Authentic Kitchen
               </span>
               <p className="text-sm font-semibold opacity-90 drop-shadow-sm">
@@ -749,8 +749,8 @@ export default function RestaurantProfileView({
                   key={v.id}
                   className={`flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition ${
                     selectedVariantId === v.id
-                      ? 'border-[#f97316] dark:border-[#d9f447] bg-orange-50/50 dark:bg-[#d9f447]/10'
-                      : 'border-stone-200 dark:border-[#26352a] hover:bg-stone-50 dark:hover:bg-[#1d2a21]'
+                      ? 'border-black/[0.15] dark:border-white/[0.2] bg-stone-100 dark:bg-white/10'
+                      : 'border-black/[0.06] dark:border-white/[0.06] hover:bg-stone-50 dark:hover:bg-white/5'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -759,11 +759,11 @@ export default function RestaurantProfileView({
                       name="variant-select"
                       checked={selectedVariantId === v.id}
                       onChange={() => setSelectedVariantId(v.id)}
-                      className="accent-[#f97316] dark:accent-[#d9f447] size-4"
+                      className="accent-[#1D1D1F] dark:accent-white size-4"
                     />
-                    <span className="text-xs font-bold">{v.name}</span>
+                    <span className="text-xs font-semibold">{v.name}</span>
                   </div>
-                  <span className="text-xs font-black">₹{v.price}</span>
+                  <span className="text-xs font-bold">₹{v.price}</span>
                 </label>
               ))}
             </div>
@@ -772,14 +772,14 @@ export default function RestaurantProfileView({
               <button
                 type="button"
                 onClick={() => setVariantPickerItem(null)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-[#202d24] cursor-pointer"
+                className="px-4 py-2.5 rounded-full text-xs font-semibold text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-white/10 transition cursor-pointer min-h-[44px]"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleConfirmVariant}
-                className="px-5 py-2 rounded-xl bg-[#f97316] dark:bg-[#d9f447] text-white dark:text-[#0c120e] text-xs font-black shadow-md hover:scale-105 transition cursor-pointer"
+                className="px-6 py-2.5 rounded-full bg-[#1D1D1F] dark:bg-white text-white dark:text-[#1D1D1F] hover:bg-[#2C2C2E] dark:hover:bg-stone-200 text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer min-h-[44px]"
               >
                 Add to Cart
               </button>

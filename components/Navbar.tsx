@@ -185,7 +185,7 @@ export default function Navbar() {
                 >
                   <ShoppingCart className="size-4" />
                   {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 grid size-4.5 place-items-center rounded-full bg-[#86a018] text-[9px] font-black text-white shadow-sm">
+                    <span className="absolute -top-1 -right-1 grid size-4.5 place-items-center rounded-full bg-[#1D1D1F] dark:bg-white text-[9px] font-bold text-white dark:text-[#1D1D1F] shadow-sm">
                       {cartCount}
                     </span>
                   )}

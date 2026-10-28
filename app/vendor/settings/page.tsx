@@ -211,73 +211,75 @@ export default function VendorSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0a0f0d] text-[#121815] dark:text-white pb-28 lg:pb-16 lg:pl-64 custom-scrollbar transition-colors duration-200">
+    <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c100e] text-[#1D1D1F] dark:text-white pb-32 lg:pb-16 lg:pl-64 custom-scrollbar transition-colors duration-200">
       <VendorSidebar />
 
-      <div className="mx-auto max-w-4xl px-4 pt-6 sm:px-6 space-y-6">
+      <div className="mx-auto max-w-4xl px-3 sm:px-6 pt-4 sm:pt-6 space-y-4 sm:space-y-6">
         {/* Header Hero */}
-        <div className="rounded-3xl border border-stone-200 dark:border-[#233027] bg-white dark:bg-gradient-to-r dark:from-[#141b17] dark:via-[#111614] dark:to-[#18231c] p-6 shadow-sm dark:shadow-xl">
+        <div className="rounded-3xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] p-5 sm:p-7 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="grid size-12 place-items-center rounded-2xl bg-[#d9f447] text-[#121815] shadow-md shadow-[#d9f447]/20">
+            <div className="flex items-center gap-3.5 sm:gap-4">
+              <div className="grid size-12 place-items-center rounded-2xl bg-stone-100 dark:bg-white/10 text-[#1D1D1F] dark:text-white shrink-0">
                 <UtensilsCrossed className="size-6" />
               </div>
-              <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#86a018] dark:text-[#d9f447]">
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
                   Vendor Console
                 </span>
-                <h2 className="mt-0.5 text-2xl sm:text-3xl font-black text-[#121815] dark:text-white">
-                  Bank &amp; Store Settings
+                <h2 className="mt-0.5 text-xl sm:text-2xl font-bold text-[#1D1D1F] dark:text-white truncate">
+                  Store &amp; Payout Settings
                 </h2>
-                <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
-                  Manage payout, kitchen availability, tax profile, and commission rates.
+                <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                  Manage payout, kitchen availability, and commercial profile.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 bg-stone-100 dark:bg-[#18201c] p-3 rounded-2xl border border-stone-200 dark:border-[#27342d]">
-              <span className="text-xs font-bold text-stone-700 dark:text-gray-300">
+            <div className="flex items-center justify-between sm:justify-start gap-3 bg-stone-100/80 dark:bg-white/[0.06] p-2.5 sm:p-3 rounded-full border border-black/[0.06] dark:border-white/[0.06]">
+              <span className="text-xs font-semibold text-stone-700 dark:text-stone-300 pl-1">
                 Accepting Orders:
               </span>
-              <AppleToggle
-                checked={kitchenOpen}
-                onChange={() => void handleToggleKitchen()}
-                disabled={!restaurantId || settingsLoading}
-                iconVariant="power"
-                activeColor="bg-[#34c759]"
-                ariaLabel="Accepting orders status"
-              />
-              <span
-                className={`text-xs font-bold tracking-wider uppercase ${
-                  kitchenOpen
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-rose-600 dark:text-rose-400'
-                }`}
-              >
-                {kitchenOpen ? 'ONLINE' : 'OFFLINE'}
-              </span>
+              <div className="flex items-center gap-2">
+                <AppleToggle
+                  checked={kitchenOpen}
+                  onChange={() => void handleToggleKitchen()}
+                  disabled={!restaurantId || settingsLoading}
+                  iconVariant="power"
+                  activeColor="bg-[#34c759]"
+                  ariaLabel="Accepting orders status"
+                />
+                <span
+                  className={`text-[10px] sm:text-xs font-semibold tracking-wider uppercase pr-1 ${
+                    kitchenOpen
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-rose-600 dark:text-rose-400'
+                  }`}
+                >
+                  {kitchenOpen ? 'ONLINE' : 'OFFLINE'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Toast Alert Message */}
         {toastMsg && (
-          <div className="rounded-2xl border border-[#86a018]/40 dark:border-[#d9f447]/40 bg-[#d9f447]/15 p-4 text-xs font-bold text-[#5e700a] dark:text-[#d9f447] shadow-sm animate-in fade-in duration-200">
+          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-xs font-semibold text-emerald-700 dark:text-emerald-400 shadow-xs animate-in fade-in duration-200">
             {toastMsg}
           </div>
         )}
 
         {/* Theme & Visual Appearance Section */}
-        <div className="rounded-3xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-6 shadow-sm dark:shadow-xl space-y-4">
-          <div className="flex items-center gap-3 border-b border-stone-100 dark:border-[#202b24] pb-4">
-            <div className="grid size-10 place-items-center rounded-xl bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 font-bold">
+        <div className="rounded-3xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] p-5 sm:p-7 shadow-xs space-y-4">
+          <div className="flex items-center gap-3 border-b border-black/[0.06] dark:border-white/[0.06] pb-4">
+            <div className="grid size-10 place-items-center rounded-2xl bg-stone-100 dark:bg-white/10 text-[#1D1D1F] dark:text-white shrink-0">
               <Palette className="size-5" />
             </div>
             <div>
-              <h3 className="font-black text-base text-[#121815] dark:text-white">
+              <h3 className="font-bold text-base text-[#1D1D1F] dark:text-white">
                 Appearance &amp; Theme Mode
               </h3>
-              <p className="text-xs text-stone-500 dark:text-gray-400">
+              <p className="text-xs text-stone-500 dark:text-stone-400">
                 Choose your preferred store portal display mode (Light, Dark, or System Sync).
               </p>
             </div>
@@ -288,16 +290,16 @@ export default function VendorSettingsPage() {
         {/* Bank & Payout Form */}
         <form onSubmit={handleSaveSettings} className="space-y-6">
           {/* Registered Bank Account Card */}
-          <div className="rounded-3xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-6 shadow-sm dark:shadow-xl space-y-5">
-            <div className="flex items-center gap-3 border-b border-stone-100 dark:border-[#202b24] pb-4">
-              <div className="grid size-10 place-items-center rounded-xl bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 font-bold">
+          <div className="rounded-3xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] p-5 sm:p-7 shadow-xs space-y-5">
+            <div className="flex items-center gap-3 border-b border-black/[0.06] dark:border-white/[0.06] pb-4">
+              <div className="grid size-10 place-items-center rounded-2xl bg-stone-100 dark:bg-white/10 text-[#1D1D1F] dark:text-white shrink-0">
                 <Building2 className="size-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-[#121815] dark:text-white">
+                <h3 className="text-lg font-bold text-[#1D1D1F] dark:text-white">
                   Payout Bank Account
                 </h3>
-                <p className="text-xs text-stone-500 dark:text-gray-400">
+                <p className="text-xs text-stone-500 dark:text-stone-400">
                   Bank details stored on your restaurant profile
                 </p>
               </div>
@@ -305,7 +307,7 @@ export default function VendorSettingsPage() {
 
             <div className="grid gap-4 sm:grid-cols-2 text-xs">
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">
+                <label className="font-semibold text-stone-600 dark:text-stone-300">
                   Account Holder Name
                 </label>
                 <input
@@ -314,24 +316,24 @@ export default function VendorSettingsPage() {
                   placeholder="e.g. Krishna Sagar Pvt Ltd"
                   value={accountHolder}
                   onChange={(e) => setAccountHolder(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-semibold text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                  className="mt-1.5 w-full min-h-[44px] rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-stone-50 dark:bg-white/5 p-3 sm:py-2.5 text-base sm:text-xs font-semibold text-[#1D1D1F] dark:text-white placeholder-stone-400 dark:placeholder-stone-500 outline-none focus:border-black/30 dark:focus:border-white/30 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">Bank Name</label>
+                <label className="font-semibold text-stone-600 dark:text-stone-300">Bank Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. HDFC Bank"
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-semibold text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                  className="mt-1.5 w-full min-h-[44px] rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-stone-50 dark:bg-white/5 p-3 sm:py-2.5 text-base sm:text-xs font-semibold text-[#1D1D1F] dark:text-white placeholder-stone-400 dark:placeholder-stone-500 outline-none focus:border-black/30 dark:focus:border-white/30 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">
+                <label className="font-semibold text-stone-600 dark:text-stone-300">
                   Bank Account Number
                 </label>
                 <input
@@ -340,40 +342,40 @@ export default function VendorSettingsPage() {
                   placeholder="e.g. 5010023456789"
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono font-bold text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                  className="mt-1.5 w-full min-h-[44px] rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-stone-50 dark:bg-white/5 p-3 sm:py-2.5 font-mono text-base sm:text-xs font-bold text-[#1D1D1F] dark:text-white placeholder-stone-400 dark:placeholder-stone-500 outline-none focus:border-black/30 dark:focus:border-white/30 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">IFSC Code</label>
+                <label className="font-semibold text-stone-600 dark:text-stone-300">IFSC Code</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. HDFC0001234"
                   value={ifscCode}
                   onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
-                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono font-bold uppercase text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                  className="mt-1.5 w-full min-h-[44px] rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-stone-50 dark:bg-white/5 p-3 sm:py-2.5 font-mono text-base sm:text-xs font-bold uppercase text-[#1D1D1F] dark:text-white placeholder-stone-400 dark:placeholder-stone-500 outline-none focus:border-black/30 dark:focus:border-white/30 transition-colors"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="font-bold text-stone-700 dark:text-gray-200">
+                <label className="font-semibold text-stone-600 dark:text-stone-300">
                   Primary Payout UPI VPA (Optional)
                 </label>
                 <input
                   type="text"
                   value={payoutUpi}
                   onChange={(e) => setPayoutUpi(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-semibold text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                  className="mt-1.5 w-full min-h-[44px] rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-stone-50 dark:bg-white/5 p-3 sm:py-2.5 text-base sm:text-xs font-semibold text-[#1D1D1F] dark:text-white placeholder-stone-400 dark:placeholder-stone-500 outline-none focus:border-black/30 dark:focus:border-white/30 transition-colors"
                   placeholder="e.g. restaurant@bank"
                 />
               </div>
             </div>
 
-            <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 p-4 border border-emerald-200 dark:border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-3">
+            <div className="rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/10 p-4 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-3">
               <ShieldCheck className="size-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
               <div>
-                <p className="font-extrabold text-[#121815] dark:text-white">
+                <p className="font-bold text-[#1D1D1F] dark:text-white">
                   {accountNumber ? 'Bank details saved' : 'Bank details not configured'}
                 </p>
                 <p className="mt-0.5 text-emerald-700/80 dark:text-emerald-300/80">
@@ -386,16 +388,16 @@ export default function VendorSettingsPage() {
           </div>
 
           {/* Restaurant License & Address Info */}
-          <div className="rounded-3xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-6 shadow-sm dark:shadow-xl space-y-5">
-            <div className="flex items-center gap-3 border-b border-stone-100 dark:border-[#202b24] pb-4">
-              <div className="grid size-10 place-items-center rounded-xl bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 font-bold">
+          <div className="rounded-3xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] p-5 sm:p-7 shadow-xs space-y-5">
+            <div className="flex items-center gap-3 border-b border-black/[0.06] dark:border-white/[0.06] pb-4">
+              <div className="grid size-10 place-items-center rounded-2xl bg-stone-100 dark:bg-white/10 text-[#1D1D1F] dark:text-white shrink-0">
                 <FileText className="size-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-[#121815] dark:text-white">
+                <h3 className="text-lg font-bold text-[#1D1D1F] dark:text-white">
                   FSSAI License &amp; Store Details
                 </h3>
-                <p className="text-xs text-stone-500 dark:text-gray-400">
+                <p className="text-xs text-stone-500 dark:text-stone-400">
                   Government compliance and pickup address
                 </p>
               </div>
@@ -403,7 +405,7 @@ export default function VendorSettingsPage() {
 
             <div className="grid gap-4 sm:grid-cols-2 text-xs">
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">
+                <label className="font-semibold text-stone-600 dark:text-stone-300">
                   FSSAI Registration License #
                 </label>
                 <input
@@ -412,12 +414,12 @@ export default function VendorSettingsPage() {
                   placeholder="e.g. 11223344556677"
                   value={fssaiLicense}
                   onChange={(e) => setFssaiLicense(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono font-bold text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                  className="mt-1.5 w-full min-h-[44px] rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-stone-50 dark:bg-white/5 p-3 sm:py-2.5 font-mono text-base sm:text-xs font-bold text-[#1D1D1F] dark:text-white placeholder-stone-400 dark:placeholder-stone-500 outline-none focus:border-black/30 dark:focus:border-white/30 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">
+                <label className="font-semibold text-stone-600 dark:text-stone-300">
                   Manager Phone Number
                 </label>
                 <input
@@ -426,12 +428,12 @@ export default function VendorSettingsPage() {
                   placeholder="e.g. 9876543210"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-semibold text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                  className="mt-1.5 w-full min-h-[44px] rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-stone-50 dark:bg-white/5 p-3 sm:py-2.5 text-base sm:text-xs font-semibold text-[#1D1D1F] dark:text-white placeholder-stone-400 dark:placeholder-stone-500 outline-none focus:border-black/30 dark:focus:border-white/30 transition-colors"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="font-bold text-stone-700 dark:text-gray-200">
+                <label className="font-semibold text-stone-600 dark:text-stone-300">
                   Kitchen Pickup Address
                 </label>
                 <textarea
@@ -440,23 +442,23 @@ export default function VendorSettingsPage() {
                   placeholder="Enter full pickup address for riders..."
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-semibold text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                  className="mt-1.5 w-full rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-stone-50 dark:bg-white/5 p-3 text-base sm:text-xs font-semibold text-[#1D1D1F] dark:text-white placeholder-stone-400 dark:placeholder-stone-500 outline-none focus:border-black/30 dark:focus:border-white/30 transition-colors"
                 />
               </div>
             </div>
           </div>
 
           {/* Commercial Tax & GST Profile Card */}
-          <div className="rounded-3xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-6 shadow-sm dark:shadow-xl space-y-5">
-            <div className="flex items-center gap-3 border-b border-stone-100 dark:border-[#202b24] pb-4">
-              <div className="grid size-10 place-items-center rounded-xl bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 font-bold">
+          <div className="rounded-3xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] p-5 sm:p-7 shadow-xs space-y-5">
+            <div className="flex items-center gap-3 border-b border-black/[0.06] dark:border-white/[0.06] pb-4">
+              <div className="grid size-10 place-items-center rounded-2xl bg-stone-100 dark:bg-white/10 text-[#1D1D1F] dark:text-white shrink-0">
                 <ShieldCheck className="size-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-[#121815] dark:text-white">
+                <h3 className="text-lg font-bold text-[#1D1D1F] dark:text-white">
                   GST Tax Registration &amp; Pricing Mode
                 </h3>
-                <p className="text-xs text-stone-500 dark:text-gray-400">
+                <p className="text-xs text-stone-500 dark:text-stone-400">
                   Commercial engine tax profile &amp; place of supply configuration
                 </p>
               </div>
@@ -464,7 +466,7 @@ export default function VendorSettingsPage() {
 
             <div className="grid gap-4 sm:grid-cols-2 text-xs">
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">
+                <label className="font-semibold text-stone-600 dark:text-stone-300">
                   GSTIN Registration Number
                 </label>
                 <input
@@ -472,40 +474,40 @@ export default function VendorSettingsPage() {
                   placeholder="e.g. 29AAAAA0000A1Z5"
                   value={gstin}
                   onChange={(e) => setGstin(e.target.value.toUpperCase())}
-                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono font-bold uppercase text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                  className="mt-1.5 w-full min-h-[44px] rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-stone-50 dark:bg-white/5 p-3 sm:py-2.5 font-mono text-base sm:text-xs font-bold uppercase text-[#1D1D1F] dark:text-white placeholder-stone-400 dark:placeholder-stone-500 outline-none focus:border-black/30 dark:focus:border-white/30 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">
+                <label className="font-semibold text-stone-600 dark:text-stone-300">
                   GST Registration Status
                 </label>
                 <select
                   value={gstStatus}
                   onChange={(e) => setGstStatus(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                  className="mt-1.5 w-full min-h-[44px] rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-stone-50 dark:bg-white/5 p-3 sm:py-2.5 text-base sm:text-xs font-bold text-[#1D1D1F] dark:text-white outline-none focus:border-black/30 dark:focus:border-white/30 transition-colors cursor-pointer"
                 >
                   <option
                     value="REGISTERED"
-                    className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                    className="bg-white dark:bg-[#161617] text-[#1D1D1F] dark:text-white"
                   >
                     REGISTERED (Regular Taxable)
                   </option>
                   <option
                     value="UNREGISTERED"
-                    className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                    className="bg-white dark:bg-[#161617] text-[#1D1D1F] dark:text-white"
                   >
                     UNREGISTERED
                   </option>
                   <option
                     value="COMPOSITION"
-                    className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                    className="bg-white dark:bg-[#161617] text-[#1D1D1F] dark:text-white"
                   >
                     COMPOSITION SCHEME
                   </option>
                   <option
                     value="EXEMPT"
-                    className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                    className="bg-white dark:bg-[#161617] text-[#1D1D1F] dark:text-white"
                   >
                     EXEMPT
                   </option>
@@ -513,7 +515,7 @@ export default function VendorSettingsPage() {
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">
+                <label className="font-semibold text-stone-600 dark:text-stone-300">
                   Supplier Registration State
                 </label>
                 <input
@@ -521,28 +523,28 @@ export default function VendorSettingsPage() {
                   placeholder="e.g. Karnataka"
                   value={supplierState}
                   onChange={(e) => setSupplierState(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white placeholder-stone-400 dark:placeholder-gray-400 outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                  className="mt-1.5 w-full min-h-[44px] rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-stone-50 dark:bg-white/5 p-3 sm:py-2.5 text-base sm:text-xs font-bold text-[#1D1D1F] dark:text-white placeholder-stone-400 dark:placeholder-stone-500 outline-none focus:border-black/30 dark:focus:border-white/30 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">
+                <label className="font-semibold text-stone-600 dark:text-stone-300">
                   Default Menu Price Tax Mode
                 </label>
                 <select
                   value={priceTaxMode}
                   onChange={(e) => setPriceTaxMode(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                  className="mt-1.5 w-full min-h-[44px] rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-stone-50 dark:bg-white/5 p-3 sm:py-2.5 text-base sm:text-xs font-bold text-[#1D1D1F] dark:text-white outline-none focus:border-black/30 dark:focus:border-white/30 transition-colors cursor-pointer"
                 >
                   <option
                     value="TAX_INCLUSIVE"
-                    className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                    className="bg-white dark:bg-[#161617] text-[#1D1D1F] dark:text-white"
                   >
                     TAX INCLUSIVE (Displayed price includes 5% GST)
                   </option>
                   <option
                     value="TAX_EXCLUSIVE"
-                    className="bg-white dark:bg-[#121815] text-[#121815] dark:text-white"
+                    className="bg-white dark:bg-[#161617] text-[#1D1D1F] dark:text-white"
                   >
                     TAX EXCLUSIVE (5% GST added at checkout)
                   </option>
@@ -552,16 +554,16 @@ export default function VendorSettingsPage() {
           </div>
 
           {/* Commission & Markup Rate Card */}
-          <div className="rounded-3xl border border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-6 shadow-sm dark:shadow-xl space-y-5">
-            <div className="flex items-center gap-3 border-b border-stone-100 dark:border-[#202b24] pb-4">
-              <div className="grid size-10 place-items-center rounded-xl bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 font-bold">
+          <div className="rounded-3xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] p-5 sm:p-7 shadow-xs space-y-5">
+            <div className="flex items-center gap-3 border-b border-black/[0.06] dark:border-white/[0.06] pb-4">
+              <div className="grid size-10 place-items-center rounded-2xl bg-stone-100 dark:bg-white/10 text-[#1D1D1F] dark:text-white shrink-0">
                 <Tag className="size-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-[#121815] dark:text-white">
+                <h3 className="text-lg font-bold text-[#1D1D1F] dark:text-white">
                   Commission &amp; Markup Rate
                 </h3>
-                <p className="text-xs text-stone-500 dark:text-gray-400">
+                <p className="text-xs text-stone-500 dark:text-stone-400">
                   Platform commission and markup applied to your order totals
                 </p>
               </div>
@@ -569,13 +571,13 @@ export default function VendorSettingsPage() {
 
             <div className="grid gap-4 sm:grid-cols-3 text-xs">
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">
+                <label className="font-semibold text-stone-600 dark:text-stone-300">
                   Commercial Model
                 </label>
                 <select
                   value={commercialModel}
                   onChange={(e) => setCommercialModel(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                  className="mt-1.5 w-full min-h-[44px] rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-stone-50 dark:bg-white/5 p-3 sm:py-2.5 text-base sm:text-xs font-bold text-[#1D1D1F] dark:text-white outline-none focus:border-black/30 dark:focus:border-white/30 transition-colors cursor-pointer"
                 >
                   <option value="commission">Commission</option>
                   <option value="markup">Markup</option>
@@ -584,7 +586,7 @@ export default function VendorSettingsPage() {
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">
+                <label className="font-semibold text-stone-600 dark:text-stone-300">
                   Commission Rate (%)
                 </label>
                 <input
@@ -595,12 +597,12 @@ export default function VendorSettingsPage() {
                   placeholder="e.g. 15"
                   value={commissionRate}
                   onChange={(e) => setCommissionRate(Number(e.target.value) || 0)}
-                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                  className="mt-1.5 w-full min-h-[44px] rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-stone-50 dark:bg-white/5 p-3 sm:py-2.5 font-mono text-base sm:text-xs font-bold text-[#1D1D1F] dark:text-white outline-none focus:border-black/30 dark:focus:border-white/30 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 dark:text-gray-200">
+                <label className="font-semibold text-stone-600 dark:text-stone-300">
                   Markup Rate (%)
                 </label>
                 <input
@@ -611,23 +613,23 @@ export default function VendorSettingsPage() {
                   placeholder="e.g. 0"
                   value={markupRate}
                   onChange={(e) => setMarkupRate(Number(e.target.value) || 0)}
-                  className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018] dark:focus:border-[#d9f447]"
+                  className="mt-1.5 w-full min-h-[44px] rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-stone-50 dark:bg-white/5 p-3 sm:py-2.5 font-mono text-base sm:text-xs font-bold text-[#1D1D1F] dark:text-white outline-none focus:border-black/30 dark:focus:border-white/30 transition-colors"
                 />
               </div>
             </div>
           </div>
 
           {/* Submit Save Button */}
-          <div className="flex justify-end">
+          <div className="flex sm:justify-end">
             <button
               type="submit"
               disabled={saving}
-              className={`inline-flex items-center gap-2 rounded-full bg-[#d9f447] px-8 py-3.5 text-xs font-black text-[#0d1310] shadow-md hover:bg-[#c8e434] hover:shadow-lg active:scale-95 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100`}
+              className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-[#1D1D1F] dark:bg-white text-white dark:text-[#1D1D1F] hover:bg-[#2C2C2E] dark:hover:bg-stone-200 px-8 py-3.5 min-h-[48px] text-sm sm:text-xs font-semibold transition active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 shadow-xs"
             >
               {saving ? (
-                <Loader2 className="size-4 text-[#0d1310] animate-spin" />
+                <Loader2 className="size-4 animate-spin" />
               ) : (
-                <Save className="size-4 text-[#0d1310]" />
+                <Save className="size-4" />
               )}{' '}
               {saving ? 'Saving...' : 'Save Bank & Store Settings'}
             </button>

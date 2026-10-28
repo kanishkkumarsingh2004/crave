@@ -40,9 +40,14 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: 'cover',
-  colorScheme: 'light',
-  themeColor: '#121815',
+  colorScheme: 'light dark',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0c100e' },
+  ],
 }
 
 export default function RootLayout({
@@ -73,6 +78,28 @@ export default function RootLayout({
           id="theme-initializer"
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('crave_theme_preference');if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.classList.remove('light');document.documentElement.setAttribute('data-theme','dark');document.documentElement.style.colorScheme='dark';}else{document.documentElement.classList.add('light');document.documentElement.classList.remove('dark');document.documentElement.setAttribute('data-theme','light');document.documentElement.style.colorScheme='light';}}catch(e){}})();`,
+          }}
+        />
+        <script
+          id="client-security-guard"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+              try {
+                if (typeof window !== 'undefined' && typeof window.__REACT_DEVTOOLS_GLOBAL_HOOK__ === 'object') {
+                  for (var k in window.__REACT_DEVTOOLS_GLOBAL_HOOK__) {
+                    if (typeof window.__REACT_DEVTOOLS_GLOBAL_HOOK__[k] === 'function') {
+                      window.__REACT_DEVTOOLS_GLOBAL_HOOK__[k] = function(){};
+                    }
+                  }
+                }
+                if (typeof console !== 'undefined' && console.log) {
+                  setTimeout(function() {
+                    console.log('%cSTOP! SECURITY WARNING', 'color: #ef4444; font-size: 24px; font-weight: 900;');
+                    console.log('%cThis browser feature is intended for developers. Running or pasting commands here can expose your account or sensitive session keys.', 'font-size: 13px; color: #888;');
+                  }, 150);
+                }
+              } catch(e) {}
+            })();`,
           }}
         />
       </head>
