@@ -11,7 +11,11 @@ export function XPStorePage({ onBrowse }: { onBrowse: () => void }) {
           <p className="eyebrow">{t.nav.xp}</p>
           <h1>craveXP Instamart</h1>
         </div>
-        <img className="brand-mark" src={appLogo} alt="craveXP" />
+        <img
+          className="w-[48px] h-[48px] rounded-[15px] object-cover"
+          src={appLogo}
+          alt="craveXP"
+        />
       </header>
       <div className="welcome">
         <p>10-minute grocery delivery</p>

@@ -64,14 +64,22 @@ const AddressMap = lazy(() => import('./AddressMap'))
 
 function Logo({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`brand ${compact ? 'compact' : ''}`}>
-      <img className="brand-mark" src={appLogo} alt="Crave" />
+    <div
+      className={`flex items-center ${compact ? 'gap-0' : 'gap-[12px]'} font-manrope font-black text-[28px] tracking-[-1.5px] text-ink`}
+    >
+      <img
+        className={`block object-cover ${compact ? 'w-[43px] h-[43px] rounded-[14px]' : 'w-[48px] h-[48px] rounded-[15px]'}`}
+        src={appLogo}
+        alt="Crave"
+      />
       {!compact && <span>CRAVE.</span>}
     </div>
   )
 }
 function Spinner() {
-  return <span className="spinner" />
+  return (
+    <span className="inline-block w-[20px] h-[20px] border-2 border-current border-r-transparent rounded-full animate-[spin_0.7s_linear_infinite] [vertical-align:middle]" />
+  )
 }
 function Empty({
   icon,
@@ -797,7 +805,15 @@ function CartPage({
             </button>
           </>
         ) : (
-          <div className="cart-scroll">
+          <div
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              paddingBottom: 78,
+            }}
+          >
             <div className="cart-restaurant">
               <div className="mini-logo">{restaurant?.name?.[0] || 'C'}</div>
               <span>
@@ -828,18 +844,26 @@ function CartPage({
                 </article>
               ))}
             </div>
-            <div className="sticky-action">
-              <div>
-                <small>ITEM TOTAL</small>
-                <strong>{money(subtotal)}</strong>
-              </div>
-              <button className="primary" onClick={onCheckout}>
-                Continue <Icon name="chevron" />
-              </button>
-            </div>
           </div>
         )}
       </PullToRefresh>
+      {cart.length > 0 && (
+        <div className="fixed z-[100] bottom-[var(--nav-height)] left-0 right-0 w-full max-w-[740px] mx-auto box-border min-h-[76px] px-[18px] py-[10px] bg-chrome-bg border-t border-line backdrop-blur-[14px] flex items-center justify-between gap-3">
+          <div className="flex flex-col justify-center min-w-[90px] shrink-0">
+            <small className="text-[9px] text-[#6f776f] font-black">ITEM TOTAL</small>
+
+            <strong className="text-[19px] leading-[1.3] mt-[2]">{money(subtotal)}</strong>
+          </div>
+
+          <button
+            className="primary flex-1 min-h-[46px] flex items-center justify-center gap-2 min-w-0 m-0"
+            onClick={onCheckout}
+          >
+            Continue
+            <Icon name="chevron" className="w-[17px]" />
+          </button>
+        </div>
+      )}
     </section>
   )
 }
@@ -2214,8 +2238,8 @@ function Account({
               <div
                 style={{
                   padding: '16px',
-                  background: '#18201c',
-                  color: '#fff',
+                  background: 'var(--green)',
+                  color: 'var(--profile-text)',
                   borderRadius: '18px',
                   margin: '8px 16px',
                 }}
@@ -2223,7 +2247,7 @@ function Account({
                 <p
                   style={{
                     fontSize: '11px',
-                    color: '#d9f447',
+                    color: 'var(--lime)',
                     fontWeight: 800,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
@@ -2231,13 +2255,20 @@ function Account({
                 >
                   Priority Assistance Desk
                 </p>
-                <h3 style={{ fontSize: '20px', fontWeight: 900, margin: '6px 0', color: '#fff' }}>
+                <h3
+                  style={{
+                    fontSize: '20px',
+                    fontWeight: 900,
+                    margin: '6px 0',
+                    color: 'var(--profile-text)',
+                  }}
+                >
                   Reach out to: -9625694673
                 </h3>
                 <p
                   style={{
                     fontSize: '12px',
-                    color: '#ccc',
+                    color: 'var(--muted)',
                     margin: '4px 0 14px 0',
                     lineHeight: 1.5,
                   }}
@@ -2254,8 +2285,8 @@ function Account({
                     gap: '8px',
                     padding: '10px 20px',
                     borderRadius: '999px',
-                    background: '#d9f447',
-                    color: '#18201c',
+                    background: 'var(--accent)',
+                    color: 'var(--on-accent)',
                     fontWeight: 900,
                     fontSize: '13px',
                   }}
@@ -2270,7 +2301,7 @@ function Account({
                     fontSize: '13px',
                     fontWeight: 900,
                     textTransform: 'uppercase',
-                    color: 'var(--text-secondary, #666)',
+                    color: 'var(--muted)',
                     marginBottom: '12px',
                     letterSpacing: '0.04em',
                   }}
@@ -2280,7 +2311,7 @@ function Account({
 
                 <div
                   style={{
-                    background: 'var(--surface-subtle, #f5f6f4)',
+                    background: 'var(--surface-2)',
                     padding: '14px',
                     borderRadius: '14px',
                     marginBottom: '10px',
@@ -2290,7 +2321,7 @@ function Account({
                     style={{
                       fontSize: '13px',
                       display: 'block',
-                      color: 'var(--text-primary, #18201c)',
+                      color: 'var(--ink)',
                       marginBottom: '4px',
                     }}
                   >
@@ -2299,7 +2330,7 @@ function Account({
                   <p
                     style={{
                       fontSize: '12px',
-                      color: 'var(--text-secondary, #666)',
+                      color: 'var(--muted)',
                       margin: 0,
                       lineHeight: 1.5,
                     }}
@@ -2312,7 +2343,7 @@ function Account({
 
                 <div
                   style={{
-                    background: 'var(--surface-subtle, #f5f6f4)',
+                    background: 'var(--surface-2)',
                     padding: '14px',
                     borderRadius: '14px',
                     marginBottom: '10px',
@@ -2322,7 +2353,7 @@ function Account({
                     style={{
                       fontSize: '13px',
                       display: 'block',
-                      color: 'var(--text-primary, #18201c)',
+                      color: 'var(--ink)',
                       marginBottom: '4px',
                     }}
                   >
@@ -2331,7 +2362,7 @@ function Account({
                   <p
                     style={{
                       fontSize: '12px',
-                      color: 'var(--text-secondary, #666)',
+                      color: 'var(--muted)',
                       margin: 0,
                       lineHeight: 1.5,
                     }}
@@ -2344,7 +2375,7 @@ function Account({
 
                 <div
                   style={{
-                    background: 'var(--surface-subtle, #f5f6f4)',
+                    background: 'var(--surface-2)',
                     padding: '14px',
                     borderRadius: '14px',
                     marginBottom: '10px',
@@ -2354,7 +2385,7 @@ function Account({
                     style={{
                       fontSize: '13px',
                       display: 'block',
-                      color: 'var(--text-primary, #18201c)',
+                      color: 'var(--ink)',
                       marginBottom: '4px',
                     }}
                   >
@@ -2363,7 +2394,7 @@ function Account({
                   <p
                     style={{
                       fontSize: '12px',
-                      color: 'var(--text-secondary, #666)',
+                      color: 'var(--muted)',
                       margin: 0,
                       lineHeight: 1.5,
                     }}
@@ -2375,7 +2406,7 @@ function Account({
 
                 <div
                   style={{
-                    background: 'var(--surface-subtle, #f5f6f4)',
+                    background: 'var(--surface-2)',
                     padding: '14px',
                     borderRadius: '14px',
                   }}
@@ -2384,7 +2415,7 @@ function Account({
                     style={{
                       fontSize: '13px',
                       display: 'block',
-                      color: 'var(--text-primary, #18201c)',
+                      color: 'var(--ink)',
                       marginBottom: '4px',
                     }}
                   >
@@ -2393,7 +2424,7 @@ function Account({
                   <p
                     style={{
                       fontSize: '12px',
-                      color: 'var(--text-secondary, #666)',
+                      color: 'var(--muted)',
                       margin: 0,
                       lineHeight: 1.5,
                     }}
@@ -2437,7 +2468,8 @@ function Addresses({
     >([]),
     [searching, setSearching] = useState(false),
     [locating, setLocating] = useState(false),
-    [mapBusy, setMapBusy] = useState(false)
+    [mapBusy, setMapBusy] = useState(false),
+    [mapKey, setMapKey] = useState(0)
   useEffect(() => {
     if (!adding || form.address.trim().length < 3 || location) {
       setSuggestions([])
@@ -2622,7 +2654,12 @@ function Addresses({
               <Suspense
                 fallback={<div className="address-map-canvas map-loading">Loading map…</div>}
               >
-                <AddressMap location={location} onPick={(point) => void chooseMapLocation(point)} />
+                <AddressMap
+                  key={mapKey}
+                  location={location}
+                  onPick={(point) => void chooseMapLocation(point)}
+                  onRetry={() => setMapKey((k) => k + 1)}
+                />
               </Suspense>
               <div className="address-map-toolbar">
                 <span>
@@ -3002,6 +3039,10 @@ export default function App() {
     })
     return () => void listener?.remove()
   }, [addressPage, checkout, selected, tab])
+  useEffect(() => {
+    if (!user || tab !== 'home') return
+    selectTab('search')
+  }, [user, tab, selectTab])
   const add = (item: MenuItem, variant?: Variant) => {
     const switchingRestaurant = Boolean(
       cartRestaurant && selected && cartRestaurant.id !== selected.id
@@ -3060,7 +3101,7 @@ export default function App() {
   }
   if (!ready)
     return (
-      <div className="splash">
+      <div className="fixed inset-0 grid place-items-center gap-[34px] text-center bg-app-bg text-ink">
         <Logo />
         <Spinner />
       </div>

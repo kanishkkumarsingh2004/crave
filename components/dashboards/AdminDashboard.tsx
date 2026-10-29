@@ -40,7 +40,7 @@ interface AccountRecord {
   restaurantName?: string
   cuisine?: string
   commissionRate?: number
-  paymentModel?: 'commission' | 'markup'
+  paymentModel?: 'commission' | 'markup' | 'hybrid'
   commissionType?: 'commission' | 'markup' | 'hybrid'
   commissionPercent?: number
   commissionFlatRs?: number
@@ -179,7 +179,7 @@ export default function AdminDashboard() {
     markupRate: 0,
     fixedCommission: 0,
     fixedMarkup: 0,
-    paymentModel: 'commission' as 'commission' | 'markup',
+    paymentModel: 'commission' as 'commission' | 'markup' | 'hybrid',
     bannerUrl: '',
     latitude: 12.679898,
     longitude: 77.469493,
@@ -227,7 +227,7 @@ export default function AdminDashboard() {
     commissionFlatRs: 0,
     markupPercent: 0,
     markupFlatRs: 0,
-    paymentModel: 'commission' as 'commission' | 'markup',
+    paymentModel: 'commission' as 'commission' | 'markup' | 'hybrid',
     vehicleType: 'Electric Scooter',
     licensePlate: '',
     bannerUrl: '',
@@ -364,21 +364,23 @@ export default function AdminDashboard() {
             address: u.address || matchedVendor?.address || undefined,
             restaurantName: matchedVendor?.storeName || u.restaurant_name || undefined,
             cuisine: u.cuisine || matchedVendor?.description || undefined,
-            commissionRate: Number(u.commission_rate || matchedVendor?.commissionRate || 15),
+            commissionRate: Number(u.commission_rate ?? matchedVendor?.commissionRate ?? 15),
             commissionType:
               matchedVendor?.commissionType === 'MARKUP'
                 ? 'markup'
                 : matchedVendor?.commissionType === 'HYBRID'
                   ? 'hybrid'
                   : 'commission',
-            commissionPercent: Number(u.commission_rate || matchedVendor?.commissionPercent || 15),
-            commissionFlatRs: Number(u.fixed_commission || matchedVendor?.commissionFlatRs || 0),
-            markupPercent: Number(u.markup_rate || matchedVendor?.markupPercent || 0),
-            markupFlatRs: Number(u.fixed_markup || matchedVendor?.markupFlatRs || 0),
+            commissionPercent: Number(u.commission_rate ?? matchedVendor?.commissionPercent ?? 15),
+            commissionFlatRs: Number(u.fixed_commission ?? matchedVendor?.commissionFlatRs ?? 0),
+            markupPercent: Number(u.markup_rate ?? matchedVendor?.markupPercent ?? 0),
+            markupFlatRs: Number(u.fixed_markup ?? matchedVendor?.markupFlatRs ?? 0),
             paymentModel:
-              u.payment_model === 'markup' || matchedVendor?.commissionType === 'MARKUP'
+              matchedVendor?.commissionType === 'MARKUP'
                 ? 'markup'
-                : 'commission',
+                : matchedVendor?.commissionType === 'HYBRID'
+                  ? 'hybrid'
+                  : 'commission',
             vendorType: isXP ? 'XP Store' : 'Restaurant Vendor',
             totalSpent: Number(u.total_spent || 0),
             totalOrders: Number(u.total_orders || 0),
@@ -427,7 +429,7 @@ export default function AdminDashboard() {
               cuisine: v.description
                 ? v.description.split('·')[1]?.trim() || v.description
                 : 'Multi-Cuisine',
-              commissionRate: v.commissionRate || 15,
+              commissionRate: v.commissionRate ?? 15,
               paymentModel: v.commissionType === 'MARKUP' ? 'markup' : 'commission',
               vendorType: isXP ? 'XP Store' : 'Restaurant Vendor',
               totalSpent: 0,
@@ -1182,12 +1184,25 @@ export default function AdminDashboard() {
                           Pricing Model
                         </span>
                         {account.paymentModel === 'markup' ? (
-                          <span className="text-sky-600 dark:text-sky-300 font-semibold text-[11px]">
-                            Price Markup
+                          <span className="text-sky-600 dark:text-sky-300 font-semibold text-[10px] leading-none">
+                            {(account.markupPercent ?? 0 > 0)
+                              ? `Markup ${account.markupPercent}%`
+                              : 'Price Markup'}
+                            {(account.markupFlatRs ?? 0) > 0 ? ` + ₹${account.markupFlatRs}` : ''}
+                          </span>
+                        ) : account.paymentModel === 'hybrid' ? (
+                          <span className="text-amber-700 dark:text-amber-300 font-semibold text-[10px] leading-none">
+                            Hybrid {account.commissionRate ?? 15}% + {account.markupPercent ?? 0}%
+                            {(account.commissionFlatRs ?? 0) > 0
+                              ? ` + ₹${account.commissionFlatRs}`
+                              : ''}
                           </span>
                         ) : (
-                          <span className="text-emerald-600 dark:text-[#d9f447] font-semibold text-[11px]">
-                            Commission ({account.commissionRate}%)
+                          <span className="text-emerald-600 dark:text-[#d9f447] font-semibold text-[10px] leading-none">
+                            Commission {account.commissionRate ?? 15}%
+                            {(account.commissionFlatRs ?? 0) > 0
+                              ? ` + ₹${account.commissionFlatRs}`
+                              : ''}
                           </span>
                         )}
                       </div>
@@ -1341,12 +1356,25 @@ export default function AdminDashboard() {
 
                         <td className="px-4 py-3.5 whitespace-nowrap font-medium text-xs text-[#18201c] dark:text-white">
                           {account.paymentModel === 'markup' ? (
-                            <span className="rounded-md bg-sky-50 dark:bg-sky-500/20 border border-sky-300 dark:border-sky-500/40 px-2 py-0.5 text-[11px] font-semibold text-sky-700 dark:text-sky-300">
-                              Price Markup
+                            <span className="rounded-md bg-sky-50 dark:bg-sky-500/20 border border-sky-300 dark:border-sky-500/40 px-2 py-0.5 text-[10px] font-semibold text-sky-700 dark:text-sky-300 leading-none">
+                              {(account.markupPercent ?? 0) > 0
+                                ? `Markup ${account.markupPercent}%`
+                                : 'Price Markup'}
+                              {(account.markupFlatRs ?? 0) > 0 ? ` + ₹${account.markupFlatRs}` : ''}
+                            </span>
+                          ) : account.paymentModel === 'hybrid' ? (
+                            <span className="rounded-md bg-amber-50 dark:bg-amber-500/15 border border-amber-300 dark:border-amber-500/30 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300 leading-none">
+                              Hybrid {account.commissionRate ?? 15}% + {account.markupPercent ?? 0}%
+                              {(account.commissionFlatRs ?? 0) > 0
+                                ? ` + ₹${account.commissionFlatRs}`
+                                : ''}
                             </span>
                           ) : (
-                            <span className="rounded-md bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
-                              Commission ({account.commissionRate}%)
+                            <span className="rounded-md bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 leading-none">
+                              Commission {account.commissionRate ?? 15}%
+                              {(account.commissionFlatRs ?? 0) > 0
+                                ? ` + ₹${account.commissionFlatRs}`
+                                : ''}
                             </span>
                           )}
                         </td>

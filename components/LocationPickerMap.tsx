@@ -1,5 +1,7 @@
 'use client'
 
+import type * as MapLibreGL from 'maplibre-gl'
+
 import { apiFetch } from '@/lib/client/api-fetch'
 import {
   Map,
@@ -13,6 +15,10 @@ import {
 import { generateH3GridGeoJSON, type TelemetryPin } from '@/lib/h3-grid'
 import { Bike, Hexagon, Locate, MapPin, Utensils, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+
+const OSM_STYLE: string = 'https://tiles.openfreemap.org/styles/bright'
+
+const DARK_OSM_STYLE: string = 'https://tiles.openfreemap.org/styles/liberty'
 
 interface LocationPickerMapProps {
   initialLat?: number
@@ -174,18 +180,8 @@ export default function LocationPickerMap({
         onClick={handleMapClick}
         className="h-full w-full"
         styles={{
-          light: {
-            version: 8,
-            name: 'blank-light',
-            sources: {},
-            layers: [],
-          },
-          dark: {
-            version: 8,
-            name: 'blank-dark',
-            sources: {},
-            layers: [],
-          },
+          light: OSM_STYLE,
+          dark: DARK_OSM_STYLE,
         }}
       >
         <MapControls position="bottom-right" showZoom />

@@ -3,8 +3,8 @@ import type { Map as MapLibreMap, StyleSpecification } from 'maplibre-gl'
 export type WebsiteMapTheme = 'light' | 'dark'
 
 export const WEBSITE_MAP_STYLES = {
-  light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-  dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+  light: 'https://demotiles.maplibre.org/style.json',
+  dark: 'https://demotiles.maplibre.org/style.json',
 } as const
 
 const palettes = {

@@ -2,31 +2,31 @@
   "schemaVersion": 1,
   "apps": {
     "admin": {
-      "versionCode": 31,
+      "versionCode": 32,
       "versionName": "1.0.0",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-admin-debug.apk?sha256=7de563a875481b9cea9e8b4623c7ce35d4d11ccb787bf1511fbca9ee9deea48a",
-      "sha256": "7de563a875481b9cea9e8b4623c7ce35d4d11ccb787bf1511fbca9ee9deea48a",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-admin-debug.apk?sha256=dec17bfe6ab9121a5af25eab10932f6903dc590fb2d94a6588a98f6bdcbc8af6",
+      "sha256": "dec17bfe6ab9121a5af25eab10932f6903dc590fb2d94a6588a98f6bdcbc8af6",
       "releaseNotes": "XP Store barcode scanning with the device camera, durable rider live-map telemetry and the exact website Mapcn location experience."
     },
     "driver": {
-      "versionCode": 29,
+      "versionCode": 30,
       "versionName": "1.0.0",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-driver-debug.apk?sha256=8510c2f6184bce3598c31b136e3f1a7202572199388f63ec7db1e8a98c8c6626",
-      "sha256": "8510c2f6184bce3598c31b136e3f1a7202572199388f63ec7db1e8a98c8c6626",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-driver-debug.apk?sha256=e04cc92478ccf84c36b230dd10b93ec9048bf5bbb3f06f794e02d6793a8469cd",
+      "sha256": "e04cc92478ccf84c36b230dd10b93ec9048bf5bbb3f06f794e02d6793a8469cd",
       "releaseNotes": "Clearer pickup handover: the customer sees their delivery code from the moment the food is collected, and the driver confirms it at the door."
     },
     "restaurant": {
-      "versionCode": 29,
+      "versionCode": 30,
       "versionName": "1.0.0",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-restaurant-debug.apk?sha256=a57608fb6521f82b46b1ccb03e2c250ca014516c6da35a7be050c018f5aba095",
-      "sha256": "a57608fb6521f82b46b1ccb03e2c250ca014516c6da35a7be050c018f5aba095",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-restaurant-debug.apk?sha256=7ee11c7f6de8cf16d44d55e1e74e4c10896aacec44cb1d1d2e272a4dd8393699",
+      "sha256": "7ee11c7f6de8cf16d44d55e1e74e4c10896aacec44cb1d1d2e272a4dd8393699",
       "releaseNotes": "Complete light, dark and system themes with consistent text, icons, forms, menu cards, modals and restaurant controls."
     },
     "customer": {
-      "versionCode": 27,
+      "versionCode": 28,
       "versionName": "1.0.0",
-      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk?sha256=588afe32ed04b1f3fe44c48d673a8366ad41129b9fed4f04ee8c4fa0e82f91b3",
-      "sha256": "588afe32ed04b1f3fe44c48d673a8366ad41129b9fed4f04ee8c4fa0e82f91b3",
+      "androidUrl": "https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk?sha256=870c61084db5ed2c81271b8a850bec1b66366efc2aed186d268c0914fc01536b",
+      "sha256": "870c61084db5ed2c81271b8a850bec1b66366efc2aed186d268c0914fc01536b",
       "releaseNotes": "Redesigned restaurant menu screen with aligned cards, plus a delivery code that appears once the food is collected and disappears once the driver confirms the handover."
     }
   }

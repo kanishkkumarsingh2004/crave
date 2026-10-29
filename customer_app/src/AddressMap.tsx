@@ -38,9 +38,11 @@ function createMapcnMarker() {
 export default function AddressMap({
   location,
   onPick,
+  onRetry,
 }: {
   location: AddressMapPoint | null
   onPick: (point: AddressMapPoint) => void
+  onRetry?: () => void
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
@@ -102,8 +104,8 @@ export default function AddressMap({
         map.setStyle(websiteMapFallbackStyle(activeTheme), { diff: false })
         failureTimeout = window.setTimeout(() => {
           if (!map.isStyleLoaded()) setStatus('error')
-        }, 10_000)
-      }, 10_000)
+        }, 8_000)
+      }, 5_000)
     }
     const handleStyleLoad = () => {
       clearTimers()
@@ -177,7 +179,20 @@ export default function AddressMap({
       {status === 'loading' && <div className="address-map-status">Loading map…</div>}
       {status === 'error' && (
         <div className="address-map-status address-map-error">
-          Map unavailable. Check your connection and reopen this page.
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+            <span>Map unavailable</span>
+            <button
+              type="button"
+              onClick={() => {
+                setStatus('loading')
+                if (onRetry) onRetry()
+              }}
+              className="primary"
+              style={{ padding: '6px 14px', fontSize: 11, marginTop: 6 }}
+            >
+              Retry
+            </button>
+          </div>
         </div>
       )}
       <div className="address-map-credit">

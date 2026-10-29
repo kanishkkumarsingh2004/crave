@@ -226,6 +226,62 @@ const blankMapStyle: MapLibreGL.StyleSpecification = {
   ],
 }
 
+// Free OpenStreetMap raster fallback used when the primary basemap style fails
+// to load (no API token required).
+const osmFallbackStyle: MapLibreGL.StyleSpecification = {
+  version: 8,
+  sources: {
+    openstreetmap: {
+      type: 'raster',
+      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      maxzoom: 19,
+    },
+  },
+  layers: [
+    {
+      id: 'background',
+      type: 'background',
+      paint: { 'background-color': '#f8fafc' },
+    },
+    {
+      id: 'openstreetmap',
+      type: 'raster',
+      source: 'openstreetmap',
+    },
+  ],
+}
+
+const osmFallbackStyleDark: MapLibreGL.StyleSpecification = {
+  version: 8,
+  sources: {
+    openstreetmap: {
+      type: 'raster',
+      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      maxzoom: 19,
+    },
+  },
+  layers: [
+    {
+      id: 'background',
+      type: 'background',
+      paint: { 'background-color': '#111a15' },
+    },
+    {
+      id: 'openstreetmap',
+      type: 'raster',
+      source: 'openstreetmap',
+      paint: {
+        'raster-brightness-max': 0.68,
+        'raster-brightness-min': 0.08,
+        'raster-contrast': 0.16,
+        'raster-saturation': -0.45,
+      },
+    },
+  ],
+}
+
 // Prevent equivalent inline style objects from triggering a full map style reload.
 function useStableValue<T>(value: T): T {
   const key = useMemo(() => JSON.stringify(value) ?? '', [value])
@@ -410,12 +466,12 @@ function MapLoadError() {
 function MapDataCredit() {
   return (
     <div className="bg-background/85 text-muted-foreground pointer-events-auto absolute bottom-1 left-1 z-10 rounded px-1.5 py-0.5 text-[9px] leading-none shadow-sm backdrop-blur-sm">
-      <a href="https://carto.com/attributions" target="_blank" rel="noreferrer">
-        © CARTO
-      </a>{' '}
-      ·{' '}
       <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
         © OSM
+      </a>{' '}
+      ·
+      <a href="https://openfreemap.org/" target="_blank" rel="noreferrer">
+        OpenFreeMap
       </a>
     </div>
   )
@@ -484,7 +540,8 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
       clearStyleTimers()
       styleLoadTimerRef.current = window.setTimeout(() => {
         if (map.isStyleLoaded()) return
-        const fallbackStyle = resolvedThemeRef.current === 'dark' ? blankMapStyle : blankMapStyle
+        const fallbackStyle =
+          resolvedThemeRef.current === 'dark' ? osmFallbackStyleDark : osmFallbackStyle
         currentStyleRef.current = fallbackStyle
         map.setStyle(fallbackStyle, { diff: false })
         styleFailureTimerRef.current = window.setTimeout(() => {
