@@ -1,0 +1,27 @@
+{
+	"appId": "com.crave.restaurant",
+	"appName": "Crave Restaurant",
+	"webDir": "dist",
+	"backgroundColor": "#121815",
+	"appendUserAgent": " CraveRestaurant/1.0.0",
+	"plugins": {
+		"LocalNotifications": {
+			"smallIcon": "ic_stat_crave",
+			"iconColor": "#D9F447"
+		},
+		"SplashScreen": {
+			"launchShowDuration": 0,
+			"launchAutoHide": true,
+			"backgroundColor": "#121815",
+			"showSpinner": false,
+			"androidScaleType": "CENTER_CROP",
+			"splashFullScreen": true,
+			"splashImmersive": true
+		},
+		"StatusBar": {
+			"style": "LIGHT",
+			"backgroundColor": "#121815",
+			"overlaysWebView": true
+		}
+	}
+}

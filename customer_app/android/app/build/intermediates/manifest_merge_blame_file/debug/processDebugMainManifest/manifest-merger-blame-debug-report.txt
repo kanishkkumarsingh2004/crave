@@ -1,0 +1,455 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.crave.customer"
+4    android:versionCode="28"
+5    android:versionName="1.0.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="36" />
+10
+11    <queries>
+11-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:3:5-11:15
+12        <package android:name="com.google.android.apps.nbu.paisa.user" />
+12-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:4:9-74
+12-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:4:18-71
+13        <package android:name="com.phonepe.app" />
+13-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:5:9-51
+13-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:5:18-48
+14        <package android:name="net.one97.paytm" />
+14-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:6:9-51
+14-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:6:18-48
+15
+16        <intent>
+16-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:7:9-10:18
+17            <action android:name="android.intent.action.VIEW" />
+17-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:8:13-65
+17-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:8:21-62
+18
+19            <data android:scheme="upi" />
+19-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:9:13-42
+19-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:9:19-39
+20        </intent>
+21    </queries>
+22
+23    <!-- Permissions -->
+24
+25    <uses-permission android:name="android.permission.INTERNET" />
+25-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:59:5-67
+25-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:59:22-64
+26    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+26-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:60:5-81
+26-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:60:22-78
+27    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+27-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:61:5-79
+27-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:61:22-76
+28    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+28-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:62:5-77
+28-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:62:22-74
+29    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+29-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:63:5-77
+29-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:63:22-74
+30    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SHORT_SERVICE" />
+30-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:64:5-91
+30-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:64:22-88
+31    <uses-permission android:name="android.permission.WAKE_LOCK" />
+31-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:65:5-68
+31-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:65:22-65
+32    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+32-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:66:5-83
+32-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:66:22-80
+33    <uses-permission android:name="android.permission.VIBRATE" />
+33-->[:capacitor-haptics] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+haptics@8.0.2_@capacitor+core@8.5.3/node_modules/@capacitor/haptics/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:7:5-66
+33-->[:capacitor-haptics] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+haptics@8.0.2_@capacitor+core@8.5.3/node_modules/@capacitor/haptics/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:7:22-63
+34    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+34-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:7:5-81
+34-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:7:22-78
+35    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+35-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:10:5-79
+35-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:10:22-76
+36    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <!-- Required by older versions of Google Play services to create IID tokens -->
+36-->[:capacitor-network] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+network@8.0.1_@capacitor+core@8.5.3/node_modules/@capacitor/network/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:7:5-79
+36-->[:capacitor-network] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+network@8.0.1_@capacitor+core@8.5.3/node_modules/@capacitor/network/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:7:22-76
+37    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+37-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:26:5-82
+37-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:26:22-79
+38
+39    <permission
+39-->[androidx.core:core:1.17.0] /home/kanishk/.gradle/caches/8.14.3/transforms/11094a199bb7945826b161d8a9c17beb/transformed/core-1.17.0/AndroidManifest.xml:22:5-24:47
+40        android:name="com.crave.customer.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+40-->[androidx.core:core:1.17.0] /home/kanishk/.gradle/caches/8.14.3/transforms/11094a199bb7945826b161d8a9c17beb/transformed/core-1.17.0/AndroidManifest.xml:23:9-81
+41        android:protectionLevel="signature" />
+41-->[androidx.core:core:1.17.0] /home/kanishk/.gradle/caches/8.14.3/transforms/11094a199bb7945826b161d8a9c17beb/transformed/core-1.17.0/AndroidManifest.xml:24:9-44
+42
+43    <uses-permission android:name="com.crave.customer.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+43-->[androidx.core:core:1.17.0] /home/kanishk/.gradle/caches/8.14.3/transforms/11094a199bb7945826b161d8a9c17beb/transformed/core-1.17.0/AndroidManifest.xml:26:5-97
+43-->[androidx.core:core:1.17.0] /home/kanishk/.gradle/caches/8.14.3/transforms/11094a199bb7945826b161d8a9c17beb/transformed/core-1.17.0/AndroidManifest.xml:26:22-94
+44
+45    <application
+45-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:12:5-55:19
+46        android:allowBackup="false"
+46-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:13:9-36
+47        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+47-->[androidx.core:core:1.17.0] /home/kanishk/.gradle/caches/8.14.3/transforms/11094a199bb7945826b161d8a9c17beb/transformed/core-1.17.0/AndroidManifest.xml:28:18-86
+48        android:debuggable="true"
+49        android:extractNativeLibs="false"
+50        android:icon="@mipmap/ic_launcher"
+50-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:14:9-43
+51        android:label="@string/app_name"
+51-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:15:9-41
+52        android:roundIcon="@mipmap/ic_launcher_round"
+52-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:16:9-54
+53        android:supportsRtl="true"
+53-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:17:9-35
+54        android:theme="@style/AppTheme"
+54-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:18:9-40
+55        android:usesCleartextTraffic="false" >
+55-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:19:9-45
+56        <activity
+56-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:20:9-38:20
+57            android:name="com.crave.customer.MainActivity"
+57-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:22:13-41
+58            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
+58-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:21:13-148
+59            android:exported="true"
+59-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:26:13-36
+60            android:label="@string/title_activity_main"
+60-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:23:13-56
+61            android:launchMode="singleTask"
+61-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:25:13-44
+62            android:theme="@style/AppTheme.NoActionBarLaunch" >
+62-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:24:13-62
+63            <intent-filter>
+63-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:27:13-30:29
+64                <action android:name="android.intent.action.MAIN" />
+64-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:28:17-69
+64-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:28:25-66
+65
+66                <category android:name="android.intent.category.LAUNCHER" />
+66-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:29:17-77
+66-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:29:27-74
+67            </intent-filter>
+68            <intent-filter>
+68-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:32:13-37:29
+69                <action android:name="android.intent.action.VIEW" />
+69-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:8:13-65
+69-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:8:21-62
+70
+71                <category android:name="android.intent.category.DEFAULT" />
+71-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:34:17-76
+71-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:34:27-73
+72                <category android:name="android.intent.category.BROWSABLE" />
+72-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:35:17-78
+72-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:35:27-75
+73
+74                <data android:scheme="crave" />
+74-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:9:13-42
+74-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:9:19-39
+75            </intent-filter>
+76        </activity>
+77
+78        <!--
+79             Background order-status polling service (foreground, keeps a persistent notification
+80             while the customer has an active order so the OS does not kill it).
+81        -->
+82        <service
+82-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:42:9-46:44
+83            android:name="com.crave.customer.OrderPollingService"
+83-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:43:13-48
+84            android:exported="false"
+84-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:44:13-37
+85            android:foregroundServiceType="shortService"
+85-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:45:13-57
+86            android:stopWithTask="false" />
+86-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:46:13-41
+87
+88        <provider
+89            android:name="androidx.core.content.FileProvider"
+89-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:49:13-62
+90            android:authorities="com.crave.customer.fileprovider"
+90-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:50:13-64
+91            android:exported="false"
+91-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:51:13-37
+92            android:grantUriPermissions="true" >
+92-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:52:13-47
+93            <meta-data
+93-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:53:13-112
+94                android:name="android.support.FILE_PROVIDER_PATHS"
+94-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:53:24-74
+95                android:resource="@xml/file_paths" />
+95-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:53:75-109
+96        </provider>
+97
+98        <receiver android:name="com.capacitorjs.plugins.localnotifications.TimedNotificationPublisher" />
+98-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:13:9-106
+98-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:13:19-103
+99        <receiver android:name="com.capacitorjs.plugins.localnotifications.NotificationDismissReceiver" />
+99-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:14:9-107
+99-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:14:19-104
+100        <receiver
+100-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:15:9-24:20
+101            android:name="com.capacitorjs.plugins.localnotifications.LocalNotificationRestoreReceiver"
+101-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:16:13-103
+102            android:directBootAware="true"
+102-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:17:13-43
+103            android:exported="false" >
+103-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:18:13-37
+104            <intent-filter>
+104-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:19:13-23:29
+105                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+105-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:20:17-86
+105-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:20:25-83
+106                <action android:name="android.intent.action.BOOT_COMPLETED" />
+106-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:21:17-79
+106-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:21:25-76
+107                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+107-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:22:17-82
+107-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:22:25-79
+108            </intent-filter>
+109        </receiver>
+110
+111        <provider
+111-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:26:9-34:20
+112            android:name="com.capacitorjs.plugins.localnotifications.LocalNotificationsAssetProvider"
+112-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:27:13-102
+113            android:authorities="com.crave.customer.localnotifications.fileprovider"
+113-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:28:13-83
+114            android:exported="false"
+114-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:29:13-37
+115            android:grantUriPermissions="true" >
+115-->[:capacitor-local-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+local-notifications@8.3.1_@capacitor+core@8.5.3/node_modules/@capacitor/local-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:30:13-47
+116            <meta-data
+116-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:53:13-112
+117                android:name="android.support.FILE_PROVIDER_PATHS"
+117-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:53:24-74
+118                android:resource="@xml/localnotifications_provider_paths" />
+118-->/home/kanishk/Desktop/kk-code/APEX/crave/customer_app/android/app/src/main/AndroidManifest.xml:53:75-109
+119        </provider>
+120
+121        <service
+121-->[:capacitor-push-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+push-notifications@8.1.3_@capacitor+core@8.5.3/node_modules/@capacitor/push-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:8:9-14:19
+122            android:name="com.capacitorjs.plugins.pushnotifications.MessagingService"
+122-->[:capacitor-push-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+push-notifications@8.1.3_@capacitor+core@8.5.3/node_modules/@capacitor/push-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:9:13-86
+123            android:exported="false" >
+123-->[:capacitor-push-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+push-notifications@8.1.3_@capacitor+core@8.5.3/node_modules/@capacitor/push-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:10:13-37
+124            <intent-filter>
+124-->[:capacitor-push-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+push-notifications@8.1.3_@capacitor+core@8.5.3/node_modules/@capacitor/push-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:11:13-13:29
+125                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+125-->[:capacitor-push-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+push-notifications@8.1.3_@capacitor+core@8.5.3/node_modules/@capacitor/push-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:12:17-78
+125-->[:capacitor-push-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+push-notifications@8.1.3_@capacitor+core@8.5.3/node_modules/@capacitor/push-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:12:25-75
+126            </intent-filter>
+127        </service>
+128
+129        <receiver
+129-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:29:9-40:20
+130            android:name="com.google.firebase.iid.FirebaseInstanceIdReceiver"
+130-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:30:13-78
+131            android:exported="true"
+131-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:31:13-36
+132            android:permission="com.google.android.c2dm.permission.SEND" >
+132-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:32:13-73
+133            <intent-filter>
+133-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:33:13-35:29
+134                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+134-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:34:17-81
+134-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:34:25-78
+135            </intent-filter>
+136
+137            <meta-data
+137-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:37:13-39:40
+138                android:name="com.google.android.gms.cloudmessaging.FINISHED_AFTER_HANDLED"
+138-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:38:17-92
+139                android:value="true" />
+139-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:39:17-37
+140        </receiver>
+141        <!--
+142             FirebaseMessagingService performs security checks at runtime,
+143             but set to not exported to explicitly avoid allowing another app to call it.
+144        -->
+145        <service
+145-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:46:9-53:19
+146            android:name="com.google.firebase.messaging.FirebaseMessagingService"
+146-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:47:13-82
+147            android:directBootAware="true"
+147-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:48:13-43
+148            android:exported="false" >
+148-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:49:13-37
+149            <intent-filter android:priority="-500" >
+149-->[:capacitor-push-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+push-notifications@8.1.3_@capacitor+core@8.5.3/node_modules/@capacitor/push-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:11:13-13:29
+150                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+150-->[:capacitor-push-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+push-notifications@8.1.3_@capacitor+core@8.5.3/node_modules/@capacitor/push-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:12:17-78
+150-->[:capacitor-push-notifications] /home/kanishk/Desktop/kk-code/APEX/crave/node_modules/.pnpm/@capacitor+push-notifications@8.1.3_@capacitor+core@8.5.3/node_modules/@capacitor/push-notifications/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:12:25-75
+151            </intent-filter>
+152        </service>
+153        <service
+153-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:54:9-63:19
+154            android:name="com.google.firebase.components.ComponentDiscoveryService"
+154-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:55:13-84
+155            android:directBootAware="true"
+155-->[com.google.firebase:firebase-common:22.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/cb546919c09df4bb1e2d2127157bcaa2/transformed/firebase-common-22.0.1/AndroidManifest.xml:32:13-43
+156            android:exported="false" >
+156-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:56:13-37
+157            <meta-data
+157-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:57:13-59:85
+158                android:name="com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingKtxRegistrar"
+158-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:58:17-122
+159                android:value="com.google.firebase.components.ComponentRegistrar" />
+159-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:59:17-82
+160            <meta-data
+160-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:60:13-62:85
+161                android:name="com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingRegistrar"
+161-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:61:17-119
+162                android:value="com.google.firebase.components.ComponentRegistrar" />
+162-->[com.google.firebase:firebase-messaging:25.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/fee7827030cf30b9c64fc7d59fae02bb/transformed/firebase-messaging-25.0.1/AndroidManifest.xml:62:17-82
+163            <meta-data
+163-->[com.google.firebase:firebase-installations:18.0.0] /home/kanishk/.gradle/caches/8.14.3/transforms/df907beae055c1d2434697ac5cd0594d/transformed/firebase-installations-18.0.0/AndroidManifest.xml:15:13-17:85
+164                android:name="com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsKtxRegistrar"
+164-->[com.google.firebase:firebase-installations:18.0.0] /home/kanishk/.gradle/caches/8.14.3/transforms/df907beae055c1d2434697ac5cd0594d/transformed/firebase-installations-18.0.0/AndroidManifest.xml:16:17-130
+165                android:value="com.google.firebase.components.ComponentRegistrar" />
+165-->[com.google.firebase:firebase-installations:18.0.0] /home/kanishk/.gradle/caches/8.14.3/transforms/df907beae055c1d2434697ac5cd0594d/transformed/firebase-installations-18.0.0/AndroidManifest.xml:17:17-82
+166            <meta-data
+166-->[com.google.firebase:firebase-installations:18.0.0] /home/kanishk/.gradle/caches/8.14.3/transforms/df907beae055c1d2434697ac5cd0594d/transformed/firebase-installations-18.0.0/AndroidManifest.xml:18:13-20:85
+167                android:name="com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsRegistrar"
+167-->[com.google.firebase:firebase-installations:18.0.0] /home/kanishk/.gradle/caches/8.14.3/transforms/df907beae055c1d2434697ac5cd0594d/transformed/firebase-installations-18.0.0/AndroidManifest.xml:19:17-127
+168                android:value="com.google.firebase.components.ComponentRegistrar" />
+168-->[com.google.firebase:firebase-installations:18.0.0] /home/kanishk/.gradle/caches/8.14.3/transforms/df907beae055c1d2434697ac5cd0594d/transformed/firebase-installations-18.0.0/AndroidManifest.xml:20:17-82
+169            <meta-data
+169-->[com.google.firebase:firebase-common:22.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/cb546919c09df4bb1e2d2127157bcaa2/transformed/firebase-common-22.0.1/AndroidManifest.xml:35:13-37:85
+170                android:name="com.google.firebase.components:com.google.firebase.FirebaseCommonKtxRegistrar"
+170-->[com.google.firebase:firebase-common:22.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/cb546919c09df4bb1e2d2127157bcaa2/transformed/firebase-common-22.0.1/AndroidManifest.xml:36:17-109
+171                android:value="com.google.firebase.components.ComponentRegistrar" />
+171-->[com.google.firebase:firebase-common:22.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/cb546919c09df4bb1e2d2127157bcaa2/transformed/firebase-common-22.0.1/AndroidManifest.xml:37:17-82
+172            <meta-data
+172-->[com.google.firebase:firebase-datatransport:18.2.0] /home/kanishk/.gradle/caches/8.14.3/transforms/37804962654ec3e9f031e2012e83e63f/transformed/firebase-datatransport-18.2.0/AndroidManifest.xml:25:13-27:85
+173                android:name="com.google.firebase.components:com.google.firebase.datatransport.TransportRegistrar"
+173-->[com.google.firebase:firebase-datatransport:18.2.0] /home/kanishk/.gradle/caches/8.14.3/transforms/37804962654ec3e9f031e2012e83e63f/transformed/firebase-datatransport-18.2.0/AndroidManifest.xml:26:17-115
+174                android:value="com.google.firebase.components.ComponentRegistrar" />
+174-->[com.google.firebase:firebase-datatransport:18.2.0] /home/kanishk/.gradle/caches/8.14.3/transforms/37804962654ec3e9f031e2012e83e63f/transformed/firebase-datatransport-18.2.0/AndroidManifest.xml:27:17-82
+175        </service>
+176
+177        <activity
+177-->[com.google.android.gms:play-services-base:18.5.0] /home/kanishk/.gradle/caches/8.14.3/transforms/c1b0052ae712299163f2612d6db27779/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:9-173
+178            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+178-->[com.google.android.gms:play-services-base:18.5.0] /home/kanishk/.gradle/caches/8.14.3/transforms/c1b0052ae712299163f2612d6db27779/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:19-85
+179            android:exported="false"
+179-->[com.google.android.gms:play-services-base:18.5.0] /home/kanishk/.gradle/caches/8.14.3/transforms/c1b0052ae712299163f2612d6db27779/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:146-170
+180            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+180-->[com.google.android.gms:play-services-base:18.5.0] /home/kanishk/.gradle/caches/8.14.3/transforms/c1b0052ae712299163f2612d6db27779/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:86-145
+181
+182        <provider
+182-->[androidx.emoji2:emoji2:1.3.0] /home/kanishk/.gradle/caches/8.14.3/transforms/353d69426d62513a7e19e841051a3a44/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+183            android:name="androidx.startup.InitializationProvider"
+183-->[androidx.emoji2:emoji2:1.3.0] /home/kanishk/.gradle/caches/8.14.3/transforms/353d69426d62513a7e19e841051a3a44/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
+184            android:authorities="com.crave.customer.androidx-startup"
+184-->[androidx.emoji2:emoji2:1.3.0] /home/kanishk/.gradle/caches/8.14.3/transforms/353d69426d62513a7e19e841051a3a44/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
+185            android:exported="false" >
+185-->[androidx.emoji2:emoji2:1.3.0] /home/kanishk/.gradle/caches/8.14.3/transforms/353d69426d62513a7e19e841051a3a44/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
+186            <meta-data
+186-->[androidx.emoji2:emoji2:1.3.0] /home/kanishk/.gradle/caches/8.14.3/transforms/353d69426d62513a7e19e841051a3a44/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+187                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+187-->[androidx.emoji2:emoji2:1.3.0] /home/kanishk/.gradle/caches/8.14.3/transforms/353d69426d62513a7e19e841051a3a44/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
+188                android:value="androidx.startup" />
+188-->[androidx.emoji2:emoji2:1.3.0] /home/kanishk/.gradle/caches/8.14.3/transforms/353d69426d62513a7e19e841051a3a44/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
+189            <meta-data
+189-->[androidx.lifecycle:lifecycle-process:2.6.2] /home/kanishk/.gradle/caches/8.14.3/transforms/14a3b51da1167f75215e7e32d2231e74/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:29:13-31:52
+190                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+190-->[androidx.lifecycle:lifecycle-process:2.6.2] /home/kanishk/.gradle/caches/8.14.3/transforms/14a3b51da1167f75215e7e32d2231e74/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:30:17-78
+191                android:value="androidx.startup" />
+191-->[androidx.lifecycle:lifecycle-process:2.6.2] /home/kanishk/.gradle/caches/8.14.3/transforms/14a3b51da1167f75215e7e32d2231e74/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:31:17-49
+192            <meta-data
+192-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:29:13-31:52
+193                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+193-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:30:17-85
+194                android:value="androidx.startup" />
+194-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:31:17-49
+195        </provider>
+196        <provider
+196-->[com.google.firebase:firebase-common:22.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/cb546919c09df4bb1e2d2127157bcaa2/transformed/firebase-common-22.0.1/AndroidManifest.xml:23:9-28:39
+197            android:name="com.google.firebase.provider.FirebaseInitProvider"
+197-->[com.google.firebase:firebase-common:22.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/cb546919c09df4bb1e2d2127157bcaa2/transformed/firebase-common-22.0.1/AndroidManifest.xml:24:13-77
+198            android:authorities="com.crave.customer.firebaseinitprovider"
+198-->[com.google.firebase:firebase-common:22.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/cb546919c09df4bb1e2d2127157bcaa2/transformed/firebase-common-22.0.1/AndroidManifest.xml:25:13-72
+199            android:directBootAware="true"
+199-->[com.google.firebase:firebase-common:22.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/cb546919c09df4bb1e2d2127157bcaa2/transformed/firebase-common-22.0.1/AndroidManifest.xml:26:13-43
+200            android:exported="false"
+200-->[com.google.firebase:firebase-common:22.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/cb546919c09df4bb1e2d2127157bcaa2/transformed/firebase-common-22.0.1/AndroidManifest.xml:27:13-37
+201            android:initOrder="100" />
+201-->[com.google.firebase:firebase-common:22.0.1] /home/kanishk/.gradle/caches/8.14.3/transforms/cb546919c09df4bb1e2d2127157bcaa2/transformed/firebase-common-22.0.1/AndroidManifest.xml:28:13-36
+202
+203        <meta-data
+203-->[com.google.android.gms:play-services-basement:18.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/535e9dd0a65eaa85bd344836d560144e/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:9-122
+204            android:name="com.google.android.gms.version"
+204-->[com.google.android.gms:play-services-basement:18.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/535e9dd0a65eaa85bd344836d560144e/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:20-65
+205            android:value="@integer/google_play_services_version" />
+205-->[com.google.android.gms:play-services-basement:18.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/535e9dd0a65eaa85bd344836d560144e/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:66-119
+206
+207        <receiver
+207-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:34:9-52:20
+208            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+208-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:35:13-76
+209            android:directBootAware="false"
+209-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:36:13-44
+210            android:enabled="true"
+210-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:37:13-35
+211            android:exported="true"
+211-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:38:13-36
+212            android:permission="android.permission.DUMP" >
+212-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:39:13-57
+213            <intent-filter>
+213-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:40:13-42:29
+214                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+214-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:41:17-91
+214-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:41:25-88
+215            </intent-filter>
+216            <intent-filter>
+216-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:43:13-45:29
+217                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+217-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:44:17-85
+217-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:44:25-82
+218            </intent-filter>
+219            <intent-filter>
+219-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:46:13-48:29
+220                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+220-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:47:17-88
+220-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:47:25-85
+221            </intent-filter>
+222            <intent-filter>
+222-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:49:13-51:29
+223                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+223-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:50:17-95
+223-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kanishk/.gradle/caches/8.14.3/transforms/f95ab50c54d3211c648684c462933e30/transformed/profileinstaller-1.4.0/AndroidManifest.xml:50:25-92
+224            </intent-filter>
+225        </receiver>
+226
+227        <service
+227-->[com.google.android.datatransport:transport-backend-cct:3.1.9] /home/kanishk/.gradle/caches/8.14.3/transforms/ea620a6b5afc7c5e432bbec109041d91/transformed/transport-backend-cct-3.1.9/AndroidManifest.xml:28:9-34:19
+228            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+228-->[com.google.android.datatransport:transport-backend-cct:3.1.9] /home/kanishk/.gradle/caches/8.14.3/transforms/ea620a6b5afc7c5e432bbec109041d91/transformed/transport-backend-cct-3.1.9/AndroidManifest.xml:29:13-103
+229            android:exported="false" >
+229-->[com.google.android.datatransport:transport-backend-cct:3.1.9] /home/kanishk/.gradle/caches/8.14.3/transforms/ea620a6b5afc7c5e432bbec109041d91/transformed/transport-backend-cct-3.1.9/AndroidManifest.xml:30:13-37
+230            <meta-data
+230-->[com.google.android.datatransport:transport-backend-cct:3.1.9] /home/kanishk/.gradle/caches/8.14.3/transforms/ea620a6b5afc7c5e432bbec109041d91/transformed/transport-backend-cct-3.1.9/AndroidManifest.xml:31:13-33:39
+231                android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
+231-->[com.google.android.datatransport:transport-backend-cct:3.1.9] /home/kanishk/.gradle/caches/8.14.3/transforms/ea620a6b5afc7c5e432bbec109041d91/transformed/transport-backend-cct-3.1.9/AndroidManifest.xml:32:17-94
+232                android:value="cct" />
+232-->[com.google.android.datatransport:transport-backend-cct:3.1.9] /home/kanishk/.gradle/caches/8.14.3/transforms/ea620a6b5afc7c5e432bbec109041d91/transformed/transport-backend-cct-3.1.9/AndroidManifest.xml:33:17-36
+233        </service>
+234        <service
+234-->[com.google.android.datatransport:transport-runtime:3.1.9] /home/kanishk/.gradle/caches/8.14.3/transforms/1491c73c5d15eb22051217da9a2fb39c/transformed/transport-runtime-3.1.9/AndroidManifest.xml:26:9-30:19
+235            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+235-->[com.google.android.datatransport:transport-runtime:3.1.9] /home/kanishk/.gradle/caches/8.14.3/transforms/1491c73c5d15eb22051217da9a2fb39c/transformed/transport-runtime-3.1.9/AndroidManifest.xml:27:13-117
+236            android:exported="false"
+236-->[com.google.android.datatransport:transport-runtime:3.1.9] /home/kanishk/.gradle/caches/8.14.3/transforms/1491c73c5d15eb22051217da9a2fb39c/transformed/transport-runtime-3.1.9/AndroidManifest.xml:28:13-37
+237            android:permission="android.permission.BIND_JOB_SERVICE" >
+237-->[com.google.android.datatransport:transport-runtime:3.1.9] /home/kanishk/.gradle/caches/8.14.3/transforms/1491c73c5d15eb22051217da9a2fb39c/transformed/transport-runtime-3.1.9/AndroidManifest.xml:29:13-69
+238        </service>
+239
+240        <receiver
+240-->[com.google.android.datatransport:transport-runtime:3.1.9] /home/kanishk/.gradle/caches/8.14.3/transforms/1491c73c5d15eb22051217da9a2fb39c/transformed/transport-runtime-3.1.9/AndroidManifest.xml:32:9-34:40
+241            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+241-->[com.google.android.datatransport:transport-runtime:3.1.9] /home/kanishk/.gradle/caches/8.14.3/transforms/1491c73c5d15eb22051217da9a2fb39c/transformed/transport-runtime-3.1.9/AndroidManifest.xml:33:13-132
+242            android:exported="false" />
+242-->[com.google.android.datatransport:transport-runtime:3.1.9] /home/kanishk/.gradle/caches/8.14.3/transforms/1491c73c5d15eb22051217da9a2fb39c/transformed/transport-runtime-3.1.9/AndroidManifest.xml:34:13-37
+243    </application>
+244
+245</manifest>
