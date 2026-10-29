@@ -4,7 +4,7 @@ import VendorSidebar from '@/components/VendorSidebar'
 import { VendorDashboardSkeleton } from '@/components/ui/SkeletonLoaders'
 import { useAuth } from '@/lib/auth-context'
 import { apiFetch } from '@/lib/client/api-fetch'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight, CheckCircle2, Clock3, DollarSign, Percent, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -138,7 +138,6 @@ export default function VendorSalesPage() {
     return <VendorDashboardSkeleton />
   }
 
-<<<<<<< HEAD
   // Aggregate financial metrics from orders or settlements
   const ordersGross = orders.reduce((sum, o) => sum + Number(o.subtotal || o.total_amount || 0), 0)
   const settlementsGross = settlementsHistory.reduce((sum, s) => sum + Number(s.grossSales || 0), 0)
@@ -195,8 +194,6 @@ export default function VendorSalesPage() {
 
   const totalRecordCount = orders.length > 0 ? orders.length : settlementsHistory.length
 
-=======
->>>>>>> fa6727555c3de077aebf0ab7613e40d294766d87
   return (
     <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0a0f0d] text-[#121815] dark:text-white pb-28 lg:pb-16 lg:pl-64 custom-scrollbar overflow-x-hidden w-full max-w-full transition-colors duration-200">
       <VendorSidebar />
@@ -227,7 +224,6 @@ export default function VendorSalesPage() {
             </Link>
           </div>
         </div>
-<<<<<<< HEAD
 
         {/* 5 Financial Summary KPI Cards */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5 w-full min-w-0">
@@ -321,8 +317,6 @@ export default function VendorSalesPage() {
             </p>
           </div>
         </div>
-=======
->>>>>>> fa6727555c3de077aebf0ab7613e40d294766d87
       </div>
     </div>
   )

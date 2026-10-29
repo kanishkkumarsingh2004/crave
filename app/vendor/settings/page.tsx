@@ -43,6 +43,9 @@ export default function VendorSettingsPage() {
   const [gstStatus, setGstStatus] = useState('REGISTERED')
   const [supplierState, setSupplierState] = useState('Karnataka')
   const [priceTaxMode, setPriceTaxMode] = useState('TAX_INCLUSIVE')
+  const [commercialModel, setCommercialModel] = useState('commission')
+  const [commissionRate, setCommissionRate] = useState(15)
+  const [markupRate, setMarkupRate] = useState(0)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -96,6 +99,9 @@ export default function VendorSettingsPage() {
         setGstStatus(restaurant.gst_status ?? 'REGISTERED')
         setSupplierState(restaurant.supplier_state ?? 'Karnataka')
         setPriceTaxMode(restaurant.price_tax_mode ?? 'TAX_INCLUSIVE')
+        setCommercialModel(restaurant.commercial_model ?? 'commission')
+        setCommissionRate(Number(restaurant.commission_rate ?? 15))
+        setMarkupRate(Number(restaurant.markup_rate ?? 0))
       } catch (err) {
         console.error('Failed to load restaurant settings:', err)
       } finally {
@@ -166,6 +172,9 @@ export default function VendorSettingsPage() {
           gst_status: gstStatus || 'REGISTERED',
           supplier_state: supplierState || 'Karnataka',
           price_tax_mode: priceTaxMode || 'TAX_INCLUSIVE',
+          commercial_model: commercialModel || 'commission',
+          commission_rate: Number(commissionRate) || 15,
+          markup_rate: Number(markupRate) || 0,
         }),
       })
       if (!res.ok) {
@@ -544,7 +553,6 @@ export default function VendorSettingsPage() {
             </div>
           </div>
 
-<<<<<<< HEAD
           {/* Commission & Markup Rate Card */}
           <div className="rounded-3xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] p-5 sm:p-7 shadow-xs space-y-5">
             <div className="flex items-center gap-3 border-b border-black/[0.06] dark:border-white/[0.06] pb-4">
@@ -611,8 +619,6 @@ export default function VendorSettingsPage() {
             </div>
           </div>
 
-=======
->>>>>>> fa6727555c3de077aebf0ab7613e40d294766d87
           {/* Submit Save Button */}
           <div className="flex sm:justify-end">
             <button

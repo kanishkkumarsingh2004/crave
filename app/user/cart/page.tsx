@@ -1336,6 +1336,10 @@ export default function CartPage() {
                         )}
                       </button>
                     </form>
+
+                    <p className="text-center text-[11px] text-stone-400 dark:text-stone-500">
+                      100% secure payment &bull; 256-bit encryption
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1344,7 +1348,6 @@ export default function CartPage() {
         )}
       </main>
 
-<<<<<<< HEAD
       {/* Floating Mobile Checkout Bar */}
       {cart.length > 0 && !orderSuccess && (
         <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-40 lg:hidden animate-in slide-in-from-bottom-4 duration-200">
@@ -1367,8 +1370,6 @@ export default function CartPage() {
         </div>
       )}
 
-=======
->>>>>>> fa6727555c3de077aebf0ab7613e40d294766d87
       {/* Available Coupons Modal */}
       {showCouponsModal && (
         <div
