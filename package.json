@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "pnpm@12.3.4",
   "scripts": {
-    "dev": "node server.js",
+    "dev": "NODE_ENV=development node server.js",
     "dev:ws": "node ws-server.js",
     "dev:admin": "VITE_API_BASE_URL=http://localhost:3000 pnpm --filter @crave/admin-app dev",
     "dev:driver": "VITE_API_BASE_URL=http://localhost:3000 pnpm --filter @crave/driver-app dev",
@@ -15,7 +15,7 @@
     "build:ios": "bash scripts/build-ios.sh",
     "build:next": "prisma generate && next build --webpack",
     "rebuild": "turbo run //#build:next @crave/admin-app#build @crave/driver-app#build @crave/restaurant-app#build @crave/customer-app#build --force",
-    "start": "node server.js",
+    "start": "NODE_ENV=production node server.js",
     "start:ws": "node ws-server.js",
     "typecheck": "turbo run typecheck:ts",
     "typecheck:ts": "tsc --noEmit",

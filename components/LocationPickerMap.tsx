@@ -174,8 +174,18 @@ export default function LocationPickerMap({
         onClick={handleMapClick}
         className="h-full w-full"
         styles={{
-          light: 'https://tiles.openfreemap.org/styles/bright',
-          dark: 'https://tiles.openfreemap.org/styles/liberty',
+          light: {
+            version: 8,
+            name: 'blank-light',
+            sources: {},
+            layers: [],
+          },
+          dark: {
+            version: 8,
+            name: 'blank-dark',
+            sources: {},
+            layers: [],
+          },
         }}
       >
         <MapControls position="bottom-right" showZoom />

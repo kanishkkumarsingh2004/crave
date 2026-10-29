@@ -17,7 +17,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const CUSTOMER_ANDROID_APK_URL =
   'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk'
@@ -170,6 +170,7 @@ export default function HomePage() {
   const [selectedLocation, setSelectedLocation] = useState('Kanakapura Road, Bengaluru')
   const [redirectTimeoutExceeded, setRedirectTimeoutExceeded] = useState(false)
   const [showAppPopup, setShowAppPopup] = useState(false)
+  const hasNavigated = useRef(false)
 
   // Compute target dashboard URL based on operational user role or URL redirect param
   const getTargetDashboard = () => {
@@ -193,9 +194,11 @@ export default function HomePage() {
 
   // Preserve authentication redirects to designated operational cockpits
   useEffect(() => {
+    if (hasNavigated.current) return
     if (!isLoading && user) {
       const targetDashboard = getTargetDashboard()
       if (targetDashboard) {
+        hasNavigated.current = true
         router.replace(targetDashboard)
 
         // Safety timeout: prevent indefinite spinner if routing delays or hits edge case (UIX-004)
