@@ -58,10 +58,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
-    const passwordMatches =
-      verifyPassword(password, profile.password_hash, profile.email) ||
-      (password.startsWith('-') && verifyPassword(password.slice(1), profile.password_hash, profile.email)) ||
-      verifyPassword(`-${password}`, profile.password_hash, profile.email)
+    const passwordMatches = verifyPassword(password, profile.password_hash, profile.email)
 
     if (!passwordMatches) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
@@ -171,11 +168,14 @@ export async function POST(request: Request) {
       )
     }
 
+    const isGenericNativeClient = Boolean(nativeHeader && !['restaurant', 'driver', 'admin', 'customer'].includes(nativeHeader))
     const shouldReturnNativeToken =
+      isGenericNativeClient ||
       (nativeApp === 'restaurant' && isRestaurantRole) ||
       (nativeApp === 'driver' && isDriverRole) ||
       (nativeApp === 'admin' && isAdminRole) ||
       (nativeApp === 'customer' && isCustomerRole)
+
     return setCookies(
       NextResponse.json({
         success: true,

@@ -154,10 +154,11 @@ export async function POST(request: Request) {
 
     const token = await createToken(userPayload)
     const nativeApp = request.headers.get('x-crave-native-app')?.trim().toLowerCase()
+    const isNativeClient = Boolean(nativeApp)
     const response = NextResponse.json({
       success: true,
       user: userPayload,
-      ...(nativeApp === 'customer' ? { token } : {}),
+      ...(isNativeClient ? { token } : {}),
       message: 'Account created successfully!',
     })
 

@@ -101,12 +101,13 @@ export async function GET(request: Request) {
   } catch (err: any) {
     clearTimeout(timeoutId)
     if (err?.name === 'AbortError') {
-      return NextResponse.json({ error: 'Geocoding service timeout' }, { status: 504 })
+      console.warn('[Reverse Geocode API] Nominatim timed out after 5s, using graceful coordinates fallback')
+    } else {
+      console.warn('[Reverse Geocode API] Nominatim lookup failed:', err?.message)
     }
-    console.warn('[Reverse Geocode API] Nominatim lookup failed:', err?.message)
   }
 
-  // Graceful fallback if external geocoding service is unreachable
+  // Graceful fallback if external geocoding service is unreachable or times out
   const fallbackFormatted = `Location near ${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E, Bengaluru`
   return NextResponse.json({
     success: true,

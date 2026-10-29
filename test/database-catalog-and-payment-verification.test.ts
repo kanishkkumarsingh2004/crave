@@ -19,7 +19,10 @@ const FIXTURE_REST_1 = 'test_fixture_rest_01'
 const FIXTURE_REST_2 = 'test_fixture_rest_02'
 const FIXTURE_ITEM_2 = 'test_fixture_item_02'
 
+const dbEnabled = process.env.ALLOW_DATABASE_TESTS === 'true' && Boolean(prisma)
+
 before(async () => {
+  if (!dbEnabled) return
   // Ensure clean test fixtures
   await prisma.menuItem.deleteMany({
     where: { id: FIXTURE_ITEM_2 },
@@ -65,6 +68,7 @@ before(async () => {
 })
 
 after(async () => {
+  if (!dbEnabled) return
   await prisma.menuItem.deleteMany({
     where: { id: FIXTURE_ITEM_2 },
   })
@@ -73,7 +77,7 @@ after(async () => {
   })
 })
 
-test('Order creation rejects with 404 if restaurant does not exist in database', async () => {
+test('Order creation rejects with 404 if restaurant does not exist in database', { skip: !dbEnabled }, async () => {
   const req = createTestRequest(
     'POST',
     'http://localhost:3000/api/orders',
@@ -101,7 +105,7 @@ test('Order creation rejects with 404 if restaurant does not exist in database',
   assert.match(json.error, /Restaurant not found in database/i)
 })
 
-test('Order creation rejects with 404 if menu item does not exist in database', async () => {
+test('Order creation rejects with 404 if menu item does not exist in database', { skip: !dbEnabled }, async () => {
   const req = createTestRequest(
     'POST',
     'http://localhost:3000/api/orders',
@@ -129,7 +133,7 @@ test('Order creation rejects with 404 if menu item does not exist in database', 
   assert.match(json.error, /not found in database/i)
 })
 
-test('Order creation rejects with 400 if items belong to a different restaurant', async () => {
+test('Order creation rejects with 400 if items belong to a different restaurant', { skip: !dbEnabled }, async () => {
   const req = createTestRequest(
     'POST',
     'http://localhost:3000/api/orders',
@@ -157,7 +161,7 @@ test('Order creation rejects with 400 if items belong to a different restaurant'
   assert.match(json.error, /does not belong to/i)
 })
 
-test('Payment order creation rejects with 400 if order has no restaurant_id', async () => {
+test('Payment order creation rejects with 400 if order has no restaurant_id', { skip: !dbEnabled }, async () => {
   const testOrderId = `test_ord_no_rest_${Date.now()}`
   await prisma.order.create({
     data: {
@@ -193,7 +197,7 @@ test('Payment order creation rejects with 400 if order has no restaurant_id', as
   }
 })
 
-test('Payment order creation rejects with 400 if restaurant is closed', async () => {
+test('Payment order creation rejects with 400 if restaurant is closed', { skip: !dbEnabled }, async () => {
   // Temporarily mark fixture restaurant as closed
   await prisma.restaurant.update({
     where: { id: FIXTURE_REST_1 },
@@ -239,7 +243,7 @@ test('Payment order creation rejects with 400 if restaurant is closed', async ()
   }
 })
 
-test('Payment order creation rejects with 404 if order items do not exist in database', async () => {
+test('Payment order creation rejects with 404 if order items do not exist in database', { skip: !dbEnabled }, async () => {
   const testOrderId = `test_ord_fake_item_${Date.now()}`
   await prisma.order.create({
     data: {

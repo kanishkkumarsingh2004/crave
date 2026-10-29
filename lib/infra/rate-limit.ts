@@ -91,17 +91,20 @@ export async function checkRateLimit(
         `[rate-limit] Redis error on tier ${tier} for key ${key}:`,
         redisErr instanceof Error ? redisErr.message : redisErr
       )
-      // For security-critical tiers, fail closed
-      const criticalTiers: RateLimitTierKey[] = ['AUTH_LOGIN', 'AUTH_SIGNUP', 'ORDER_CREATE']
-      if (criticalTiers.includes(tier)) {
-        return {
-          allowed: false,
-          remaining: 0,
-          resetTime: now + windowMs,
-          retryAfter: Math.ceil(windowMs / 1000),
+      // For security-critical tiers, fail closed only if explicitly required by env;
+      // otherwise fall back to local in-memory store so legitimate users are not locked out during Redis maintenance.
+      if (process.env.FAIL_CLOSED_ON_REDIS_ERROR === 'true') {
+        const criticalTiers: RateLimitTierKey[] = ['AUTH_LOGIN', 'AUTH_SIGNUP', 'ORDER_CREATE']
+        if (criticalTiers.includes(tier)) {
+          return {
+            allowed: false,
+            remaining: 0,
+            resetTime: now + windowMs,
+            retryAfter: Math.ceil(windowMs / 1000),
+          }
         }
       }
-      // For non-critical tiers, fall through to memory store
+      // For non-critical tiers or when fallback is active, fall through to memory store
     }
   }
 
