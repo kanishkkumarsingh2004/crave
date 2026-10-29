@@ -264,50 +264,6 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
   const onClickRef = useRef(onClick)
   onClickRef.current = onClick
 
-<<<<<<< HEAD
-=======
-  const stableStyles = useStableValue(styles)
-
-  const clearStyleTimers = useCallback(() => {
-    if (styleLoadTimerRef.current) window.clearTimeout(styleLoadTimerRef.current)
-    if (styleFailureTimerRef.current) window.clearTimeout(styleFailureTimerRef.current)
-    styleLoadTimerRef.current = undefined
-    styleFailureTimerRef.current = undefined
-  }, [])
-
-  const scheduleStyleFallback = useCallback(
-    (map: MapLibreGL.Map) => {
-      clearStyleTimers()
-      styleLoadTimerRef.current = window.setTimeout(() => {
-        if (map.isStyleLoaded()) return
-        const fallbackStyle = resolvedThemeRef.current === 'dark' ? blankMapStyle : blankMapStyle
-        currentStyleRef.current = fallbackStyle
-        map.setStyle(fallbackStyle, { diff: false })
-        styleFailureTimerRef.current = window.setTimeout(() => {
-          if (!map.isStyleLoaded()) setLoadFailed(true)
-        }, 3_000)
-      }, 2_000)
-    },
-    [clearStyleTimers]
-  )
-
-  const mapStyles = useMemo(() => {
-    // Explicit styles win. Otherwise `blank` opts into the transparent
-    // tile-less basemap; with neither, fall back to the Carto defaults.
-    if (stableStyles) {
-      return {
-        dark: stableStyles.dark ?? defaultStyles.dark,
-        light: stableStyles.light ?? defaultStyles.light,
-      }
-    }
-    if (blank) {
-      return { dark: blankMapStyle, light: blankMapStyle }
-    }
-    return defaultStyles
-  }, [stableStyles, blank])
-
-  // Expose the map instance to the parent component
->>>>>>> fa6727555c3de077aebf0ab7613e40d294766d87
   useImperativeHandle(ref, () => mapInstance as MapLibreGL.Map, [mapInstance])
 
   useEffect(() => {

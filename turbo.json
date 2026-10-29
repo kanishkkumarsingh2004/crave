@@ -20,22 +20,7 @@
     "build": {
       "dependsOn": ["build:next"]
     },
-    "//#build:next": {
-      "inputs": [
-        "app/**",
-        "components/**",
-        "lib/**",
-        "public/**",
-        "prisma/**",
-        "workers/**",
-        "next.config.mjs",
-        "tsconfig.json",
-        "package.json"
-      ],
-      "outputs": [".next/**", "!.next/cache/**"]
-    },
     "build:next": {
-      "dependsOn": ["^build:next"],
       "inputs": [
         "app/**",
         "components/**",
@@ -60,31 +45,7 @@
       ],
       "outputs": []
     },
-    "//#typecheck:ts": {
-      "inputs": [
-        "app/**",
-        "components/**",
-        "lib/**",
-        "workers/**",
-        "tsconfig.json",
-        "next-env.d.ts"
-      ],
-      "outputs": []
-    },
     "format:check:prettier": {
-      "inputs": [
-        "app/**",
-        "components/**",
-        "lib/**",
-        "workers/**",
-        "*.js",
-        "*.ts",
-        "*.mjs",
-        "*.json"
-      ],
-      "outputs": []
-    },
-    "//#format:check:prettier": {
       "inputs": [
         "app/**",
         "components/**",

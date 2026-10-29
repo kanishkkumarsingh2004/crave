@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 
 interface PullToRefreshProps {
@@ -12,8 +12,9 @@ export function PullToRefresh({ children, onRefresh, refreshing = false }: PullT
   const [active, setActive] = useState(false)
   const startY = useRef(0)
   const THRESHOLD = 70
+  const containerRef = useRef<HTMLDivElement>(null)
 
-  const onTouchStart = (e: React.TouchEvent) => {
+  const onTouchStart = (e: TouchEvent) => {
     const el = e.currentTarget as HTMLElement
     if (el.scrollTop > 0) return
     startY.current = e.touches[0].clientY
@@ -21,7 +22,7 @@ export function PullToRefresh({ children, onRefresh, refreshing = false }: PullT
     setPullOffset(0)
   }
 
-  const onTouchMove = (e: React.TouchEvent) => {
+  const onTouchMove = (e: TouchEvent) => {
     if (!active) return
     const el = e.currentTarget as HTMLElement
     if (el.scrollTop > 0) {
@@ -50,15 +51,26 @@ export function PullToRefresh({ children, onRefresh, refreshing = false }: PullT
     }
   }, [active, pullOffset, onRefresh, refreshing])
 
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    el.addEventListener('touchstart', onTouchStart, { passive: false })
+    el.addEventListener('touchmove', onTouchMove, { passive: false })
+    el.addEventListener('touchend', onTouchEnd)
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart)
+      el.removeEventListener('touchmove', onTouchMove)
+      el.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [onTouchStart, onTouchMove, onTouchEnd])
+
   const stretch = refreshing ? THRESHOLD : pullOffset
   const showIndicator = refreshing || pullOffset > 10
 
   return (
     <div
+      ref={containerRef}
       className="ptr-scroll"
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
       style={{ maxHeight: `calc(100dvh - var(--nav-height))` }}
     >
       <div

@@ -1324,7 +1324,7 @@ export default function CartPage() {
                       <button
                         type="submit"
                         disabled={isSubmittingOrder}
-                        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#121815] dark:bg-[#d9f447] py-4 px-6 text-sm font-bold text-[#d9f447] dark:text-[#121815] shadow-xl hover:opacity-95 active:scale-[0.99] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        className="min-w-[14rem] w-full flex items-center justify-center gap-2 rounded-2xl bg-[#121815] dark:bg-[#d9f447] py-4 px-6 text-sm font-bold text-[#d9f447] dark:text-[#121815] shadow-xl hover:opacity-95 active:scale-[0.99] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
                       >
                         {isSubmittingOrder ? (
                           <CraveButtonLoader label="Processing payment..." sublabel="Opening checkout" variant="dark" size="md" />
@@ -1344,7 +1344,6 @@ export default function CartPage() {
         )}
       </main>
 
-<<<<<<< HEAD
       {/* Floating Mobile Checkout Bar */}
       {cart.length > 0 && !orderSuccess && (
         <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-40 lg:hidden animate-in slide-in-from-bottom-4 duration-200">
@@ -1367,8 +1366,6 @@ export default function CartPage() {
         </div>
       )}
 
-=======
->>>>>>> fa6727555c3de077aebf0ab7613e40d294766d87
       {/* Available Coupons Modal */}
       {showCouponsModal && (
         <div

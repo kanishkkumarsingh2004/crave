@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth-context'
 import Link from 'next/link'
 import { LogIn, RefreshCw, ShieldAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CustomerDashboardSkeleton } from '@/components/ui/SkeletonLoaders'
 
 const getDashboardPath = (role: string) => {
@@ -27,6 +27,7 @@ export default function UserDashboardPage() {
   const { user, role, isLoading } = useAuth()
   const router = useRouter()
   const [loadTimeoutExceeded, setLoadTimeoutExceeded] = useState(false)
+  const hasNavigated = useRef(false)
 
   // Safety timer: If preloader runs for > 3.5s, give user clear escape hatches
   useEffect(() => {
@@ -38,11 +39,14 @@ export default function UserDashboardPage() {
   }, [isLoading, user])
 
   useEffect(() => {
+    if (hasNavigated.current) return
     if (isLoading) return
 
     if (!user) {
+      hasNavigated.current = true
       router.replace('/login')
     } else if (role !== 'user' && role !== 'customer') {
+      hasNavigated.current = true
       router.replace(`/${getDashboardPath(role)}`)
     } else {
       router.replace('/user/explore')

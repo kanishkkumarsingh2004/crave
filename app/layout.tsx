@@ -8,10 +8,7 @@ import PwaInstallPrompt from '@/components/PwaInstallPrompt'
 import WebPushPrompt from '@/components/WebPushPrompt'
 import { cn } from '@/lib/utils'
 import type { Metadata, Viewport } from 'next'
-import { Geist } from 'next/font/google'
 import './globals.css'
-
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
 
 export const metadata: Metadata = {
   title: 'crave. | Crave What You Love • Instant Food & Grocery Delivery',
@@ -60,7 +57,7 @@ export default function RootLayout({
       lang="en"
       data-theme="light"
       suppressHydrationWarning
-      className={cn('font-sans', geist.variable, 'light')}
+      className={cn('font-sans', 'light')}
     >
       <head>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

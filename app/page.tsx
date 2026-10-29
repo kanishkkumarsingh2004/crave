@@ -16,7 +16,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // ── Featured Kitchen Collections (Real Database Fallback) ────────────
 const DEFAULT_FEATURED_KITCHENS = [
@@ -66,6 +66,7 @@ export default function HomePage() {
   const [redirectTimeoutExceeded, setRedirectTimeoutExceeded] = useState(false)
   const [activeKitchen, setActiveKitchen] = useState(0)
   const [featuredKitchens, setFeaturedKitchens] = useState(DEFAULT_FEATURED_KITCHENS)
+  const hasNavigated = useRef(false)
 
   // Fetch real restaurants from the database for the homepage
   useEffect(() => {
@@ -127,9 +128,11 @@ export default function HomePage() {
 
   // Preserve authentication redirects to designated operational cockpits
   useEffect(() => {
+    if (hasNavigated.current) return
     if (!isLoading && user) {
       const targetDashboard = getTargetDashboard()
       if (targetDashboard) {
+        hasNavigated.current = true
         router.replace(targetDashboard)
 
         // Safety timeout: prevent indefinite spinner if routing delays or hits edge case (UIX-004)
