@@ -147,6 +147,7 @@ export async function createVendorSettlement(data: {
 }
 
 export async function listVendorSettlements(restaurantId?: string) {
+  if (!prisma) return []
   return await prisma.vendorSettlement.findMany({
     where: restaurantId ? { restaurant_id: restaurantId } : undefined,
     orderBy: { payout_date: 'desc' },

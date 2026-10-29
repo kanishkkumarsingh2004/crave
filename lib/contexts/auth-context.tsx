@@ -232,14 +232,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const activeToken =
         token || (typeof window !== 'undefined' ? localStorage.getItem('crave_token') : null)
 
-      await unregisterWebPushSubscription(activeToken)
-
+      // Purge local storage and cookies immediately so client-side state is wiped
       if (typeof window !== 'undefined') {
         localStorage.removeItem('crave_user')
         localStorage.removeItem('crave_token')
         sessionStorage.clear()
       }
       clearClientCookies()
+
+      // Best-effort web push unregistration with a 300ms timeout so logout NEVER hangs
+      try {
+        await Promise.race([
+          unregisterWebPushSubscription(activeToken),
+          new Promise((resolve) => setTimeout(resolve, 300)),
+        ])
+      } catch {}
 
       // Notify server to revoke JWT in Redis/memory and purge HttpOnly cookies
       await fetch('/api/auth/logout', {

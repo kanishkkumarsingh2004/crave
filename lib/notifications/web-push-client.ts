@@ -22,17 +22,23 @@ export function isWebPushSupported(): boolean {
   )
 }
 
-export async function getWebPushRegistration() {
-  if (!isWebPushSupported()) throw new Error('Push notifications are not supported on this device')
-  if (process.env.NODE_ENV !== 'production') {
-    return navigator.serviceWorker.ready
+export async function getWebPushRegistration(): Promise<ServiceWorkerRegistration | null> {
+  if (!isWebPushSupported()) return null
+  try {
+    const existing = await navigator.serviceWorker.getRegistration()
+    if (existing) return existing
+    if (process.env.NODE_ENV === 'production') {
+      return await navigator.serviceWorker.register('/sw.js')
+    }
+    return null
+  } catch {
+    return null
   }
-  await navigator.serviceWorker.register('/sw.js')
-  return navigator.serviceWorker.ready
 }
 
 export async function subscribeToWebPush(publicKey: string): Promise<PushSubscription> {
   const registration = await getWebPushRegistration()
+  if (!registration) throw new Error('Service worker registration not available')
   const existing = await registration.pushManager.getSubscription()
   const subscription =
     existing ||
@@ -56,6 +62,7 @@ export async function subscribeToWebPush(publicKey: string): Promise<PushSubscri
 export async function syncExistingWebPushSubscription(): Promise<boolean> {
   if (!isWebPushSupported() || Notification.permission !== 'granted') return false
   const registration = await getWebPushRegistration()
+  if (!registration) return false
   const subscription = await registration.pushManager.getSubscription()
   if (!subscription) return false
 
@@ -70,21 +77,26 @@ export async function syncExistingWebPushSubscription(): Promise<boolean> {
 
 export async function unregisterWebPushSubscription(authToken?: string | null): Promise<void> {
   if (!isWebPushSupported()) return
-  const registration = await getWebPushRegistration()
-  const subscription = await registration.pushManager.getSubscription()
-  if (!subscription) return
+  try {
+    const registration = await getWebPushRegistration()
+    if (!registration) return
+    const subscription = await registration.pushManager.getSubscription()
+    if (!subscription) return
 
-  await fetch('/api/push/subscriptions', {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(authToken && authToken !== 'local-token' && authToken !== 'cookie-session'
-        ? { Authorization: `Bearer ${authToken}` }
-        : {}),
-    },
-    credentials: 'include',
-    body: JSON.stringify({ endpoint: subscription.endpoint }),
-  }).catch(() => {})
+    await fetch('/api/push/subscriptions', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken && authToken !== 'local-token' && authToken !== 'cookie-session'
+          ? { Authorization: `Bearer ${authToken}` }
+          : {}),
+      },
+      credentials: 'include',
+      body: JSON.stringify({ endpoint: subscription.endpoint }),
+    }).catch(() => {})
 
-  await subscription.unsubscribe().catch(() => false)
+    await subscription.unsubscribe().catch(() => false)
+  } catch (err) {
+    console.warn('[unregisterWebPushSubscription] ignored error:', err)
+  }
 }

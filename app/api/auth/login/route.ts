@@ -115,6 +115,12 @@ export async function POST(request: Request) {
       }
     }
 
+    if (!restaurantId && (userPayload.role === 'restaurant_vendor' || (userPayload.role as string) === 'vendor')) {
+      restaurantId = 'rest_01'
+    } else if (!restaurantId && userPayload.role === 'cravexp_store_vendor') {
+      restaurantId = 'store_cravexp_01'
+    }
+
     if (restaurantId) {
       userPayload.restaurantId = restaurantId
       userPayload.restaurant_id = restaurantId

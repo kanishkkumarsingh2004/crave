@@ -50,7 +50,7 @@ export default function NotificationSettingsCard() {
       if (!response.ok) throw new Error(config.error || 'Unable to load notification settings.')
 
       const isConfigured = Boolean(config.configured && config.publicKey)
-      const subscription = await registration.pushManager.getSubscription()
+      const subscription = registration ? await registration.pushManager?.getSubscription() : null
       setConfigured(isConfigured)
       setPublicKey(typeof config.publicKey === 'string' ? config.publicKey : '')
       setEnabled(Notification.permission === 'granted' && Boolean(subscription))
@@ -117,7 +117,7 @@ export default function NotificationSettingsCard() {
       window.dispatchEvent(new Event('crave_push_subscription_changed'))
 
       const registration = await getWebPushRegistration()
-      await registration
+      if (registration) await registration
         .showNotification('Crave notifications are on', {
           body: 'You will receive order, payment, preparation, pickup and delivery updates.',
           icon: '/icons/icon-192x192.png',

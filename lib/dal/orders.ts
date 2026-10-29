@@ -10,6 +10,7 @@ import { broadcast } from '@/lib/ws-server'
 // ─── Queries ─────────────────────────────────────────────
 
 export async function findOrderById(id: string) {
+  if (!prisma) return null
   return prisma.order.findUnique({
     where: { id },
     include: { customer: true, restaurant: true },
@@ -36,6 +37,7 @@ export async function listOrders(filters?: {
   includeAvailableForRider?: boolean
   limit?: number
 }) {
+  if (!prisma) return []
   const cacheKey = JSON.stringify(filters || {})
   const cached = listOrdersCache.get(cacheKey)
   if (cached && cached.expiresAt > Date.now()) {

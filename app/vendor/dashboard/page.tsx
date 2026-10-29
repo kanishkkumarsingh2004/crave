@@ -29,7 +29,7 @@ export default function VendorDashboardPage() {
     try {
       setQuickSigningIn(true)
       setAuthError(null)
-      await login('vendor@crave.com', 'Password123!')
+      await login('vendor@crave.com', '123456789')
     } catch (err: any) {
       setAuthError(err?.message || 'Failed to sign in as vendor')
     } finally {

@@ -60,11 +60,11 @@ export async function GET(request: Request) {
       const found = await findRestaurantListingById(restaurantId)
       restaurants = found ? [found] : []
     } else if (effectiveOwnerId) {
-      restaurants = await prisma.restaurant.findMany({
+      restaurants = prisma ? await prisma.restaurant.findMany({
         where: { owner_id: effectiveOwnerId },
         orderBy: { created_at: 'desc' },
         take: 20,
-      })
+      }) : await listRestaurants({ ownerId: effectiveOwnerId, limit: 20 })
     } else if (isDarkStore !== null) {
       restaurants = await listRestaurants({ isDarkStore: isDarkStore === 'true' })
     } else {

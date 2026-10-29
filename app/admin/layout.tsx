@@ -234,7 +234,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Sidebar Bottom Profile (Spacious & Decongested) */}
         <div className="border-t border-[#e2e8e3] dark:border-white/10 p-3.5 transition-all duration-300 ease-in-out bg-[#f4f7f4] dark:bg-[#0e1310]">
           <div
-            className={`flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'gap-3 p-2.5'} rounded-2xl bg-white dark:bg-white/5 border border-[#e2e8e3] dark:border-white/5 shadow-xs transition-all duration-300 ease-in-out`}
+            className={`flex items-center ${sidebarCollapsed ? 'flex-col gap-2 p-2' : 'gap-3 p-2.5'} rounded-2xl bg-white dark:bg-white/5 border border-[#e2e8e3] dark:border-white/5 shadow-xs transition-all duration-300 ease-in-out`}
           >
             <span
               className="grid size-9 place-items-center rounded-xl bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 font-extrabold border border-purple-200 dark:border-purple-800 text-xs shrink-0"
@@ -270,7 +270,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               title="Sign Out"
               aria-label="Sign Out"
               className={`grid size-8 place-items-center rounded-xl bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300 hover:bg-rose-500 hover:text-white transition-all duration-200 shrink-0 ${
-                sidebarCollapsed ? 'hidden' : 'grid'
+                'grid'
               }`}
             >
               <LogOut className="size-3.5" />
@@ -305,6 +305,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <ThemeToggle />
 
             <LanguageSwitcher variant="pill" />
+
+            <button
+              type="button"
+              onClick={() => logout()}
+              title="Sign Out"
+              aria-label="Sign Out"
+              className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/30 px-3 py-1.5 text-xs font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition cursor-pointer"
+            >
+              <LogOut className="size-3.5" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
 
             {/* Mobile Navigation Button */}
             <button

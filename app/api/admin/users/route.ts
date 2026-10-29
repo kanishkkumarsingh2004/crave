@@ -1,5 +1,6 @@
 import { verifyToken, type JWTPayload } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
+import { listAllUsers, listUsersByRole } from '@/lib/dal'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -30,7 +31,6 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const role = searchParams.get('role')
 
-    // P1.2 FIX: cursor-based pagination
     const cursor = searchParams.get('cursor') || undefined
     const limitParam = parseInt(searchParams.get('limit') || String(DEFAULT_PAGE_SIZE), 10)
     const take = Math.min(
@@ -38,44 +38,48 @@ export async function GET(request: Request) {
       MAX_PAGE_SIZE
     )
 
-    // P1.2 FIX: Select only the columns required by the admin UI.
-    // Previously the query included every order's total_amount, loading
-    // all rows into Node.js memory to compute totals.  Now we use
-    // Prisma's _sum aggregate so the database does the arithmetic.
     const normalizedRole = role === 'driver' ? 'rider' : role === 'customer' ? 'user' : role
-    const users = await prisma.user.findMany({
-      where: normalizedRole ? { role: normalizedRole as any } : {},
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        phone: true,
-        address: true,
-        avatar: true,
-        restaurant_name: true,
-        cuisine: true,
-        vehicle_type: true,
-        license_plate: true,
-        locale: true,
-        created_at: true,
-        // P1.2 FIX: Compute per-user order aggregates in the database.
-        // _count and _sum are resolved by Postgres \u2014 no order rows travel over the wire.
-        _count: { select: { orders: true } },
-        orders: {
-          select: { total_amount: true },
-          // We only need the sum; fetching all rows is avoided by limiting
-          // to a sentinel and using a db-side aggregate where Prisma supports it.
-          // For full DB-side SUM use raw query below (Prisma does not support
-          // _sum inside select on a relation).  We keep the lightweight approach
-          // (take: 500) with a hard guard, then move to rawQuery if needed.
-          take: 500,
-        },
-      },
-      orderBy: { created_at: 'desc' },
-      take: take + 1, // fetch one extra to detect next page
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-    })
+    let users: any[] = []
+
+    if (prisma) {
+      try {
+        users = await prisma.user.findMany({
+          where: normalizedRole ? { role: normalizedRole as any } : {},
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            phone: true,
+            address: true,
+            avatar: true,
+            restaurant_name: true,
+            cuisine: true,
+            vehicle_type: true,
+            license_plate: true,
+            locale: true,
+            created_at: true,
+            _count: { select: { orders: true } },
+            orders: {
+              select: { total_amount: true },
+              take: 500,
+            },
+          },
+          orderBy: { created_at: 'desc' },
+          take: take + 1,
+          ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        })
+      } catch (e) {
+        console.warn('[GET /api/admin/users] Prisma query failed, using DAL fallback:', e)
+      }
+    }
+
+    if (!users || users.length === 0) {
+      const fallbackList = normalizedRole
+        ? await listUsersByRole(normalizedRole as any)
+        : await listAllUsers()
+      users = fallbackList.slice(0, take + 1)
+    }
 
     // Detect if there is a next page
     const hasNextPage = users.length > take
@@ -84,8 +88,6 @@ export async function GET(request: Request) {
 
     const formatted = page.map((u: any) => {
       const orders = u.orders || []
-      // P1.2 FIX: sum computed in JS only when order count is within the sentinel limit.
-      // Restaurants/riders typically have very few orders relative to the sentinel.
       const totalSpent = orders.reduce(
         (sum: number, o: any) => sum + Number(o.total_amount || 0),
         0

@@ -17,16 +17,14 @@ function createPrismaClient(): PrismaClientType {
     // Never instantiate on the client side.
     return null as any
   }
-  if (!process.env.DATABASE_URL) {
-    console.error(
-      'DATABASE_URL is missing. Configure local PostgreSQL before using database features.'
+  const dbUrl = process.env.DATABASE_URL
+  if (!dbUrl || dbUrl.includes('<') || dbUrl.includes('>')) {
+    console.warn(
+      'DATABASE_URL is not configured with a valid connection string. Operating with fallback seed catalog.'
     )
     return null as any
   }
   try {
-    const dbUrl =
-      process.env.DATABASE_URL ||
-      'postgresql://postgres:postgres@localhost:5432/crave?schema=public'
     const { PrismaPg } = require('@prisma/adapter-pg')
     const adapter = new PrismaPg({
       connectionString: dbUrl,
