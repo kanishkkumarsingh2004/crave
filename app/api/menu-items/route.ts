@@ -30,11 +30,12 @@ function normalizeVariants(
     const name = String(raw?.name || '').trim()
     const restaurantPrice = Number(raw?.restaurant_price)
     const explicitPrice = raw?.price != null && Number(raw.price) > 0 ? Number(raw.price) : null
-    const price = explicitPrice != null
-      ? explicitPrice
-      : calculatePrice
-        ? calculatePrice(restaurantPrice)
-        : Number(raw?.price ?? restaurantPrice)
+    const price =
+      explicitPrice != null
+        ? explicitPrice
+        : calculatePrice
+          ? calculatePrice(restaurantPrice)
+          : Number(raw?.price ?? restaurantPrice)
     if (!name) return { error: `Variant ${index + 1} needs a name` }
     const nameKey = name.toLowerCase()
     if (names.has(nameKey)) return { error: `Variant names must be unique: ${name}` }
@@ -166,10 +167,7 @@ export async function GET(request: Request) {
                 price:
                   explicitVariantPrice > 0
                     ? explicitVariantPrice
-                    : calculateMenuAppPrice(
-                        Number(variantRestaurantPrice ?? 0),
-                        settings
-                      ),
+                    : calculateMenuAppPrice(Number(variantRestaurantPrice ?? 0), settings),
               }
             }),
           }

@@ -76,9 +76,7 @@ export function PullToRefresh({ children, onRefresh, refreshing = false }: PullT
       <div
         className="ptr-indicator"
         style={{
-          transform: refreshing
-            ? 'translateY(0)'
-            : `translateY(calc(-100% + ${pullOffset}px))`,
+          transform: refreshing ? 'translateY(0)' : `translateY(calc(-100% + ${pullOffset}px))`,
           opacity: refreshing ? 1 : Math.min(pullOffset / 30, 1),
           transition: refreshing
             ? 'none'
@@ -92,9 +90,7 @@ export function PullToRefresh({ children, onRefresh, refreshing = false }: PullT
         className="ptr-stretch"
         style={{
           transform: `translateY(${stretch}px)`,
-          transition: refreshing
-            ? 'none'
-            : 'transform 0.25s cubic-bezier(0, 0, 0.2, 1)',
+          transition: refreshing ? 'none' : 'transform 0.25s cubic-bezier(0, 0, 0.2, 1)',
         }}
       >
         {children}
