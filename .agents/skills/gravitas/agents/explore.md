@@ -91,10 +91,10 @@ Do NOT skip this phase. This is where bad plans get caught before they ship.
 
 ## Exploration Depth by Tier
 
-| Tier | Scope | Time Budget |
-|------|-------|-------------|
-| **0** | Target file + immediate imports | 1 parallel batch |
-| **1** | Full recon checklist + callers + all tests | 2–3 parallel batches |
+| Tier  | Scope                                                                           | Time Budget          |
+| ----- | ------------------------------------------------------------------------------- | -------------------- |
+| **0** | Target file + immediate imports                                                 | 1 parallel batch     |
+| **1** | Full recon checklist + callers + all tests                                      | 2–3 parallel batches |
 | **2** | Everything — full subsystem map, all middleware, integration tests, schema, env | 3–5 parallel batches |
 
 For Tier 2: if you haven't read 10+ files, you haven't explored enough.
@@ -109,7 +109,9 @@ Return a structured exploration report — not raw file dumps:
 ## Exploration Report — [task]
 
 ### Full File Map
+
 [Every file read, with line count and key facts]
+
 - `src/auth/session.ts` (142 lines) — main target
   - Line 23: `SESSION_TIMEOUT = 5_000`
   - Exports: createSession, destroySession, validateSession
@@ -122,26 +124,32 @@ Return a structured exploration report — not raw file dumps:
   - Uses validateSession at line 23 (critical path)
 
 ### Dependency Graph
+
 [Who calls what, what breaks if target changes]
 
 ### Git History
+
 [Relevant commits — what changed, when, who, why]
 
 ### Config
+
 [tsconfig strict mode, test runner, lint rules]
 
 ### Risk Flags
+
 - ⚠️ HIGH: 2 middleware files on critical auth path
 - ⚠️ HIGH: Test at line 47 asserts exact old value
 - ⚠️ MEDIUM: No integration tests, only unit tests
 - ✅ LOW: Config untouched, no migration required
 
 ### Critical Observations
+
 1. [Most important insight — may reframe the whole task]
 2. [Second most important — edge case or hidden dependency]
 3. [Third — why the obvious fix might be wrong]
 
 ### What the Plan Agent Needs to Know
+
 [Anything that would change the plan if not known]
 ```
 

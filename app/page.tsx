@@ -29,7 +29,8 @@ const DEFAULT_FEATURED_KITCHENS = [
     deliveryTime: '25 min',
     distance: '1.2 km',
     offer: '50% OFF up to ₹100',
-    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
+    image:
+      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
     tag: 'Gourmet Handi & Mughlai',
     path: '/user/explore?restaurant=rest_01',
   },
@@ -42,7 +43,8 @@ const DEFAULT_FEATURED_KITCHENS = [
     deliveryTime: '20 min',
     distance: '1.8 km',
     offer: 'Flat ₹120 Off Gourmet',
-    image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
+    image:
+      'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
     tag: 'Artisan Woodfired & Pasta',
     path: '/user/explore?restaurant=rest_02',
   },
@@ -85,7 +87,9 @@ export default function HomePage() {
               deliveryTime: `${r.delivery_minutes || 25} min`,
               distance: r.distance ? `${r.distance}` : '1.5 km',
               offer: r.offer || 'Special Discount Available',
-              image: r.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
+              image:
+                r.image ||
+                'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
               tag: r.cuisine?.split(' ')[0] || 'Verified Kitchen',
               path: `/user/explore?restaurant=${r.id}`,
             }))

@@ -8,14 +8,7 @@ import {
 import VendorPricingModal from '@/components/admin/VendorPricingModal'
 import VendorSettlementsTable from '@/components/admin/VendorSettlementsTable'
 import { getLocalPaymentConfig } from '@/lib/payment-config'
-import {
-  CheckCircle2,
-  Clock3,
-  DollarSign,
-  Percent,
-  Store,
-  TrendingUp,
-} from 'lucide-react'
+import { CheckCircle2, Clock3, DollarSign, Percent, Store, TrendingUp } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export type { VendorFinancialRecord }
@@ -182,15 +175,15 @@ export default function VendorSettlementsPage() {
               (o.financial_snapshot?.vendorPayableNetPaise
                 ? o.financial_snapshot.vendorPayableNetPaise / 100
                 : null) ??
-              o.restaurant_payout ??
-              0
+                o.restaurant_payout ??
+                0
             )
             const comm = Number(
               (o.financial_snapshot?.grossCommissionPaise
                 ? o.financial_snapshot.grossCommissionPaise / 100
                 : null) ??
-              o.commission_amount ??
-              0
+                o.commission_amount ??
+                0
             )
             if (netPay > 0) restaurantMap[targetKey].netPayableAmount += netPay
             if (comm > 0) restaurantMap[targetKey].commissionAmount += comm

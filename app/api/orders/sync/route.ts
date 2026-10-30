@@ -41,11 +41,15 @@ export async function GET(request: Request) {
       }
 
       // Authoritative Driver Location (In-memory spatial index + PostgreSQL fallback)
-      let driverLocation = order.rider_id ? await getDriverLocationDistributed(order.rider_id) : undefined
+      let driverLocation = order.rider_id
+        ? await getDriverLocationDistributed(order.rider_id)
+        : undefined
 
       if (!driverLocation && order.rider_id) {
-        const restLat = order.restaurant?.latitude != null ? Number(order.restaurant.latitude) : 12.9716
-        const restLng = order.restaurant?.longitude != null ? Number(order.restaurant.longitude) : 77.6412
+        const restLat =
+          order.restaurant?.latitude != null ? Number(order.restaurant.latitude) : 12.9716
+        const restLng =
+          order.restaurant?.longitude != null ? Number(order.restaurant.longitude) : 77.6412
         const lastUpdated = order.created_at ? new Date(order.created_at).getTime() : Date.now()
         driverLocation = {
           driverId: order.rider_id,
@@ -63,7 +67,6 @@ export async function GET(request: Request) {
           staleDurationSeconds: 0,
         }
       }
-
 
       // Recover missed events from Transactional Outbox
       const missedEvents = await prisma.orderOutbox.findMany({

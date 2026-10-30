@@ -1,6 +1,17 @@
 'use client'
 
-import { Briefcase, Building, Check, Edit3, Home, Loader2, MapPin, Plus, Star, Trash2 } from 'lucide-react'
+import {
+  Briefcase,
+  Building,
+  Check,
+  Edit3,
+  Home,
+  Loader2,
+  MapPin,
+  Plus,
+  Star,
+  Trash2,
+} from 'lucide-react'
 import { useState } from 'react'
 import type { AddressItem } from './types'
 

@@ -12,33 +12,33 @@ Spend intelligence where expected error cost exceeds expected inference cost. Ro
 ## Conceptual Routing Policy
 
 simple fix / answer / review
-  -> fast inexpensive model + eco
+-> fast inexpensive model + eco
 
 moderate feature / debugging
-  -> fast inexpensive model + balanced
+-> fast inexpensive model + balanced
 
 high uncertainty / architecture / security
-  -> fast model (high effort) OR Pro-class model + deep
+-> fast model (high effort) OR Pro-class model + deep
 
 parallelizable large project
-  -> native Antigravity Teamwork
+-> native Antigravity Teamwork
 
 unresolvable failure after circuit breaker
-  -> Antigravity Boost / manual model escalation
+-> Antigravity Boost / manual model escalation
 
 ## When Native Antigravity Features Are Better
 
 Do not replicate what Antigravity already does well:
 
-| Task type | Use Gravitas | Use Antigravity native |
-|-----------|:---:|:---:|
-| Reliability enforcement | yes | -- |
-| Evidence tracking | yes | -- |
-| Requirement coverage | yes | -- |
-| Interruption recovery | yes | -- |
-| Parallel large project | -- | Teamwork |
-| Maximum reasoning depth | -- | Boost |
-| Single-session complex task | yes | -- |
+| Task type                   | Use Gravitas | Use Antigravity native |
+| --------------------------- | :----------: | :--------------------: |
+| Reliability enforcement     |     yes      |           --           |
+| Evidence tracking           |     yes      |           --           |
+| Requirement coverage        |     yes      |           --           |
+| Interruption recovery       |     yes      |           --           |
+| Parallel large project      |      --      |        Teamwork        |
+| Maximum reasoning depth     |      --      |         Boost          |
+| Single-session complex task |     yes      |           --           |
 
 Gravitas + Teamwork and Gravitas + Boost are compatible and complementary.
 
@@ -59,6 +59,7 @@ matched GravitasBench configuration. No model is the product's identity.
 Monitor quota state with /usage before starting a long session.
 
 If premium model quota is low:
+
 1. Switch to a fast inexpensive model + Gravitas (the intended fallback)
 2. Gravitas state.json allows continuation from any model switch point
 3. The reliability difference should be reduced by Gravitas enforcement

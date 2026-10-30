@@ -8,10 +8,7 @@ interface DatabaseInspectorTabsProps {
   dbData: DbData | null
 }
 
-export default function DatabaseInspectorTabs({
-  activeTab,
-  dbData,
-}: DatabaseInspectorTabsProps) {
+export default function DatabaseInspectorTabs({ activeTab, dbData }: DatabaseInspectorTabsProps) {
   if (activeTab === 'db_config') {
     return (
       <div className="bg-white dark:bg-[#151c18] border border-gray-200 dark:border-[#26332b] rounded-2xl p-6 space-y-4 shadow-sm dark:shadow-xl">
@@ -89,8 +86,8 @@ export default function DatabaseInspectorTabs({
     return (
       <div className="bg-white dark:bg-[#151c18] border border-gray-200 dark:border-[#26332b] rounded-2xl p-6 space-y-4 shadow-sm dark:shadow-xl">
         <h3 className="text-base font-bold text-[#18201c] dark:text-white flex items-center gap-2">
-          <Layers className="size-4 text-purple-500 dark:text-purple-400" /> Recent Database Orders (
-          {dbData?.orders?.length || 0})
+          <Layers className="size-4 text-purple-500 dark:text-purple-400" /> Recent Database Orders
+          ({dbData?.orders?.length || 0})
         </h3>
         <div className="overflow-x-auto text-xs font-mono">
           <table className="w-full text-left border-collapse">

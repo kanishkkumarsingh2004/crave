@@ -246,7 +246,14 @@ export function useOrderUpdates(
         } else if (data.order) {
           onOrders([data.order])
         } else if (data.orderId && data.status) {
-          onOrders([{ id: data.orderId, status: data.status, driver_name: data.driver_name, driver_phone: data.driver_phone }])
+          onOrders([
+            {
+              id: data.orderId,
+              status: data.status,
+              driver_name: data.driver_name,
+              driver_phone: data.driver_phone,
+            },
+          ])
         }
       }
     },
@@ -327,7 +334,12 @@ export function useDriverLocation(orderId: string | undefined, onLocation: (data
     onMessage: (msg) => {
       if (msg.channel === 'driver_location') {
         const data = msg.data as any
-        if (!data.orderId || !orderId || data.orderId === orderId || (data.lat != null && data.lng != null)) {
+        if (
+          !data.orderId ||
+          !orderId ||
+          data.orderId === orderId ||
+          (data.lat != null && data.lng != null)
+        ) {
           onLocation({
             ...data,
             lat: Number(data.lat),
@@ -338,7 +350,6 @@ export function useDriverLocation(orderId: string | undefined, onLocation: (data
     },
   })
 }
-
 
 export function useAdminStatsUpdates(onEvent: (data: any) => void) {
   return useWebSocket({
@@ -393,7 +404,9 @@ export function useMenuItemUpdates(
   useEffect(() => {
     if (!restaurantId || typeof window === 'undefined') return
     const syncMenu = () => {
-      fetch(`/api/menu-items?restaurantId=${encodeURIComponent(restaurantId)}`, { cache: 'no-store' })
+      fetch(`/api/menu-items?restaurantId=${encodeURIComponent(restaurantId)}`, {
+        cache: 'no-store',
+      })
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data?.items && Array.isArray(data.items)) {
@@ -419,4 +432,3 @@ export function useMenuItemUpdates(
     },
   })
 }
-

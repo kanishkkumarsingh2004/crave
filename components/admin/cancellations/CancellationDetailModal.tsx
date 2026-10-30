@@ -144,9 +144,7 @@ export function CancellationDetailModal({
             </div>
             <div className="flex justify-between text-gray-500 dark:text-gray-400">
               <span>GST &amp; Taxes</span>
-              <span className="font-mono text-[#18201c] dark:text-white">
-                ₹{selectedOrder.gst}
-              </span>
+              <span className="font-mono text-[#18201c] dark:text-white">₹{selectedOrder.gst}</span>
             </div>
             <div className="flex justify-between border-t border-gray-200 dark:border-[#25332a] pt-2 text-sm font-black text-[#18201c] dark:text-white">
               <span>Total Order Value</span>
@@ -183,9 +181,7 @@ export function CancellationDetailModal({
               <div className="mt-3 space-y-1">
                 <p className="text-xs text-gray-300">
                   Refund Amount:{' '}
-                  <strong className="text-[#d9f447] text-sm">
-                    ₹{selectedOrder.refund.amount}
-                  </strong>
+                  <strong className="text-[#d9f447] text-sm">₹{selectedOrder.refund.amount}</strong>
                 </p>
                 <p className="text-[11px] text-gray-400">
                   Reason: <span className="text-white">{selectedOrder.refund.reason}</span>

@@ -337,8 +337,8 @@ export default function AddVendorModal({ isOpen, onClose, onSuccess }: AddVendor
 
           <div className="rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 p-4 border border-emerald-200 dark:border-emerald-900/50 space-y-3">
             <p className="font-bold text-[#18201c] dark:text-emerald-200 flex items-center gap-1.5 text-xs">
-              <Store className="size-4 text-emerald-700 dark:text-emerald-400" /> Payout Bank Account
-              Details
+              <Store className="size-4 text-emerald-700 dark:text-emerald-400" /> Payout Bank
+              Account Details
             </p>
 
             <div className="grid gap-3 sm:grid-cols-3">

@@ -59,6 +59,7 @@ BAD:  if (user.p === 'a') {
 ### Preserve existing patterns
 
 Match the style of the file you're editing:
+
 - Same import style (named vs default)
 - Same function style (arrow vs declaration)
 - Same error handling pattern
@@ -67,6 +68,7 @@ Match the style of the file you're editing:
 ### Don't over-engineer
 
 The scope is what the plan says. Don't:
+
 - Refactor unrelated code
 - Add abstractions not required
 - "Clean up" things not in scope
@@ -178,6 +180,7 @@ The task scope is the plan. If you find a problem outside scope:
 Don't silently expand scope. Don't silently narrow scope.
 
 If the plan was wrong about something (file doesn't exist, line numbers off):
+
 1. Do everything that doesn't depend on the wrong part
 2. State your finding explicitly
 3. Propose adjustment and ask if appropriate (Tier 2) or adjust with note (Tier 1)

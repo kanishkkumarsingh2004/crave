@@ -20,11 +20,7 @@ interface PaymentLedgerTableProps {
   onSelectTx: (tx: TransactionRecord) => void
 }
 
-export function PaymentLedgerTable({
-  loading,
-  transactions,
-  onSelectTx,
-}: PaymentLedgerTableProps) {
+export function PaymentLedgerTable({ loading, transactions, onSelectTx }: PaymentLedgerTableProps) {
   return (
     <div className="rounded-3xl border border-[#dfe4dc] dark:border-[#222c26] bg-white dark:bg-[#131b16] shadow-xs overflow-hidden">
       {loading ? (

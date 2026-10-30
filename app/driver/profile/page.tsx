@@ -155,8 +155,8 @@ export default function DriverProfilePage() {
 
             <div className="rounded-2xl border border-black/[0.06] dark:border-white/[0.06] p-5 bg-stone-50/70 dark:bg-white/[0.03] flex flex-col gap-4">
               <h4 className="font-bold text-sm text-[#1D1D1F] dark:text-white flex items-center gap-2">
-                <Bike className="size-4 text-stone-600 dark:text-stone-300" /> Vehicle &amp;
-                Fleet Specs
+                <Bike className="size-4 text-stone-600 dark:text-stone-300" /> Vehicle &amp; Fleet
+                Specs
               </h4>
 
               <div>

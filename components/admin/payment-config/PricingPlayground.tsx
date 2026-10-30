@@ -127,9 +127,7 @@ export function PricingPlayground({
               Extra Distance ({Math.ceil(testDistanceKm - getNum(baseDistanceKm))} km @ ₹
               {getNum(perKmRate)}/km)
             </span>
-            <span className="font-extrabold text-white">
-              +₹{playgroundCalc.extraDistanceFee}
-            </span>
+            <span className="font-extrabold text-white">+₹{playgroundCalc.extraDistanceFee}</span>
           </div>
         )}
 
@@ -223,9 +221,7 @@ export function PricingPlayground({
               <span className="size-2 rounded-full bg-emerald-400" />
               Platform Net Margin ({playgroundCalc.platformMarginPct}%):
             </span>
-            <span className="font-black text-emerald-400">
-              ₹{playgroundCalc.platformNetProfit}
-            </span>
+            <span className="font-black text-emerald-400">₹{playgroundCalc.platformNetProfit}</span>
           </div>
         </div>
       </div>

@@ -102,7 +102,9 @@ export default function VendorPricingModal({
 
           <div className="grid gap-4 sm:grid-cols-3 text-xs">
             <div>
-              <label className="font-bold text-gray-700 dark:text-gray-300">Commission Rate (%)</label>
+              <label className="font-bold text-gray-700 dark:text-gray-300">
+                Commission Rate (%)
+              </label>
               <div className="mt-1.5 flex items-center gap-2">
                 <input
                   type="number"
@@ -171,7 +173,9 @@ export default function VendorPricingModal({
             </h5>
             <div className="space-y-2.5">
               <div className="flex justify-between items-center">
-                <span className="text-gray-500 dark:text-gray-400 font-medium">Kitchen Status:</span>
+                <span className="text-gray-500 dark:text-gray-400 font-medium">
+                  Kitchen Status:
+                </span>
                 <span
                   className={`font-black text-xs uppercase px-2.5 py-0.5 rounded-full ${
                     selectedVendor.kitchenStatus === 'open'
@@ -217,7 +221,9 @@ export default function VendorPricingModal({
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-500 dark:text-gray-400 font-medium">Phone / Contact:</span>
+                <span className="text-gray-500 dark:text-gray-400 font-medium">
+                  Phone / Contact:
+                </span>
                 <span className="font-bold text-[#18201c] dark:text-white">
                   {selectedVendor.phone}
                 </span>

@@ -253,9 +253,7 @@ export default function HelpView({ onViewActiveOrder }: HelpViewProps) {
             </h4>
             <p className="text-[11px] text-gray-500 dark:text-gray-400">
               Call our customer assistance team directly at{' '}
-              <strong className="text-[#18201c] dark:text-white font-mono">
-                -9625694673
-              </strong>
+              <strong className="text-[#18201c] dark:text-white font-mono">-9625694673</strong>
             </p>
           </div>
         </div>

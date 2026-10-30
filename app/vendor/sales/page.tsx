@@ -173,7 +173,11 @@ export default function VendorSalesPage() {
         ? Number(o.financial_snapshot.vendorPayableNetPaise) / 100
         : o.restaurant_payout != null
           ? Number(o.restaurant_payout)
-          : Math.max(0, Number(o.subtotal || o.total_amount || 0) - (Number(o.subtotal || o.total_amount || 0) * commissionRate) / 100)),
+          : Math.max(
+              0,
+              Number(o.subtotal || o.total_amount || 0) -
+                (Number(o.subtotal || o.total_amount || 0) * commissionRate) / 100
+            )),
     0
   )
   const totalNetEarnings =
@@ -238,7 +242,11 @@ export default function VendorSalesPage() {
               </div>
             </div>
             <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-[#121815] dark:text-white truncate">
-              ₹{totalGrossSales.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ₹
+              {totalGrossSales.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </p>
             <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-1 truncate">
               Across {totalRecordCount} {orders.length > 0 ? 'orders' : 'records'}
@@ -256,7 +264,11 @@ export default function VendorSalesPage() {
               </div>
             </div>
             <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-amber-600 dark:text-amber-400 truncate">
-              -₹{totalCommission.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              -₹
+              {totalCommission.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </p>
             <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-1 truncate">
               Commission cut
@@ -274,7 +286,11 @@ export default function VendorSalesPage() {
               </div>
             </div>
             <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-blue-600 dark:text-blue-400 truncate">
-              ₹{totalNetEarnings.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ₹
+              {totalNetEarnings.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </p>
             <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-1 truncate">
               Total net earnings
@@ -292,7 +308,11 @@ export default function VendorSalesPage() {
               </div>
             </div>
             <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-[#5e700a] dark:text-[#d9f447] truncate">
-              ₹{totalSettledAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ₹
+              {totalSettledAmount.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </p>
             <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold mt-1 truncate">
               Transferred to bank
@@ -310,7 +330,11 @@ export default function VendorSalesPage() {
               </div>
             </div>
             <p className="mt-2.5 text-lg sm:text-2xl font-black tracking-tight text-amber-600 dark:text-amber-400 truncate">
-              ₹{remainingSettlementBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ₹
+              {remainingSettlementBalance.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </p>
             <p className="text-[10px] text-amber-700/80 dark:text-amber-300/80 mt-1 truncate">
               Awaiting payout release

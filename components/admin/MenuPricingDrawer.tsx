@@ -192,7 +192,10 @@ export default function MenuPricingDrawer({ vendor, isOpen, onClose }: MenuPrici
       !Number.isInteger(finalPrice) ||
       finalPrice < finalRestaurantPrice
     ) {
-      toast('Invalid prices: use whole rupees and keep app price at or above restaurant price.', 'error')
+      toast(
+        'Invalid prices: use whole rupees and keep app price at or above restaurant price.',
+        'error'
+      )
       return
     }
 
@@ -206,7 +209,10 @@ export default function MenuPricingDrawer({ vendor, isOpen, onClose }: MenuPrici
           v.price < v.restaurantPrice
       )
     ) {
-      toast('Invalid variant: every variant needs a name and valid restaurant and app prices.', 'error')
+      toast(
+        'Invalid variant: every variant needs a name and valid restaurant and app prices.',
+        'error'
+      )
       return
     }
 
@@ -216,7 +222,9 @@ export default function MenuPricingDrawer({ vendor, isOpen, onClose }: MenuPrici
       restaurant_price: variant.restaurantPrice,
       price: variant.price,
       in_stock: variant.inStock,
-      is_default: productForm.variants.some((entry) => entry.isDefault) ? variant.isDefault : index === 0,
+      is_default: productForm.variants.some((entry) => entry.isDefault)
+        ? variant.isDefault
+        : index === 0,
     }))
 
     const payload = {
@@ -300,7 +308,8 @@ export default function MenuPricingDrawer({ vendor, isOpen, onClose }: MenuPrici
                   onClick={openAddProduct}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-[#18201c] dark:bg-[#86a018] px-3.5 py-1.5 text-xs font-bold text-white dark:text-[#121815] shadow-xs hover:bg-black dark:hover:bg-[#97b41e] transition-colors cursor-pointer"
                 >
-                  <Plus className="size-3.5 text-[#d9f447] dark:text-[#121815]" /> + Add Item for Vendor
+                  <Plus className="size-3.5 text-[#d9f447] dark:text-[#121815]" /> + Add Item for
+                  Vendor
                 </button>
                 <button
                   onClick={onClose}
@@ -319,7 +328,8 @@ export default function MenuPricingDrawer({ vendor, isOpen, onClose }: MenuPrici
                 </div>
               ) : products.length === 0 ? (
                 <div className="p-8 text-center text-xs text-gray-500 dark:text-gray-400 border border-dashed border-gray-200 dark:border-[#27342d] rounded-2xl">
-                  No products found for this vendor store. Click &apos;+ Add Item for Vendor&apos; to create one.
+                  No products found for this vendor store. Click &apos;+ Add Item for Vendor&apos;
+                  to create one.
                 </div>
               ) : (
                 <div className="table-wrapper rounded-xl border border-gray-200 dark:border-[#27342d] overflow-x-auto">
@@ -352,13 +362,17 @@ export default function MenuPricingDrawer({ vendor, isOpen, onClose }: MenuPrici
                               )}
                               <div>
                                 <p className="text-xs font-bold">{prod.name}</p>
-                                <span className={`text-[10px] ${prod.isVeg ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                <span
+                                  className={`text-[10px] ${prod.isVeg ? 'text-emerald-600' : 'text-rose-600'}`}
+                                >
                                   {prod.isVeg ? 'Veg' : 'Non-Veg'}
                                 </span>
                               </div>
                             </div>
                           </td>
-                          <td className="p-3 text-gray-600 dark:text-gray-400">{prod.categoryName}</td>
+                          <td className="p-3 text-gray-600 dark:text-gray-400">
+                            {prod.categoryName}
+                          </td>
                           <td className="p-3 font-mono font-bold">₹{prod.restaurantPrice}</td>
                           <td className="p-3 font-mono font-bold text-emerald-600 dark:text-emerald-400">
                             ₹{prod.price}
@@ -427,7 +441,9 @@ export default function MenuPricingDrawer({ vendor, isOpen, onClose }: MenuPrici
                     type="text"
                     required
                     value={productForm.categoryName}
-                    onChange={(e) => setProductForm({ ...productForm, categoryName: e.target.value })}
+                    onChange={(e) =>
+                      setProductForm({ ...productForm, categoryName: e.target.value })
+                    }
                     className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] p-2.5 font-medium outline-none focus:border-[#86a018]"
                   />
                 </div>
@@ -485,7 +501,9 @@ export default function MenuPricingDrawer({ vendor, isOpen, onClose }: MenuPrici
                   <label className="font-bold">Food Type</label>
                   <select
                     value={productForm.isVeg ? 'true' : 'false'}
-                    onChange={(e) => setProductForm({ ...productForm, isVeg: e.target.value === 'true' })}
+                    onChange={(e) =>
+                      setProductForm({ ...productForm, isVeg: e.target.value === 'true' })
+                    }
                     className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] p-2.5 font-bold outline-none cursor-pointer"
                   >
                     <option value="true">Vegetarian</option>
@@ -535,7 +553,10 @@ export default function MenuPricingDrawer({ vendor, isOpen, onClose }: MenuPrici
                   <select
                     value={productForm.status}
                     onChange={(e) =>
-                      setProductForm({ ...productForm, status: e.target.value as 'ACTIVE' | 'INACTIVE' })
+                      setProductForm({
+                        ...productForm,
+                        status: e.target.value as 'ACTIVE' | 'INACTIVE',
+                      })
                     }
                     className="mt-1.5 w-full rounded-xl border border-gray-300 dark:border-[#27342d] bg-white dark:bg-[#121815] p-2.5 font-bold outline-none cursor-pointer"
                   >
@@ -550,7 +571,9 @@ export default function MenuPricingDrawer({ vendor, isOpen, onClose }: MenuPrici
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-bold">Variants (optional)</p>
-                    <p className="text-[10px] text-gray-500">Custom size/portions with distinct prices</p>
+                    <p className="text-[10px] text-gray-500">
+                      Custom size/portions with distinct prices
+                    </p>
                   </div>
                   <button
                     type="button"
@@ -578,7 +601,9 @@ export default function MenuPricingDrawer({ vendor, isOpen, onClose }: MenuPrici
                       step={1}
                       placeholder="Restaurant ₹"
                       value={variant.restaurantPrice}
-                      onChange={(e) => updateVariant(variant.id, { restaurantPrice: Number(e.target.value) })}
+                      onChange={(e) =>
+                        updateVariant(variant.id, { restaurantPrice: Number(e.target.value) })
+                      }
                       className="rounded-lg border border-gray-300 bg-white px-3 py-2 dark:border-[#27342d] dark:bg-[#18201c]"
                     />
                     <input

@@ -25,8 +25,8 @@ export function CommissionInvoiceView({
       <div className="bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 p-4 rounded-2xl">
         <div className="flex items-center justify-between">
           <span className="font-bold text-purple-900 dark:text-purple-300 flex items-center gap-1.5 text-xs">
-            <Building2 className="size-4 text-purple-600 dark:text-purple-400" /> Platform Commission
-            &amp; Tax Settlement
+            <Building2 className="size-4 text-purple-600 dark:text-purple-400" /> Platform
+            Commission &amp; Tax Settlement
           </span>
           <span className="font-mono text-[10px] bg-purple-100 dark:bg-purple-900/60 text-purple-900 dark:text-purple-300 px-2.5 py-0.5 rounded-md font-bold">
             SAC Code: 998311 (Platform Service)
@@ -41,7 +41,9 @@ export function CommissionInvoiceView({
       <div className="grid grid-cols-2 gap-3 bg-gray-50 dark:bg-[#121815] p-4 rounded-2xl border border-gray-200 dark:border-[#27342d]">
         <div>
           <span className="text-[10px] font-bold text-gray-400 uppercase">Gross Order Sales</span>
-          <p className="font-extrabold text-base text-[#18201c] dark:text-white">₹{finalSubtotal}</p>
+          <p className="font-extrabold text-base text-[#18201c] dark:text-white">
+            ₹{finalSubtotal}
+          </p>
         </div>
 
         <div>

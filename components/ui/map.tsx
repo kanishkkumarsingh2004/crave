@@ -450,7 +450,9 @@ export function MapControls({
   }
 
   return (
-    <div className={cn('absolute z-10 flex flex-col gap-1.5', positionClasses[position], className)}>
+    <div
+      className={cn('absolute z-10 flex flex-col gap-1.5', positionClasses[position], className)}
+    >
       {showZoom && (
         <div className="flex flex-col overflow-hidden rounded-xl border border-white/10 bg-black/80 shadow-xl backdrop-blur-md">
           <button
@@ -566,11 +568,7 @@ export function MapMarker({
 
   if (!marker || !map) return null
 
-  return (
-    <MarkerContext.Provider value={{ marker, map }}>
-      {children}
-    </MarkerContext.Provider>
-  )
+  return <MarkerContext.Provider value={{ marker, map }}>{children}</MarkerContext.Provider>
 }
 
 export type MarkerContentProps = {
@@ -751,7 +749,9 @@ export function MapGeoJSON({
       })
     }
 
-    let clickHandler: ((e: MapLibreGL.MapMouseEvent & { features?: MapLibreGL.MapGeoJSONFeature[] }) => void) | null = null
+    let clickHandler:
+      | ((e: MapLibreGL.MapMouseEvent & { features?: MapLibreGL.MapGeoJSONFeature[] }) => void)
+      | null = null
     if (interactive && fillPaint !== false) {
       clickHandler = (e) => {
         if (e.features && e.features.length > 0) {
@@ -775,7 +775,18 @@ export function MapGeoJSON({
         if (map.getSource(sourceId)) map.removeSource(sourceId)
       } catch {}
     }
-  }, [isLoaded, map, data, promoteId, fillPaint, linePaint, interactive, sourceId, fillLayerId, lineLayerId])
+  }, [
+    isLoaded,
+    map,
+    data,
+    promoteId,
+    fillPaint,
+    linePaint,
+    interactive,
+    sourceId,
+    fillLayerId,
+    lineLayerId,
+  ])
 
   return null
 }

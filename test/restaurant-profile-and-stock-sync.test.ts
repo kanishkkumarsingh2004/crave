@@ -29,7 +29,13 @@ test('Real-time stock sync: stock status toggling and payload validation', () =>
   // Customer UI updater simulation
   const customerList = [
     { ...initialItem, price: 320, category: 'Main Course' },
-    { id: 'item_sg_02', name: 'Paneer Butter Masala', in_stock: true, price: 280, category: 'Main Course' },
+    {
+      id: 'item_sg_02',
+      name: 'Paneer Butter Masala',
+      in_stock: true,
+      price: 280,
+      category: 'Main Course',
+    },
   ]
 
   const updatedList = customerList.map((item) => {
@@ -78,7 +84,10 @@ test('Restaurant profile delivery ETA and distance calculation', () => {
   const totalMin = Math.max(12, prepTimeMinutes + roadTravelMinutes - 3)
   const totalMax = prepTimeMinutes + roadTravelMinutes + 3
 
-  assert.ok(distanceKm > 2.0 && distanceKm < 10.0, `Distance should be reasonable urban distance: ${distanceKm}`)
+  assert.ok(
+    distanceKm > 2.0 && distanceKm < 10.0,
+    `Distance should be reasonable urban distance: ${distanceKm}`
+  )
   assert.ok(totalMin >= 15, `Minimum ETA should account for kitchen prep: ${totalMin}`)
   assert.ok(totalMax > totalMin, `Maximum ETA should exceed minimum ETA: ${totalMax} > ${totalMin}`)
 })

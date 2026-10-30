@@ -17,17 +17,18 @@ Verification requires running. The computer is the ground truth.
 
 ## Verification by Tier
 
-| Tier | Scope | Time Budget |
-|------|-------|------------|
-| **0** | Quick sanity: does it compile/run at all? | ~30s |
-| **1** | Full chain: lint → type-check → test | ~2 min |
-| **2** | Comprehensive: lint → type → test → build → edge cases → adversarial | ~10 min |
+| Tier  | Scope                                                                | Time Budget |
+| ----- | -------------------------------------------------------------------- | ----------- |
+| **0** | Quick sanity: does it compile/run at all?                            | ~30s        |
+| **1** | Full chain: lint → type-check → test                                 | ~2 min      |
+| **2** | Comprehensive: lint → type → test → build → edge cases → adversarial | ~10 min     |
 
 ---
 
 ## Verification Chains (by Language)
 
 ### TypeScript
+
 ```bash
 # Required chain (run in this order)
 tsc --noEmit                    # type correctness first
@@ -44,6 +45,7 @@ vitest run --reporter=verbose 2>&1 | tail -30
 ```
 
 ### Python
+
 ```bash
 mypy . --strict 2>&1             # type correctness
 ruff check . 2>&1                # lint
@@ -52,6 +54,7 @@ pytest --cov=src --cov-report=term-missing 2>&1  # coverage (Tier 2)
 ```
 
 ### Rust
+
 ```bash
 cargo check 2>&1                 # syntax + types
 cargo clippy -- -D warnings 2>&1 # lint (warnings = errors)
@@ -60,6 +63,7 @@ cargo test -- --nocapture 2>&1   # with output (debugging)
 ```
 
 ### Go
+
 ```bash
 go vet ./... 2>&1
 staticcheck ./... 2>&1           # enhanced lint
@@ -68,6 +72,7 @@ go test ./... -cover 2>&1        # coverage
 ```
 
 ### Java (Maven)
+
 ```bash
 ./mvnw compile 2>&1
 ./mvnw test 2>&1
@@ -75,24 +80,28 @@ go test ./... -cover 2>&1        # coverage
 ```
 
 ### C#
+
 ```bash
 dotnet build --no-restore 2>&1
 dotnet test --logger "console;verbosity=detailed" 2>&1
 ```
 
 ### Ruby
+
 ```bash
 bundle exec rubocop --no-color 2>&1
 bundle exec rspec --format documentation 2>&1
 ```
 
 ### PHP
+
 ```bash
 composer phpstan 2>&1
 composer test 2>&1
 ```
 
 ### Swift
+
 ```bash
 swift build 2>&1
 swift test 2>&1
@@ -102,15 +111,15 @@ swift test 2>&1
 
 ## Evidence Requirements
 
-| Claim | Required Evidence | Format |
-|-------|-----------------|--------|
-| "Tests pass" | Pass count ≥ baseline, 0 failures | "47/47 passed, 0 failed" |
-| "Lint clean" | Linter output with 0 warnings/errors | "(no output)" or "0 problems" |
-| "Type-safe" | Compiler output clean | "(no output)" = clean for tsc |
-| "Build succeeds" | Last line of build output | "Build succeeded" |
-| "No regressions" | Before + after counts compared | "47→47 pass, 0 new failures" |
-| "Fixed" | Before behavior + after behavior, both observed | Test showing fix |
-| "Secure" | Security tool output + manual check | "0 high/critical findings" |
+| Claim            | Required Evidence                               | Format                        |
+| ---------------- | ----------------------------------------------- | ----------------------------- |
+| "Tests pass"     | Pass count ≥ baseline, 0 failures               | "47/47 passed, 0 failed"      |
+| "Lint clean"     | Linter output with 0 warnings/errors            | "(no output)" or "0 problems" |
+| "Type-safe"      | Compiler output clean                           | "(no output)" = clean for tsc |
+| "Build succeeds" | Last line of build output                       | "Build succeeded"             |
+| "No regressions" | Before + after counts compared                  | "47→47 pass, 0 new failures"  |
+| "Fixed"          | Before behavior + after behavior, both observed | Test showing fix              |
+| "Secure"         | Security tool output + manual check             | "0 high/critical findings"    |
 
 ### Evidence Format (cite verbatim)
 
@@ -131,6 +140,7 @@ Never paraphrase test output. Cite it verbatim.
 ## Regression Protocol
 
 ### Baseline (before implementation)
+
 ```bash
 # Run before touching any code
 vitest run 2>&1 | tail -5
@@ -138,6 +148,7 @@ vitest run 2>&1 | tail -5
 ```
 
 ### Post-change comparison
+
 ```bash
 # Run after implementation
 vitest run 2>&1 | tail -5
@@ -145,6 +156,7 @@ vitest run 2>&1 | tail -5
 ```
 
 ### Regression check
+
 ```
 Pass count: Y' >= Y?  → ✅ no regression
 Pass count: Y' < Y?   → ❌ REGRESSION — [Y-Y'] tests newly failing
@@ -157,18 +169,18 @@ New warnings: M' > M? → ❌ NEW LINT ISSUES — [list them]
 
 For every changed function, verify these inputs:
 
-| Input | Why | Typical Expected |
-|-------|-----|-----------------|
-| Normal valid input | Happy path | Success |
-| Empty string `""` | Boundary | Error or default |
-| `null` | Null safety | Error with message |
-| `undefined` | JS/TS gotcha | Error with message |
-| `0` | Zero boundary | Depends on domain |
-| Negative number `-1` | Range check | Error or clamp |
-| `MAX_SAFE_INTEGER` | Overflow | Depends |
-| Very long string | Memory / truncation | Depends |
-| Special chars `<>&"'` | XSS / injection | Escaped or rejected |
-| Malformed JSON `{bad}` | Parse safety | Error |
+| Input                  | Why                 | Typical Expected    |
+| ---------------------- | ------------------- | ------------------- |
+| Normal valid input     | Happy path          | Success             |
+| Empty string `""`      | Boundary            | Error or default    |
+| `null`                 | Null safety         | Error with message  |
+| `undefined`            | JS/TS gotcha        | Error with message  |
+| `0`                    | Zero boundary       | Depends on domain   |
+| Negative number `-1`   | Range check         | Error or clamp      |
+| `MAX_SAFE_INTEGER`     | Overflow            | Depends             |
+| Very long string       | Memory / truncation | Depends             |
+| Special chars `<>&"'`  | XSS / injection     | Escaped or rejected |
+| Malformed JSON `{bad}` | Parse safety        | Error               |
 
 Create tests for any missing from this matrix.
 
@@ -201,6 +213,7 @@ grep -rn "skipAuth\|bypassAuth\|noAuth" src/ --include="*.ts"
 ### Issuing VERDICT: PASS
 
 Requirements (ALL must be met):
+
 - [ ] All tests pass (pass count ≥ baseline)
 - [ ] Zero new lint warnings (in strict mode)
 - [ ] Type-check clean

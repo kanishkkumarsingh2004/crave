@@ -8,6 +8,7 @@ Attention degrades in the middle. Structure matters.
 ## The Attention Curve
 
 In a long context, current Pro-class models give highest attention to:
+
 - The start of the context (task, instructions, constraints)
 - The end of the context (output format, examples, final instruction)
 - Lowest attention: the middle (large code dumps, long docs)
@@ -28,13 +29,13 @@ Critical output format requirements go at the end.
 
 Know roughly how many tokens you're working with:
 
-| Content | Approx Tokens |
-|---------|--------------|
-| 1 line of code | ~10 |
-| 100-line file | ~1,000 |
-| 1,000-line file | ~10,000 |
-| Full codebase (medium) | ~100,000 |
-| Full codebase (large) | ~500,000–1M |
+| Content                | Approx Tokens |
+| ---------------------- | ------------- |
+| 1 line of code         | ~10           |
+| 100-line file          | ~1,000        |
+| 1,000-line file        | ~10,000       |
+| Full codebase (medium) | ~100,000      |
+| Full codebase (large)  | ~500,000–1M   |
 
 **Budget allocation for a 200K task:**
 
@@ -69,6 +70,7 @@ Working space:              ~34K  (17%)
 ## Context Structure (by Task Size)
 
 ### Small task (single file, < 50K tokens)
+
 ```
 [task description]
 [target file content]
@@ -77,6 +79,7 @@ Working space:              ~34K  (17%)
 ```
 
 ### Medium task (2-5 files, 50K–200K tokens)
+
 ```
 [task + goal]
 [constraints]
@@ -87,6 +90,7 @@ Working space:              ~34K  (17%)
 ```
 
 ### Large task (full codebase, 200K–1M tokens)
+
 ```
 [task + goal]               ← start: high attention
 [critical constraints]      ← start: high attention
@@ -104,6 +108,7 @@ Working space:              ~34K  (17%)
 Don't load the whole codebase when you can find what you need.
 
 ### Step 1 — Search First
+
 ```bash
 grep -rn "SESSION_TIMEOUT" src/ --include="*.ts"
 # → finds src/auth/session.ts:23
@@ -111,6 +116,7 @@ grep -rn "SESSION_TIMEOUT" src/ --include="*.ts"
 ```
 
 ### Step 2 — Load Targeted Context
+
 ```
 read src/auth/session.ts (142 lines)
 read src/auth/session.test.ts (65 lines)
@@ -118,6 +124,7 @@ read src/auth/session.test.ts (65 lines)
 ```
 
 ### Step 3 — Expand Only If Needed
+
 ```
 # If the fix has unexpected downstream effects:
 grep -rn "from.*session" src/ --include="*.ts"
@@ -132,19 +139,24 @@ grep -rn "from.*session" src/ --include="*.ts"
 When a session grows long:
 
 ### Recognize context pressure
+
 Signs that context is getting crowded:
+
 - You're unsure what state a file is in (was it edited?)
 - You're repeating recon you already did
 - You're uncertain about decisions made earlier
 
 ### Response: verify, don't rely on memory
+
 ```
 WRONG: "Earlier I established that SESSION_TIMEOUT is at line 23..."
 RIGHT: [grep SESSION_TIMEOUT src/] → confirm current state
 ```
 
 ### Cross-session continuity
+
 For multi-day tasks, use memory protocol:
+
 - Save task status to GRAVITAS_TASK_STATUS.md
 - Save non-obvious findings to GRAVITAS_MEMORY.md
 - Next session: read memory first, then recon to verify it's current
@@ -156,17 +168,20 @@ For multi-day tasks, use memory protocol:
 When spawning subagents, be deliberate about what context to pass:
 
 ### Pass to subagent:
+
 - The specific task
 - Relevant findings (not raw file dumps)
 - Constraints
 - Output format
 
 ### Don't pass:
+
 - Your full conversation history
 - Raw file content (subagent can read it themselves)
 - Intermediate work the subagent doesn't need
 
 ### Result from subagent:
+
 - Receive conclusions, not file dumps
 - The subagent's work stays in their context, not yours
 - You keep: VERDICT, key findings, specific changes made
@@ -176,12 +191,14 @@ When spawning subagents, be deliberate about what context to pass:
 ## Token-Efficient Patterns
 
 ### Read excerpts, not whole files
+
 ```
 GOOD: read src/auth.ts lines 20-50    → ~300 tokens
 BAD:  read src/auth.ts (full 2000 lines) → ~20,000 tokens
 ```
 
 ### Summarize large outputs
+
 ```
 $ grep -rn "SESSION_TIMEOUT" src/
   # 47 matches across 23 files
@@ -191,6 +208,7 @@ $ grep -rn "SESSION_TIMEOUT" src/
 ```
 
 ### Use line references
+
 ```
 GOOD: "The issue is at src/auth.ts:23 (SESSION_TIMEOUT = 5_000)"
 BAD:  [paste entire auth.ts to show line 23]

@@ -74,7 +74,10 @@ export default function CartPage() {
   const [couponCodeInput, setCouponCodeInput] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null)
   const [couponDiscount, setCouponDiscount] = useState(0)
-  const [couponMessage, setCouponMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
+  const [couponMessage, setCouponMessage] = useState<{
+    text: string
+    type: 'success' | 'error'
+  } | null>(null)
 
   useEffect(() => {
     if (!showCouponsModal) return
@@ -107,7 +110,10 @@ export default function CartPage() {
       const geocoded = await autoDetectAndGeocodeLocation()
       setDetectedCoords({ lat: geocoded.lat, lng: geocoded.lng })
       setDeliveryAddress(geocoded.formattedAddress)
-      toast(`GPS Address Detected: ${geocoded.shortAddress || geocoded.formattedAddress}`, 'success')
+      toast(
+        `GPS Address Detected: ${geocoded.shortAddress || geocoded.formattedAddress}`,
+        'success'
+      )
     } catch {
       toast('Could not detect GPS location. Please allow browser location access.', 'error')
     } finally {
@@ -115,12 +121,14 @@ export default function CartPage() {
     }
   }
 
-  const [restaurantCoords, setRestaurantCoords] = useState<{ lat: number; lng: number } | null>(() => {
-    const first = cart[0] as any
-    return first?.restaurantLat != null && first?.restaurantLng != null
-      ? { lat: Number(first.restaurantLat), lng: Number(first.restaurantLng) }
-      : null
-  })
+  const [restaurantCoords, setRestaurantCoords] = useState<{ lat: number; lng: number } | null>(
+    () => {
+      const first = cart[0] as any
+      return first?.restaurantLat != null && first?.restaurantLng != null
+        ? { lat: Number(first.restaurantLat), lng: Number(first.restaurantLng) }
+        : null
+    }
+  )
 
   useEffect(() => {
     const first = cart[0] as any
@@ -172,7 +180,9 @@ export default function CartPage() {
     }
     setSavedAddresses((prev) => {
       const exists = prev.some((a) => a.id === savedItem.id)
-      return exists ? prev.map((a) => (a.id === savedItem.id ? savedItem : a)) : [savedItem, ...prev]
+      return exists
+        ? prev.map((a) => (a.id === savedItem.id ? savedItem : a))
+        : [savedItem, ...prev]
     })
     if (typeof window !== 'undefined') {
       localStorage.setItem('crave_selected_address', savedItem.address)
@@ -258,7 +268,9 @@ export default function CartPage() {
         ])
         const [configJson, couponsJson] = await Promise.all([configRes.json(), couponsRes.json()])
 
-        setPaymentConfig(configJson.success && configJson.config ? configJson.config : getLocalPaymentConfig())
+        setPaymentConfig(
+          configJson.success && configJson.config ? configJson.config : getLocalPaymentConfig()
+        )
 
         if (couponsJson.success && Array.isArray(couponsJson.coupons)) {
           setAvailableCoupons(
@@ -366,14 +378,16 @@ export default function CartPage() {
       const isTaxInclusive =
         canonicalSnapshot.items?.every((it: any) => it.priceTaxMode !== 'TAX_EXCLUSIVE') ?? true
       const addedTaxPaise =
-        (!isTaxInclusive ? canonicalSnapshot.restaurantServiceTaxBreakdown?.totalGstPaise || 0 : 0) +
-        (canonicalSnapshot.platformServiceTaxBreakdown?.totalGstPaise || 0)
+        (!isTaxInclusive
+          ? canonicalSnapshot.restaurantServiceTaxBreakdown?.totalGstPaise || 0
+          : 0) + (canonicalSnapshot.platformServiceTaxBreakdown?.totalGstPaise || 0)
       const exactGst = Number((addedTaxPaise / 100).toFixed(2))
 
       return {
         ...local,
         deliveryFee: Number((canonicalSnapshot.deliveryFeePaise / 100).toFixed(2)),
-        isFreeDelivery: canonicalSnapshot.deliveryFeePaise === 0 && canonicalSnapshot.grossDeliveryFeePaise > 0,
+        isFreeDelivery:
+          canonicalSnapshot.deliveryFeePaise === 0 && canonicalSnapshot.grossDeliveryFeePaise > 0,
         packagingFee: Number((canonicalSnapshot.packagingFeePaise / 100).toFixed(2)),
         handlingFee: Number((canonicalSnapshot.handlingFeePaise / 100).toFixed(2)),
         platformFee: Number((canonicalSnapshot.platformFeePaise / 100).toFixed(2)),
@@ -391,7 +405,8 @@ export default function CartPage() {
   const packagingFee = pricingBreakdown.packagingFee
   const handlingFee = pricingBreakdown.handlingFee
   const platformFee = pricingBreakdown.platformFee
-  const exactGstValue = pricingBreakdown.exactGst ?? Number((pricingBreakdown.gstAmount ?? 0).toFixed(2))
+  const exactGstValue =
+    pricingBreakdown.exactGst ?? Number((pricingBreakdown.gstAmount ?? 0).toFixed(2))
 
   // Exact Final Amount To Pay (Strictly NEVER recalculated on client — sourced from snapshot)
   const exactNetPayable = useMemo(() => {
@@ -410,7 +425,17 @@ export default function CartPage() {
       exactGstValue -
       couponDiscount
     return Number(Math.max(0, raw).toFixed(2))
-  }, [canonicalSnapshot, pricingBreakdown.grandTotal, cartSubtotal, deliveryFee, packagingFee, platformFee, handlingFee, exactGstValue, couponDiscount])
+  }, [
+    canonicalSnapshot,
+    pricingBreakdown.grandTotal,
+    cartSubtotal,
+    deliveryFee,
+    packagingFee,
+    platformFee,
+    handlingFee,
+    exactGstValue,
+    couponDiscount,
+  ])
 
   // Automatically recalculate coupon discount when cart subtotal changes
   useEffect(() => {
@@ -445,12 +470,18 @@ export default function CartPage() {
 
     const found = availableCoupons.find((c) => c.code.toUpperCase() === code)
     if (!found) {
-      setCouponMessage({ text: `Invalid coupon code "${code}". Try CRAVE50 or WELCOME100.`, type: 'error' })
+      setCouponMessage({
+        text: `Invalid coupon code "${code}". Try CRAVE50 or WELCOME100.`,
+        type: 'error',
+      })
       return
     }
 
     if (cartSubtotal < found.minOrderAmount) {
-      setCouponMessage({ text: `Coupon ${found.code} requires a minimum order of ₹${found.minOrderAmount}.`, type: 'error' })
+      setCouponMessage({
+        text: `Coupon ${found.code} requires a minimum order of ₹${found.minOrderAmount}.`,
+        type: 'error',
+      })
       return
     }
 
@@ -487,7 +518,11 @@ export default function CartPage() {
     }
 
     if (deliveryServiceability && !deliveryServiceability.isServiceable) {
-      toast(deliveryServiceability.reason || 'The selected delivery address is outside our delivery area', 'error')
+      toast(
+        deliveryServiceability.reason ||
+          'The selected delivery address is outside our delivery area',
+        'error'
+      )
       document.getElementById('address-section')?.scrollIntoView({ behavior: 'smooth' })
       return
     }
@@ -508,7 +543,8 @@ export default function CartPage() {
       return
     }
 
-    const restaurantId = cart[0]?.restaurantId || cart[0]?.vendorId || (cart[0] as any)?.restaurant_id
+    const restaurantId =
+      cart[0]?.restaurantId || cart[0]?.vendorId || (cart[0] as any)?.restaurant_id
     if (!restaurantId) {
       toast('The cart item is not linked to a valid restaurant', 'error')
       return
@@ -642,7 +678,10 @@ export default function CartPage() {
         currency: paymentOrder.currency || 'INR',
         name: 'crave.',
         description: `Order #${orderId.slice(-6).toUpperCase()} • Fresh Delivery`,
-        image: typeof window !== 'undefined' ? `${window.location.origin}/icons/icon-192x192.png` : undefined,
+        image:
+          typeof window !== 'undefined'
+            ? `${window.location.origin}/icons/icon-192x192.png`
+            : undefined,
         prefill: {
           name: user?.name || '',
           contact: customerPhone.trim() || user?.phone || '',
@@ -747,7 +786,9 @@ export default function CartPage() {
             <div className="mx-auto grid size-16 place-items-center rounded-2xl bg-[#d9f447] text-[#121815] shadow-lg mb-4">
               <Check className="size-8 stroke-[3]" />
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">Order Placed Successfully!</h2>
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              Order Placed Successfully!
+            </h2>
             <p className="mt-2 text-sm text-[#9eb3a4] max-w-md mx-auto font-medium">
               Your order has been sent to {restaurantName}. Redirecting to live tracking...
             </p>
@@ -817,7 +858,8 @@ export default function CartPage() {
                                 </p>
                               )}
                               <p className="text-xs font-bold text-stone-500 dark:text-stone-400 mt-0.5">
-                                ₹{item.price} <span className="text-[10px] font-normal text-stone-400">each</span>
+                                ₹{item.price}{' '}
+                                <span className="text-[10px] font-normal text-stone-400">each</span>
                               </p>
                             </div>
                           </div>
@@ -919,7 +961,10 @@ export default function CartPage() {
                                 setSelectedAddressId(addr.id)
                                 setDeliveryAddress(addr.address)
                                 if (addr.latitude != null && addr.longitude != null) {
-                                  setDetectedCoords({ lat: Number(addr.latitude), lng: Number(addr.longitude) })
+                                  setDetectedCoords({
+                                    lat: Number(addr.latitude),
+                                    lng: Number(addr.longitude),
+                                  })
                                 }
                                 if (typeof window !== 'undefined') {
                                   localStorage.setItem('crave_selected_address', addr.address)
@@ -943,7 +988,9 @@ export default function CartPage() {
                                   )}
                                 </div>
                                 <div className="min-w-0">
-                                  <p className="text-xs font-black text-[#121815] dark:text-white">{addr.label}</p>
+                                  <p className="text-xs font-black text-[#121815] dark:text-white">
+                                    {addr.label}
+                                  </p>
                                   <p className="text-[11px] text-stone-500 dark:text-stone-400 line-clamp-2 mt-0.5 font-medium leading-relaxed">
                                     {addr.address}
                                   </p>
@@ -1015,8 +1062,12 @@ export default function CartPage() {
                               <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-3 text-xs text-rose-800 dark:text-rose-200 flex items-start gap-2">
                                 <AlertTriangle className="size-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
                                 <div>
-                                  <p className="font-extrabold">Delivery Not Available at This Location</p>
-                                  <p className="text-[11px] mt-0.5 opacity-90">{deliveryServiceability.reason}</p>
+                                  <p className="font-extrabold">
+                                    Delivery Not Available at This Location
+                                  </p>
+                                  <p className="text-[11px] mt-0.5 opacity-90">
+                                    {deliveryServiceability.reason}
+                                  </p>
                                 </div>
                               </div>
                             ) : (
@@ -1055,7 +1106,9 @@ export default function CartPage() {
                             </div>
                           )}
                         </div>
-                        <p className="text-[10px] text-stone-400 mt-1">Delivery partner will call this number on arrival.</p>
+                        <p className="text-[10px] text-stone-400 mt-1">
+                          Delivery partner will call this number on arrival.
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -1152,9 +1205,13 @@ export default function CartPage() {
                               onClick={() => handleApplyCouponCode(cpn.code)}
                               className="inline-flex items-center gap-1.5 rounded-full border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] px-3 py-1 text-[11px] font-bold text-[#121815] dark:text-white hover:border-[#5e8210] dark:hover:border-[#d9f447] transition"
                             >
-                              <span className="font-mono text-[#5e8210] dark:text-[#d9f447] font-black">{cpn.code}</span>
+                              <span className="font-mono text-[#5e8210] dark:text-[#d9f447] font-black">
+                                {cpn.code}
+                              </span>
                               <span className="text-stone-400 font-normal">
-                                {cpn.discountType === 'percentage' ? `${cpn.discountValue}% OFF` : `₹${cpn.discountValue} OFF`}
+                                {cpn.discountType === 'percentage'
+                                  ? `${cpn.discountValue}% OFF`
+                                  : `₹${cpn.discountValue} OFF`}
                               </span>
                             </button>
                           ))}
@@ -1185,9 +1242,12 @@ export default function CartPage() {
                   <div className="mx-auto grid size-20 place-items-center rounded-3xl bg-[#d9f447]/20 text-[#121815] dark:text-[#d9f447] mb-5 shadow-sm">
                     <ShoppingCart className="size-10 text-[#5e8210] dark:text-[#d9f447]" />
                   </div>
-                  <h2 className="text-2xl font-black text-[#121815] dark:text-white tracking-tight">Your Cart is Empty</h2>
+                  <h2 className="text-2xl font-black text-[#121815] dark:text-white tracking-tight">
+                    Your Cart is Empty
+                  </h2>
                   <p className="mt-2 text-sm text-stone-500 dark:text-stone-400 max-w-md mx-auto leading-relaxed font-medium">
-                    Looks like you haven&apos;t added anything to your cart yet. Explore delicious dishes from nearby restaurants!
+                    Looks like you haven&apos;t added anything to your cart yet. Explore delicious
+                    dishes from nearby restaurants!
                   </p>
                   <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5 max-w-md mx-auto">
                     <Link
@@ -1203,16 +1263,23 @@ export default function CartPage() {
 
             {/* Right Column: Premium Bill Details */}
             {cart.length > 0 && (
-              <div id="payment-section" className="space-y-6 lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24">
+              <div
+                id="payment-section"
+                className="space-y-6 lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24"
+              >
                 <div className="rounded-3xl border border-black/[0.07] dark:border-white/10 bg-white/95 dark:bg-[#131b16]/95 p-5 sm:p-7 shadow-[0_20px_50px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.6)] backdrop-blur-2xl">
                   <div className="flex items-center justify-between pb-4 border-b border-black/[0.06] dark:border-white/10 mb-5">
                     <div className="flex items-center gap-2.5">
                       <div className="size-8 rounded-xl bg-black/5 dark:bg-white/5 grid place-items-center text-[#5e8210] dark:text-[#d9f447]">
                         <Receipt className="size-4" />
                       </div>
-                      <h2 className="text-base font-extrabold text-[#121815] dark:text-white">Bill Details</h2>
+                      <h2 className="text-base font-extrabold text-[#121815] dark:text-white">
+                        Bill Details
+                      </h2>
                     </div>
-                    <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">INR (₹)</span>
+                    <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">
+                      INR (₹)
+                    </span>
                   </div>
 
                   {/* Free Delivery Progress Indicator */}
@@ -1222,14 +1289,19 @@ export default function CartPage() {
                         <span className="font-extrabold text-[#121815] dark:text-white flex items-center gap-1.5">
                           <Zap className="size-3.5 text-emerald-600 dark:text-[#d9f447] fill-emerald-600 dark:fill-[#d9f447]" />
                           {cartSubtotal >= activeConfig.freeDeliveryThreshold ? (
-                            <span className="text-emerald-600 dark:text-emerald-400 font-black">Free Delivery Unlocked!</span>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-black">
+                              Free Delivery Unlocked!
+                            </span>
                           ) : (
                             <span>
                               Add{' '}
                               <strong className="font-mono text-emerald-700 dark:text-[#d9f447]">
                                 ₹{(activeConfig.freeDeliveryThreshold - cartSubtotal).toFixed(0)}
                               </strong>{' '}
-                              more for <span className="font-black text-emerald-600 dark:text-emerald-400">FREE Delivery</span>
+                              more for{' '}
+                              <span className="font-black text-emerald-600 dark:text-emerald-400">
+                                FREE Delivery
+                              </span>
                             </span>
                           )}
                         </span>
@@ -1250,37 +1322,51 @@ export default function CartPage() {
 
                   <div className="space-y-3.5 text-xs">
                     <div className="flex justify-between text-stone-600 dark:text-stone-300">
-                      <span>Item Total ({totalCount} {totalCount === 1 ? 'item' : 'items'})</span>
-                      <span className="font-extrabold text-[#121815] dark:text-white">₹{cartSubtotal}</span>
+                      <span>
+                        Item Total ({totalCount} {totalCount === 1 ? 'item' : 'items'})
+                      </span>
+                      <span className="font-extrabold text-[#121815] dark:text-white">
+                        ₹{cartSubtotal}
+                      </span>
                     </div>
 
                     <div className="flex justify-between text-stone-600 dark:text-stone-300 items-center">
                       <span>Delivery Fee</span>
                       {pricingBreakdown.isFreeDelivery ? (
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs uppercase">FREE</span>
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs uppercase">
+                          FREE
+                        </span>
                       ) : (
-                        <span className="font-extrabold text-[#121815] dark:text-white">₹{deliveryFee}</span>
+                        <span className="font-extrabold text-[#121815] dark:text-white">
+                          ₹{deliveryFee}
+                        </span>
                       )}
                     </div>
 
                     {packagingFee > 0 && (
                       <div className="flex justify-between text-stone-600 dark:text-stone-300">
                         <span>Packaging Fee</span>
-                        <span className="font-extrabold text-[#121815] dark:text-white">₹{packagingFee}</span>
+                        <span className="font-extrabold text-[#121815] dark:text-white">
+                          ₹{packagingFee}
+                        </span>
                       </div>
                     )}
 
                     {platformFee > 0 && (
                       <div className="flex justify-between text-stone-600 dark:text-stone-300">
                         <span>Platform Fee</span>
-                        <span className="font-extrabold text-[#121815] dark:text-white">₹{platformFee}</span>
+                        <span className="font-extrabold text-[#121815] dark:text-white">
+                          ₹{platformFee}
+                        </span>
                       </div>
                     )}
 
                     {handlingFee > 0 && (
                       <div className="flex justify-between text-stone-600 dark:text-stone-300">
                         <span>Handling Fee</span>
-                        <span className="font-extrabold text-[#121815] dark:text-white">₹{handlingFee}</span>
+                        <span className="font-extrabold text-[#121815] dark:text-white">
+                          ₹{handlingFee}
+                        </span>
                       </div>
                     )}
 
@@ -1288,11 +1374,17 @@ export default function CartPage() {
                       <div className="flex justify-between text-stone-600 dark:text-stone-300">
                         <div>
                           <span>Taxes &amp; GST</span>
-                          {canonicalSnapshot?.items?.every((it: any) => it.priceTaxMode !== 'TAX_EXCLUSIVE') && (
-                            <span className="block text-[10px] text-stone-400">(Restaurant GST included in items)</span>
+                          {canonicalSnapshot?.items?.every(
+                            (it: any) => it.priceTaxMode !== 'TAX_EXCLUSIVE'
+                          ) && (
+                            <span className="block text-[10px] text-stone-400">
+                              (Restaurant GST included in items)
+                            </span>
                           )}
                         </div>
-                        <span className="font-extrabold text-[#121815] dark:text-white">₹{formatPrice(exactGstValue)}</span>
+                        <span className="font-extrabold text-[#121815] dark:text-white">
+                          ₹{formatPrice(exactGstValue)}
+                        </span>
                       </div>
                     )}
 
@@ -1305,7 +1397,9 @@ export default function CartPage() {
 
                     <div className="pt-4 border-t-2 border-dashed border-black/10 dark:border-white/10 flex items-baseline justify-between">
                       <div>
-                        <p className="text-xs font-black uppercase tracking-wider text-[#121815] dark:text-white">Total to Pay</p>
+                        <p className="text-xs font-black uppercase tracking-wider text-[#121815] dark:text-white">
+                          Total to Pay
+                        </p>
                         <p className="text-[10px] text-stone-400">Incl. all taxes and charges</p>
                       </div>
                       <span className="text-2xl sm:text-3xl font-black tracking-tight text-[#121815] dark:text-[#d9f447]">
@@ -1317,7 +1411,9 @@ export default function CartPage() {
                   <div className="mt-6 pt-5 border-t border-black/[0.06] dark:border-white/10 space-y-3">
                     <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400 px-1">
                       <span>Payment Method</span>
-                      <span className="font-semibold text-[#121815] dark:text-white">Online (UPI / Cards / Net Banking)</span>
+                      <span className="font-semibold text-[#121815] dark:text-white">
+                        Online (UPI / Cards / Net Banking)
+                      </span>
                     </div>
 
                     <form onSubmit={handlePlaceOrder} id="checkout-action-section">
@@ -1327,7 +1423,12 @@ export default function CartPage() {
                         className="min-w-[14rem] w-full flex items-center justify-center gap-2 rounded-2xl bg-[#121815] dark:bg-[#d9f447] py-4 px-6 text-sm font-bold text-[#d9f447] dark:text-[#121815] shadow-xl hover:opacity-95 active:scale-[0.99] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
                       >
                         {isSubmittingOrder ? (
-                          <CraveButtonLoader label="Processing payment..." sublabel="Opening checkout" variant="dark" size="md" />
+                          <CraveButtonLoader
+                            label="Processing payment..."
+                            sublabel="Opening checkout"
+                            variant="dark"
+                            size="md"
+                          />
                         ) : (
                           <>
                             <span>Pay ₹{formatPrice(exactNetPayable)}</span>
@@ -1352,11 +1453,17 @@ export default function CartPage() {
               <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-stone-700">
                 {totalCount} {totalCount === 1 ? 'item' : 'items'} &bull; Total to Pay
               </p>
-              <p className="text-lg font-black text-[#d9f447] dark:text-[#121815]">₹{formatPrice(exactNetPayable)}</p>
+              <p className="text-lg font-black text-[#d9f447] dark:text-[#121815]">
+                ₹{formatPrice(exactNetPayable)}
+              </p>
             </div>
             <button
               type="button"
-              onClick={() => document.getElementById('checkout-action-section')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() =>
+                document
+                  .getElementById('checkout-action-section')
+                  ?.scrollIntoView({ behavior: 'smooth' })
+              }
               className="rounded-xl bg-[#d9f447] dark:bg-[#121815] text-[#121815] dark:text-[#d9f447] px-4 py-2 text-xs font-black flex items-center gap-1.5 shadow-md cursor-pointer"
             >
               <span>Pay ₹{formatPrice(exactNetPayable)}</span>
@@ -1385,10 +1492,15 @@ export default function CartPage() {
                   <Tag className="size-5" />
                 </div>
                 <div>
-                  <h3 id="coupons-modal-title" className="text-base font-black text-[#121815] dark:text-white">
+                  <h3
+                    id="coupons-modal-title"
+                    className="text-base font-black text-[#121815] dark:text-white"
+                  >
                     Available Coupons &amp; Offers
                   </h3>
-                  <p className="text-xs text-stone-500 dark:text-stone-400">Select a coupon to apply instant discount</p>
+                  <p className="text-xs text-stone-500 dark:text-stone-400">
+                    Select a coupon to apply instant discount
+                  </p>
                 </div>
               </div>
               <button
@@ -1402,7 +1514,9 @@ export default function CartPage() {
 
             <div className="flex-1 overflow-y-auto py-4 space-y-3 pr-1">
               {availableCoupons.length === 0 ? (
-                <div className="text-center py-8 text-xs text-stone-400">No coupons currently available.</div>
+                <div className="text-center py-8 text-xs text-stone-400">
+                  No coupons currently available.
+                </div>
               ) : (
                 availableCoupons.map((coupon) => {
                   const isApplied = appliedCoupon?.code === coupon.code
@@ -1425,7 +1539,9 @@ export default function CartPage() {
                           <span className="font-mono font-black text-xs bg-black/5 dark:bg-white/10 px-2.5 py-1 rounded-lg text-[#121815] dark:text-white">
                             {coupon.code}
                           </span>
-                          <p className="text-xs text-stone-600 dark:text-stone-300 mt-1.5 font-medium">{coupon.description}</p>
+                          <p className="text-xs text-stone-600 dark:text-stone-300 mt-1.5 font-medium">
+                            {coupon.description}
+                          </p>
                         </div>
 
                         {isApplied ? (

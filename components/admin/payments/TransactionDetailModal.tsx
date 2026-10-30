@@ -94,7 +94,9 @@ export function TransactionDetailModal({
           {selectedTx.packagingFee > 0 && (
             <div className="flex justify-between text-white/80">
               <span>Restaurant Packaging Fee</span>
-              <span className="font-bold text-white">{formatCurrency(selectedTx.packagingFee)}</span>
+              <span className="font-bold text-white">
+                {formatCurrency(selectedTx.packagingFee)}
+              </span>
             </div>
           )}
 

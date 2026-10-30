@@ -34,15 +34,23 @@ export default function EconomicsCards({
           <div className="space-y-2 text-xs font-mono text-gray-700 dark:text-gray-300">
             <div className="flex justify-between">
               <span className="text-gray-500 dark:text-gray-400">Food Subtotal</span>
-              <span className="text-[#18201c] dark:text-white font-bold">₹{customerBilling.subtotal}</span>
+              <span className="text-[#18201c] dark:text-white font-bold">
+                ₹{customerBilling.subtotal}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500 dark:text-gray-400">Packaging Charge</span>
-              <span className="text-[#18201c] dark:text-white">₹{customerBilling.packagingFee}</span>
+              <span className="text-[#18201c] dark:text-white">
+                ₹{customerBilling.packagingFee}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-gray-400">Delivery Fee ({distanceKm}km)</span>
-              <span className="text-[#18201c] dark:text-white">₹{customerBilling.netDeliveryFee}</span>
+              <span className="text-gray-500 dark:text-gray-400">
+                Delivery Fee ({distanceKm}km)
+              </span>
+              <span className="text-[#18201c] dark:text-white">
+                ₹{customerBilling.netDeliveryFee}
+              </span>
             </div>
             {customerBilling.couponDiscount > 0 && (
               <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
@@ -68,7 +76,9 @@ export default function EconomicsCards({
             )}
             <div className="flex justify-between font-extrabold text-[#18201c] dark:text-white pt-2.5 border-t border-gray-200 dark:border-[#202923] text-sm">
               <span>Total Paid</span>
-              <span className="text-[#18201c] dark:text-[#d9f447]">₹{customerBilling.grandTotal}</span>
+              <span className="text-[#18201c] dark:text-[#d9f447]">
+                ₹{customerBilling.grandTotal}
+              </span>
             </div>
           </div>
         </div>
@@ -87,11 +97,15 @@ export default function EconomicsCards({
           <div className="space-y-2 text-xs font-mono text-gray-700 dark:text-gray-300">
             <div className="flex justify-between">
               <span className="text-gray-500 dark:text-gray-400">Gross Food Sales</span>
-              <span className="text-[#18201c] dark:text-white font-bold">₹{vendorSettlement.grossSales}</span>
+              <span className="text-[#18201c] dark:text-white font-bold">
+                ₹{vendorSettlement.grossSales}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500 dark:text-gray-400">Commission Rate</span>
-              <span className="text-[#18201c] dark:text-white">{vendorSettlement.commissionRatePercent}%</span>
+              <span className="text-[#18201c] dark:text-white">
+                {vendorSettlement.commissionRatePercent}%
+              </span>
             </div>
             <div className="flex justify-between text-rose-600 dark:text-rose-400 font-bold">
               <span>Commission Deducted</span>
@@ -126,11 +140,15 @@ export default function EconomicsCards({
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500 dark:text-gray-400">Extra KM Share</span>
-              <span className="text-[#18201c] dark:text-white">₹{driverEarnings.extraDistanceShare}</span>
+              <span className="text-[#18201c] dark:text-white">
+                ₹{driverEarnings.extraDistanceShare}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500 dark:text-gray-400">Surge/Rain Share</span>
-              <span className="text-[#18201c] dark:text-white">₹{driverEarnings.surgeRainShare}</span>
+              <span className="text-[#18201c] dark:text-white">
+                ₹{driverEarnings.surgeRainShare}
+              </span>
             </div>
             {driverEarnings.tip > 0 && (
               <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
@@ -203,8 +221,8 @@ export default function EconomicsCards({
       <div className="bg-white dark:bg-[#121815] border border-gray-200 dark:border-[#202923] rounded-2xl p-5 space-y-4 shadow-sm dark:shadow-xl">
         <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#202923] pb-3">
           <h3 className="text-xs font-extrabold text-[#18201c] dark:text-white flex items-center gap-2 uppercase tracking-wider">
-            <Sparkles className="size-4 text-[#18201c] dark:text-[#d9f447]" /> Unit Economics Summary
-            Table
+            <Sparkles className="size-4 text-[#18201c] dark:text-[#d9f447]" /> Unit Economics
+            Summary Table
           </h3>
           <span className="text-[10px] text-gray-500 dark:text-gray-400 font-mono">
             Real-time Computation
@@ -243,7 +261,9 @@ export default function EconomicsCards({
                 </td>
               </tr>
               <tr className="hover:bg-gray-50 dark:hover:bg-[#17201b] transition">
-                <td className="py-3 px-3 font-bold text-[#18201c] dark:text-white">Delivery Driver</td>
+                <td className="py-3 px-3 font-bold text-[#18201c] dark:text-white">
+                  Delivery Driver
+                </td>
                 <td className="py-3 px-3">₹{driverEarnings.deliveryFeeCollected} (Delivery Fee)</td>
                 <td className="py-3 px-3 text-gray-400">-</td>
                 <td className="py-3 px-3 text-emerald-600 dark:text-emerald-400 font-extrabold">
@@ -258,7 +278,8 @@ export default function EconomicsCards({
                   ₹{platformEconomics.platformGrossRevenue} (Gross Margin)
                 </td>
                 <td className="py-3 px-3 text-gray-600 dark:text-gray-400">
-                  ₹{platformEconomics.totalPaidToDriver + platformEconomics.totalPaidToVendor} (Payouts)
+                  ₹{platformEconomics.totalPaidToDriver + platformEconomics.totalPaidToVendor}{' '}
+                  (Payouts)
                 </td>
                 <td className="py-3 px-3 font-black text-amber-700 dark:text-yellow-400 text-sm">
                   ₹{platformEconomics.platformNetProfit} ({platformEconomics.profitMarginPercent}%)

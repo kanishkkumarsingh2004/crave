@@ -225,14 +225,14 @@ export default function LiveDriverMap({
         const dLat = nextLat - prevLat
         if (Math.hypot(dLng, dLat) > 0.000005) {
           const rad = Math.atan2(dLng, dLat)
-          const deg = (rad * 180 / Math.PI + 360) % 360
+          const deg = ((rad * 180) / Math.PI + 360) % 360
           setHeadingAngle(deg)
         }
       } else if (customerLat != null && customerLng != null) {
         const dLng = customerLng - nextLng
         const dLat = customerLat - nextLat
         const rad = Math.atan2(dLng, dLat)
-        const deg = (rad * 180 / Math.PI + 360) % 360
+        const deg = ((rad * 180) / Math.PI + 360) % 360
         setHeadingAngle(deg)
       }
       prevPosRef.current = [nextLng, nextLat]

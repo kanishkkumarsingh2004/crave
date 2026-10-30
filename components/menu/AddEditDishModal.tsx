@@ -45,7 +45,9 @@ export default function AddEditDishModal({
   const [skuCode, setSkuCode] = useState('')
   const [expiryDate, setExpiryDate] = useState('')
   const [hsnSac, setHsnSac] = useState('996331')
-  const [priceTaxMode, setPriceTaxMode] = useState<'TAX_INCLUSIVE' | 'TAX_EXCLUSIVE'>('TAX_INCLUSIVE')
+  const [priceTaxMode, setPriceTaxMode] = useState<'TAX_INCLUSIVE' | 'TAX_EXCLUSIVE'>(
+    'TAX_INCLUSIVE'
+  )
 
   useEffect(() => {
     if (editingItem) {
@@ -135,18 +137,22 @@ export default function AddEditDishModal({
       return
     }
     if (
-      variants.some(
-        (v) => !v.name.trim() || v.restaurant_price < 0 || v.price < v.restaurant_price
-      )
+      variants.some((v) => !v.name.trim() || v.restaurant_price < 0 || v.price < v.restaurant_price)
     ) {
-      toast('Every size needs a name and an app price at least equal to its restaurant price.', 'error')
+      toast(
+        'Every size needs a name and an app price at least equal to its restaurant price.',
+        'error'
+      )
       return
     }
 
     setSubmitting(true)
     const resolvedCat = isCustomCategory ? customCategory.trim() || 'General' : category
-    const itemId = editingItem ? editingItem.id : `prod_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
-    const defaultImg = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
+    const itemId = editingItem
+      ? editingItem.id
+      : `prod_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+    const defaultImg =
+      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
 
     const itemData: MenuItemRecord = {
       id: itemId,
@@ -228,7 +234,10 @@ export default function AddEditDishModal({
       }
 
       onSaved(savedItem, !!editingItem)
-      toast(editingItem ? `Updated dish '${savedItem.name}'!` : `Added '${savedItem.name}' to menu!`, 'success')
+      toast(
+        editingItem ? `Updated dish '${savedItem.name}'!` : `Added '${savedItem.name}' to menu!`,
+        'success'
+      )
       onClose()
     } catch (err: any) {
       toast(err.message || 'Could not save dish.', 'error')
@@ -456,7 +465,9 @@ export default function AddEditDishModal({
           <div className="rounded-2xl border border-stone-200/80 bg-stone-50 p-4 dark:border-white/10 dark:bg-white/[0.04]">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <p className="font-semibold text-sm text-stone-800 dark:text-white">Sizes / Variants</p>
+                <p className="font-semibold text-sm text-stone-800 dark:text-white">
+                  Sizes / Variants
+                </p>
                 <p className="text-[10px] text-stone-500 dark:text-stone-400">
                   Optional. Each size has its own restaurant and app price.
                 </p>
@@ -511,7 +522,9 @@ export default function AddEditDishModal({
                       min={0}
                       step={1}
                       value={variant.restaurant_price}
-                      onChange={(e) => updateVariant(variant.id, { restaurant_price: Number(e.target.value) })}
+                      onChange={(e) =>
+                        updateVariant(variant.id, { restaurant_price: Number(e.target.value) })
+                      }
                       className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 font-bold text-[#121815] outline-none dark:border-[#233027] dark:bg-[#0d1210] dark:text-white"
                       placeholder="Restaurant ₹"
                     />
@@ -539,7 +552,10 @@ export default function AddEditDishModal({
                         onClick={() =>
                           setVariants((cur) => {
                             const remaining = cur.filter((item) => item.id !== variant.id)
-                            if (remaining.length > 0 && !remaining.some((item) => item.is_default)) {
+                            if (
+                              remaining.length > 0 &&
+                              !remaining.some((item) => item.is_default)
+                            ) {
                               remaining[0] = { ...remaining[0], is_default: true }
                             }
                             return remaining
@@ -582,7 +598,9 @@ export default function AddEditDishModal({
             </div>
 
             <div>
-              <label className="font-bold text-stone-700 dark:text-gray-200">SKU Code (Optional)</label>
+              <label className="font-bold text-stone-700 dark:text-gray-200">
+                SKU Code (Optional)
+              </label>
               <input
                 type="text"
                 value={skuCode}
@@ -593,7 +611,9 @@ export default function AddEditDishModal({
             </div>
 
             <div>
-              <label className="font-bold text-stone-700 dark:text-gray-200">Expiry (Optional)</label>
+              <label className="font-bold text-stone-700 dark:text-gray-200">
+                Expiry (Optional)
+              </label>
               <input
                 type="date"
                 value={expiryDate}
@@ -677,7 +697,9 @@ export default function AddEditDishModal({
                   : 'bg-stone-200 dark:bg-white/10 text-stone-600 dark:text-stone-400 border border-stone-300 dark:border-white/10'
               }`}
             >
-              <span className={`size-1.5 rounded-full ${inStock ? 'bg-emerald-500 animate-pulse' : 'bg-stone-400'}`} />
+              <span
+                className={`size-1.5 rounded-full ${inStock ? 'bg-emerald-500 animate-pulse' : 'bg-stone-400'}`}
+              />
               <span>{inStock ? 'In Stock' : 'Out of Stock'}</span>
             </button>
           </div>

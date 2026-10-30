@@ -71,7 +71,8 @@ export function UserDropdown({
                   ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
                   : (roleDetails[user.role as UserRole]?.bg || 'bg-stone-100 dark:bg-white/10') +
                     ' ' +
-                    (roleDetails[user.role as UserRole]?.color || 'text-stone-700 dark:text-stone-300')
+                    (roleDetails[user.role as UserRole]?.color ||
+                      'text-stone-700 dark:text-stone-300')
               }`}
             >
               {isCustomer ? 'Customer' : `${user.role} Account`}

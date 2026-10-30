@@ -24,12 +24,14 @@ Created at task start. Lost when session ends.
 ```
 
 **When to write:**
+
 - Every failed approach, immediately after failure
 - Every wrong file path discovered
 - Every command that doesn't work as expected
 - Every assumption that turned out false
 
 **When to read:**
+
 - Before retrying any approach
 - Before touching a file that might have been searched before
 - At task start if the file exists from previous work
@@ -141,17 +143,21 @@ Never put full memory content here.
 # GRAVITAS Memory Index
 
 ## User
+
 - [user-preferences](memory/user-preferences.md) — dev preferences, commit style, verify commands
 
 ## Feedback
+
 - [test-runner-preference](memory/test-runner-preference.md) — vitest run, not npm test
 - [import-style](memory/import-style.md) — named exports only, never default
 
 ## Project
+
 - [auth-rewrite-context](memory/auth-rewrite-context.md) — legacy and new auth co-exist
 - [db-schema](memory/db-schema.md) — schema location and migration approach
 
 ## Reference
+
 - [stripe-webhook-docs](memory/stripe-webhook-docs.md) — webhook signature verification
 ```
 
@@ -185,6 +191,7 @@ Never put full memory content here.
 ## Recall Protocol
 
 At session start, if `GRAVITAS_MEMORY.md` exists:
+
 1. Read the index
 2. Load memories relevant to today's task
 3. Verify any memories that reference files (the file may have moved)
@@ -203,16 +210,20 @@ When continuing a multi-session task:
 ## Task Status — [task name]
 
 ### Completed
+
 - [x] Step 1: Auth recon — findings in memory/auth-rewrite-context.md
 - [x] Step 2: Plan — approved by user 2026-09-07
 
 ### In Progress
+
 - [ ] Step 3: Implementation — started src/auth/session.ts, not done
 
 ### Blocked
+
 - Step 4: Verify — can't run tests until step 3 done
 
 ### Session Failures (this session)
+
 - Tried editing config.ts for timeout. Wrong file. Actual: src/auth/session.ts:23
 ```
 

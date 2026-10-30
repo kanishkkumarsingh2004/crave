@@ -12,12 +12,12 @@ model families.
 Match reasoning depth to expected error cost and uncertainty. Do not set fixed
 token floors or prompt for narrated chain-of-thought.
 
-| Signal | Response |
-|---|---|
-| Low risk, clear, reversible | Brief reasoning and targeted checks |
-| Multiple dependencies or ambiguity | Compare failure modes before editing |
-| Security, migration, or destructive action | Deep review and explicit checkpoint |
-| Prior failed approach | Diagnose before choosing a different strategy |
+| Signal                                     | Response                                      |
+| ------------------------------------------ | --------------------------------------------- |
+| Low risk, clear, reversible                | Brief reasoning and targeted checks           |
+| Multiple dependencies or ambiguity         | Compare failure modes before editing          |
+| Security, migration, or destructive action | Deep review and explicit checkpoint           |
+| Prior failed approach                      | Diagnose before choosing a different strategy |
 
 See `../references/reasoning.md` for the adaptive formula.
 
@@ -49,10 +49,10 @@ Review the code below. Output format:
 
 ## Issues Found
 
-| File | Line | Severity | Issue | Fix |
-|------|------|----------|-------|-----|
-| src/auth.ts | 42 | HIGH | SQL injection | Use parameterized query |
-| src/utils.ts | 17 | LOW | Unused import | Remove import |
+| File         | Line | Severity | Issue         | Fix                     |
+| ------------ | ---- | -------- | ------------- | ----------------------- |
+| src/auth.ts  | 42   | HIGH     | SQL injection | Use parameterized query |
+| src/utils.ts | 17   | LOW      | Unused import | Remove import           |
 
 [your code here]
 ```
@@ -67,16 +67,20 @@ Gemini responds better to Markdown headings than XML tags in prompts.
 
 ```markdown
 ## Goal
+
 Review for security vulnerabilities
 
 ## Context
+
 Express.js API, TypeScript, connects to PostgreSQL
 
 ## Constraints
+
 - Don't suggest framework changes
 - Focus on injection and auth issues only
 
 ## Output Format
+
 [example as above]
 ```
 
@@ -92,12 +96,14 @@ tokens; verify the exact limit for the model revision you run). Key
 principles:
 
 **Use large context for:**
+
 - Full codebase review
 - Multi-file refactoring with full context
 - Long document analysis
 - Cross-file dependency tracing
 
 **Don't use large context for:**
+
 - Single-function fixes (waste of tokens)
 - Tasks where progressive disclosure is better
 - Cases where you should summarize, not dump
@@ -117,12 +123,14 @@ Structure important content at the start and end, not buried in the middle.
 ## 6. Grounding with Google Search
 
 When Gemini has search access, use it for:
+
 - API documentation (current versions, not training data)
 - Dependency compatibility (actual current versions)
 - Security vulnerability databases
 - Anything where recency matters
 
 **Don't use search for:**
+
 - Things in the codebase (use file tools)
 - Things you can read from config files
 - General programming patterns (training data is sufficient)
@@ -141,7 +149,7 @@ This is the single biggest performance multiplier in GRAVITAS.
 # BAD — sequential, three round-trips
 [read auth.ts]
 → wait →
-[read auth.test.ts]  
+[read auth.test.ts]
 → wait →
 [grep SESSION_TIMEOUT src/]
 ```
@@ -152,13 +160,13 @@ This is the single biggest performance multiplier in GRAVITAS.
 
 ## 8. Temperature Settings
 
-| Task | Temperature | Notes |
-|------|------------|-------|
-| Code generation | 0.0–0.2 | Deterministic, no creativity |
-| Bug analysis | 0.2–0.3 | Slight variation helps find alternatives |
-| Code review | 0.3–0.5 | Some creativity in finding issues |
-| Architecture | 0.5–0.7 | Exploration of options |
-| Documentation | 0.3–0.5 | Readable but accurate |
+| Task            | Temperature | Notes                                    |
+| --------------- | ----------- | ---------------------------------------- |
+| Code generation | 0.0–0.2     | Deterministic, no creativity             |
+| Bug analysis    | 0.2–0.3     | Slight variation helps find alternatives |
+| Code review     | 0.3–0.5     | Some creativity in finding issues        |
+| Architecture    | 0.5–0.7     | Exploration of options                   |
+| Documentation   | 0.3–0.5     | Readable but accurate                    |
 
 ---
 
@@ -219,24 +227,24 @@ Don't be nice. Find real problems.
 
 ## 10. Integration with GRAVITAS Tiers
 
-| Tier | Reasoning | Tools |
-|------|-----------|-------|
-| 0 | Brief | Direct action |
-| 1 | Proportional to uncertainty | Recon + implement + targeted verify |
-| 2 | Deep | Critique + checkpoint + full verify |
+| Tier | Reasoning                   | Tools                               |
+| ---- | --------------------------- | ----------------------------------- |
+| 0    | Brief                       | Direct action                       |
+| 1    | Proportional to uncertainty | Recon + implement + targeted verify |
+| 2    | Deep                        | Critique + checkpoint + full verify |
 
 ---
 
 ## 11. Portability Notes (tuned on Gemini, re-validate elsewhere)
 
-| Behavior | Tuned observation (Gemini) | When porting |
-|---------|---------------------------|--------------|
-| Prompt structure | Markdown headings preferred | Re-test on the target model |
-| Few-shot power | Very high | Very high on most models |
-| Context use | Large window, mid-degradation | Measure for the target model |
-| Tool parallelism | Native, fast | Depends on host support |
-| Reasoning | Thinking budget via API | Map to target API's effort control |
-| Output verbosity | Needs constraints to be brief | Re-tune brevity constraints |
+| Behavior         | Tuned observation (Gemini)    | When porting                       |
+| ---------------- | ----------------------------- | ---------------------------------- |
+| Prompt structure | Markdown headings preferred   | Re-test on the target model        |
+| Few-shot power   | Very high                     | Very high on most models           |
+| Context use      | Large window, mid-degradation | Measure for the target model       |
+| Tool parallelism | Native, fast                  | Depends on host support            |
+| Reasoning        | Thinking budget via API       | Map to target API's effort control |
+| Output verbosity | Needs constraints to be brief | Re-tune brevity constraints        |
 
 **Implication:** When porting these patterns to another model, re-validate
 prompt structure and output-length constraints first; they vary the most.
@@ -246,6 +254,7 @@ prompt structure and output-length constraints first; they vary the most.
 ## 12. Anti-patterns for Gemini
 
 **Don't:**
+
 - Use XML tags as primary structure (works but suboptimal)
 - Ask for "step-by-step" reasoning (it reasons internally — just give space)
 - Dump the whole codebase then ask a simple question (mid-context degradation)
@@ -253,6 +262,7 @@ prompt structure and output-length constraints first; they vary the most.
 - Pad prompts with persona setup ("You are an expert...")
 
 **Do:**
+
 - Structure with Markdown
 - Show one example of desired output format
 - Put the task first, context second

@@ -169,9 +169,8 @@ export default function DisbursePayoutModal({
         {/* Payee Bank Account Info */}
         <div className="rounded-xl bg-gray-50 dark:bg-[#171f1b] border border-gray-200 dark:border-[#233027] p-3 text-[11px] text-gray-600 dark:text-gray-400 flex items-center justify-between">
           <span>
-            Payee:{' '}
-            <strong className="text-[#18201c] dark:text-white">{vendor.bankAccount}</strong> (
-            {vendor.ifscCode})
+            Payee: <strong className="text-[#18201c] dark:text-white">{vendor.bankAccount}</strong>{' '}
+            ({vendor.ifscCode})
           </span>
           <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
             Verified Bank
@@ -189,9 +188,7 @@ export default function DisbursePayoutModal({
           </button>
           <button
             type="button"
-            disabled={
-              isSubmitting || !customPayoutAmount || parseFloat(customPayoutAmount) < 0
-            }
+            disabled={isSubmitting || !customPayoutAmount || parseFloat(customPayoutAmount) < 0}
             onClick={onConfirm}
             className="flex items-center gap-2 rounded-full bg-[#18201c] text-white hover:bg-black dark:bg-[#d9f447] dark:text-[#0d1310] px-6 py-2.5 text-xs font-black shadow-lg dark:shadow-[#d9f447]/20 dark:hover:bg-[#c8e434] active:scale-95 transition disabled:opacity-50"
           >

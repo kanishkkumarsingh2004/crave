@@ -1,16 +1,7 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import {
-  ArrowRight,
-  Bike,
-  Camera,
-  Check,
-  CheckCircle2,
-  Clock,
-  Package,
-  QrCode,
-} from 'lucide-react'
+import { ArrowRight, Bike, Camera, Check, CheckCircle2, Clock, Package, QrCode } from 'lucide-react'
 import { IncomingGroceryOrder } from './types'
 
 interface StoreOrdersViewProps {
@@ -107,7 +98,9 @@ export default function StoreOrdersView({
           <div className="col-span-full py-16 text-center rounded-3xl border border-dashed border-[#e2e7dc] bg-white">
             <Package className="mx-auto size-10 text-gray-300 mb-3" />
             <p className="text-base font-bold text-[#18201c]">No active orders in the database.</p>
-            <p className="text-xs text-gray-500 mt-1">New customer orders for this store will appear here.</p>
+            <p className="text-xs text-gray-500 mt-1">
+              New customer orders for this store will appear here.
+            </p>
           </div>
         ) : (
           filteredOrders.map((order) => {
@@ -121,7 +114,9 @@ export default function StoreOrdersView({
                   {/* Card Header */}
                   <div className="flex items-center justify-between border-b border-[#f0f4eb] pb-3 mb-4">
                     <div>
-                      <span className="font-mono text-sm font-black text-[#18201c]">#{order.id}</span>
+                      <span className="font-mono text-sm font-black text-[#18201c]">
+                        #{order.id}
+                      </span>
                       <p className="text-[11px] text-[#627068] mt-0.5">
                         {order.time}
                         {order.distance ? ` · ${order.distance}` : ''}
@@ -187,16 +182,24 @@ export default function StoreOrdersView({
                           <span className="flex items-center gap-2">
                             <span
                               className={`grid size-4 place-items-center rounded ${
-                                item.packed ? 'bg-emerald-600 text-white' : 'border border-gray-300 bg-white'
+                                item.packed
+                                  ? 'bg-emerald-600 text-white'
+                                  : 'border border-gray-300 bg-white'
                               }`}
                             >
                               {item.packed && <Check className="size-3 stroke-[3]" />}
                             </span>
-                            <span className={item.packed ? 'line-through text-gray-400' : 'font-semibold'}>
+                            <span
+                              className={
+                                item.packed ? 'line-through text-gray-400' : 'font-semibold'
+                              }
+                            >
                               {item.qty}x {item.name}
                             </span>
                           </span>
-                          <span className="text-[10px] text-gray-400 font-mono">{item.skuCode}</span>
+                          <span className="text-[10px] text-gray-400 font-mono">
+                            {item.skuCode}
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -206,7 +209,9 @@ export default function StoreOrdersView({
                 {/* Card Action Footer */}
                 <div>
                   <div className="flex items-center justify-between text-xs font-bold border-t border-[#f0f4eb] pt-3 mb-3 text-[#5c6861]">
-                    <span>Total Paid: ₹{order.total} ({order.paymentMethod})</span>
+                    <span>
+                      Total Paid: ₹{order.total} ({order.paymentMethod})
+                    </span>
                   </div>
 
                   {order.status === 'new' && (
@@ -229,7 +234,9 @@ export default function StoreOrdersView({
                           : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       }`}
                     >
-                      <span>{allItemsPacked ? 'Mark Packed & Print Barcode' : 'Check All Items First'}</span>
+                      <span>
+                        {allItemsPacked ? 'Mark Packed & Print Barcode' : 'Check All Items First'}
+                      </span>
                       <CheckCircle2 className="size-4" />
                     </button>
                   )}

@@ -63,19 +63,43 @@ async function getActiveConfig(): Promise<PaymentConfig> {
     mccCode: db.merchant_category_code || DEFAULT_PAYMENT_CONFIG.mccCode,
     ifscCode: db.ifsc_code || DEFAULT_PAYMENT_CONFIG.ifscCode,
     accountNumber: db.account_number || DEFAULT_PAYMENT_CONFIG.accountNumber,
-    platformFee: db.platform_fee != null ? Number(db.platform_fee) : DEFAULT_PAYMENT_CONFIG.platformFee,
-    handlingFee: db.handling_fee != null ? Number(db.handling_fee) : DEFAULT_PAYMENT_CONFIG.handlingFee,
-    vendorCommission: db.vendor_commission != null ? Number(db.vendor_commission) : DEFAULT_PAYMENT_CONFIG.vendorCommission,
-    packagingCap: db.packaging_cap != null ? Number(db.packaging_cap) : DEFAULT_PAYMENT_CONFIG.packagingCap,
-    gstRatePercent: Number(db.gst_rate_percent ?? db.gst_rate ?? DEFAULT_PAYMENT_CONFIG.gstRatePercent),
-    baseDeliveryFee: db.delivery_fee != null ? Number(db.delivery_fee) : DEFAULT_PAYMENT_CONFIG.baseDeliveryFee,
-    baseDistanceKm: db.base_distance_km != null ? Number(db.base_distance_km) : DEFAULT_PAYMENT_CONFIG.baseDistanceKm,
+    platformFee:
+      db.platform_fee != null ? Number(db.platform_fee) : DEFAULT_PAYMENT_CONFIG.platformFee,
+    handlingFee:
+      db.handling_fee != null ? Number(db.handling_fee) : DEFAULT_PAYMENT_CONFIG.handlingFee,
+    vendorCommission:
+      db.vendor_commission != null
+        ? Number(db.vendor_commission)
+        : DEFAULT_PAYMENT_CONFIG.vendorCommission,
+    packagingCap:
+      db.packaging_cap != null ? Number(db.packaging_cap) : DEFAULT_PAYMENT_CONFIG.packagingCap,
+    gstRatePercent: Number(
+      db.gst_rate_percent ?? db.gst_rate ?? DEFAULT_PAYMENT_CONFIG.gstRatePercent
+    ),
+    baseDeliveryFee:
+      db.delivery_fee != null ? Number(db.delivery_fee) : DEFAULT_PAYMENT_CONFIG.baseDeliveryFee,
+    baseDistanceKm:
+      db.base_distance_km != null
+        ? Number(db.base_distance_km)
+        : DEFAULT_PAYMENT_CONFIG.baseDistanceKm,
     perKmRate: db.per_km_rate != null ? Number(db.per_km_rate) : DEFAULT_PAYMENT_CONFIG.perKmRate,
-    freeDeliveryThreshold: db.free_delivery_threshold != null ? Number(db.free_delivery_threshold) : DEFAULT_PAYMENT_CONFIG.freeDeliveryThreshold,
-    driverPayoutShare: db.driver_payout_share != null ? Number(db.driver_payout_share) : DEFAULT_PAYMENT_CONFIG.driverPayoutShare,
-    surgeMultiplier: db.surge_multiplier != null ? Number(db.surge_multiplier) : DEFAULT_PAYMENT_CONFIG.surgeMultiplier,
+    freeDeliveryThreshold:
+      db.free_delivery_threshold != null
+        ? Number(db.free_delivery_threshold)
+        : DEFAULT_PAYMENT_CONFIG.freeDeliveryThreshold,
+    driverPayoutShare:
+      db.driver_payout_share != null
+        ? Number(db.driver_payout_share)
+        : DEFAULT_PAYMENT_CONFIG.driverPayoutShare,
+    surgeMultiplier:
+      db.surge_multiplier != null
+        ? Number(db.surge_multiplier)
+        : DEFAULT_PAYMENT_CONFIG.surgeMultiplier,
     rainFee: db.rain_fee != null ? Number(db.rain_fee) : DEFAULT_PAYMENT_CONFIG.rainFee,
-    nightSurgeFee: db.night_surge_fee != null ? Number(db.night_surge_fee) : DEFAULT_PAYMENT_CONFIG.nightSurgeFee,
+    nightSurgeFee:
+      db.night_surge_fee != null
+        ? Number(db.night_surge_fee)
+        : DEFAULT_PAYMENT_CONFIG.nightSurgeFee,
     isRainModeActive: db.is_rain_mode_active ?? DEFAULT_PAYMENT_CONFIG.isRainModeActive,
     isNightSurgeActive: db.is_night_surge_active ?? DEFAULT_PAYMENT_CONFIG.isNightSurgeActive,
     enableCashOnDelivery: db.enable_cash_on_delivery ?? DEFAULT_PAYMENT_CONFIG.enableCashOnDelivery,
@@ -115,7 +139,12 @@ async function resolveCustomerAddress(customerId: string, body: any) {
   if (lat == null || lng == null || !Number.isFinite(lat) || !Number.isFinite(lng)) {
     const rawLat = body.delivery_latitude ?? body.latitude
     const rawLng = body.delivery_longitude ?? body.longitude
-    if (rawLat != null && rawLng != null && Number.isFinite(Number(rawLat)) && Number.isFinite(Number(rawLng))) {
+    if (
+      rawLat != null &&
+      rawLng != null &&
+      Number.isFinite(Number(rawLat)) &&
+      Number.isFinite(Number(rawLng))
+    ) {
       lat = Number(rawLat)
       lng = Number(rawLng)
     } else {
@@ -126,11 +155,18 @@ async function resolveCustomerAddress(customerId: string, body: any) {
 
   const text =
     addrRecord?.address ||
-    (typeof body.customer_address === 'string' && body.customer_address.trim() ? body.customer_address.trim() : '') ||
+    (typeof body.customer_address === 'string' && body.customer_address.trim()
+      ? body.customer_address.trim()
+      : '') ||
     addrRecord?.label ||
     'Bengaluru, Karnataka'
 
-  return { customerLat: lat, customerLng: lng, canonicalAddressText: text, customerAddressState: 'Karnataka' }
+  return {
+    customerLat: lat,
+    customerLng: lng,
+    canonicalAddressText: text,
+    customerAddressState: 'Karnataka',
+  }
 }
 
 export async function GET(request: Request) {
@@ -167,22 +203,30 @@ export async function GET(request: Request) {
         const sinceParam = searchParams.get('since')
         let missedEvents: any[] = []
         if (sinceParam) {
-          const sinceDate = isNaN(Number(sinceParam)) ? new Date(sinceParam) : new Date(Number(sinceParam))
+          const sinceDate = isNaN(Number(sinceParam))
+            ? new Date(sinceParam)
+            : new Date(Number(sinceParam))
           if (!isNaN(sinceDate.getTime())) {
-            missedEvents = await prisma.orderOutbox.findMany({
-              where: { order_id: orderId, created_at: { gt: sinceDate } },
-              orderBy: { created_at: 'asc' },
-              take: 50,
-            }).catch(() => [])
+            missedEvents = await prisma.orderOutbox
+              .findMany({
+                where: { order_id: orderId, created_at: { gt: sinceDate } },
+                orderBy: { created_at: 'asc' },
+                take: 50,
+              })
+              .catch(() => [])
           }
         }
 
         const { getDriverLocationDistributed } = await import('@/lib/dispatch/driver-tracker')
-        let driverLocation = order.rider_id ? await getDriverLocationDistributed(order.rider_id) : undefined
+        let driverLocation = order.rider_id
+          ? await getDriverLocationDistributed(order.rider_id)
+          : undefined
 
         if (!driverLocation && order.rider_id) {
-          const restLat = order.restaurant?.latitude != null ? Number(order.restaurant.latitude) : 12.9716
-          const restLng = order.restaurant?.longitude != null ? Number(order.restaurant.longitude) : 77.6412
+          const restLat =
+            order.restaurant?.latitude != null ? Number(order.restaurant.latitude) : 12.9716
+          const restLng =
+            order.restaurant?.longitude != null ? Number(order.restaurant.longitude) : 77.6412
           const lastUpdated = order.created_at ? new Date(order.created_at).getTime() : Date.now()
           const ageMs = Date.now() - lastUpdated
           driverLocation = {
@@ -201,7 +245,6 @@ export async function GET(request: Request) {
             staleDurationSeconds: 0,
           }
         }
-
 
         return NextResponse.json({
           success: true,
@@ -240,7 +283,10 @@ export async function GET(request: Request) {
         } else if (isVendorActor) {
           scopedRestaurantId = actor.restaurantId || actor.restaurant_id || undefined
           if (!scopedRestaurantId) {
-            return NextResponse.json({ error: 'Vendor account is not linked to a restaurant' }, { status: 403 })
+            return NextResponse.json(
+              { error: 'Vendor account is not linked to a restaurant' },
+              { status: 403 }
+            )
           }
         }
       }
@@ -294,7 +340,8 @@ export async function POST(request: Request) {
         order_type = 'restaurant_food',
       } = body
 
-      const isCraveXPOrder = order_type === 'cravexp_grocery' || restaurant_id === CRAVEXP_DARK_STORE_ID
+      const isCraveXPOrder =
+        order_type === 'cravexp_grocery' || restaurant_id === CRAVEXP_DARK_STORE_ID
       const resolvedOrderType = isCraveXPOrder ? 'cravexp_grocery' : 'restaurant_food'
       const finalCustomerId = actor.id
       const idempotencyKey =
@@ -315,7 +362,10 @@ export async function POST(request: Request) {
         }
         if (idemCheck.status === 'processing') {
           return NextResponse.json(
-            { error: 'An order checkout with this idempotency key is already in progress. Please retry shortly.' },
+            {
+              error:
+                'An order checkout with this idempotency key is already in progress. Please retry shortly.',
+            },
             { status: 409, headers: { 'Retry-After': '2' } }
           )
         }
@@ -378,10 +428,16 @@ export async function POST(request: Request) {
         const quantity = Math.floor(Number(rawItem.quantity || rawItem.qty || 1))
 
         if (!itemId) {
-          return NextResponse.json({ error: 'Each item must have an itemId/menuItemId' }, { status: 400 })
+          return NextResponse.json(
+            { error: 'Each item must have an itemId/menuItemId' },
+            { status: 400 }
+          )
         }
         if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100) {
-          return NextResponse.json({ error: `Invalid quantity for item ${itemId}` }, { status: 400 })
+          return NextResponse.json(
+            { error: `Invalid quantity for item ${itemId}` },
+            { status: 400 }
+          )
         }
         validatedRaw.push({ itemId, variantId, quantity, raw: rawItem })
       }
@@ -390,8 +446,12 @@ export async function POST(request: Request) {
       let menuItemMap = new Map<string, any>()
 
       if (isCraveXPOrder) {
-        const products = await prisma.craveXPProduct.findMany({ where: { id: { in: allItemIds } } }).catch(() => [])
-        menuItemMap = new Map(products.map((p) => [p.id, { ...p, restaurant_id: CRAVEXP_DARK_STORE_ID }]))
+        const products = await prisma.craveXPProduct
+          .findMany({ where: { id: { in: allItemIds } } })
+          .catch(() => [])
+        menuItemMap = new Map(
+          products.map((p) => [p.id, { ...p, restaurant_id: CRAVEXP_DARK_STORE_ID }])
+        )
       } else {
         menuItemMap = await findMenuItemsByIds(allItemIds).catch(() => new Map())
       }
@@ -403,21 +463,31 @@ export async function POST(request: Request) {
         const menuItem = menuItemMap.get(itemId)
         if (!menuItem) {
           return NextResponse.json(
-            { error: `${isCraveXPOrder ? 'XP product' : 'Menu item'} not found in database: ${itemId}` },
+            {
+              error: `${isCraveXPOrder ? 'XP product' : 'Menu item'} not found in database: ${itemId}`,
+            },
             { status: 404 }
           )
         }
 
         if (restaurant && menuItem.restaurant_id && menuItem.restaurant_id !== restaurant.id) {
           return NextResponse.json(
-            { error: `Item "${menuItem.name}" does not belong to ${restaurant.name || restaurant_name}. All items in an order must be from a single restaurant.` },
+            {
+              error: `Item "${menuItem.name}" does not belong to ${restaurant.name || restaurant_name}. All items in an order must be from a single restaurant.`,
+            },
             { status: 400 }
           )
         }
 
-        if (menuItem.in_stock === false || (menuItem.stock_count != null && menuItem.stock_count < quantity)) {
+        if (
+          menuItem.in_stock === false ||
+          (menuItem.stock_count != null && menuItem.stock_count < quantity)
+        ) {
           if (idempotencyKey) await releaseIdempotency(idempotencyKey, 'order_checkout')
-          return NextResponse.json({ error: `Item ${menuItem.name} is out of stock` }, { status: 400 })
+          return NextResponse.json(
+            { error: `Item ${menuItem.name} is out of stock` },
+            { status: 400 }
+          )
         }
 
         const variants = Array.isArray(menuItem.variants) ? menuItem.variants : []
@@ -429,7 +499,11 @@ export async function POST(request: Request) {
             : null
 
         const restaurantPrice = Number(
-          selectedVariant?.restaurant_price ?? menuItem.restaurant_price ?? selectedVariant?.price ?? menuItem.price ?? 0
+          selectedVariant?.restaurant_price ??
+            menuItem.restaurant_price ??
+            selectedVariant?.price ??
+            menuItem.price ??
+            0
         )
         const contract = restaurant?.commercial_contracts?.[0]
         const price = isCraveXPOrder
@@ -440,26 +514,26 @@ export async function POST(request: Request) {
                 contract?.commission_rate != null
                   ? Number(contract.commission_rate)
                   : restaurant?.commission_rate != null
-                  ? Number(restaurant.commission_rate)
-                  : undefined,
+                    ? Number(restaurant.commission_rate)
+                    : undefined,
               markupRate:
                 contract?.markup_rate != null
                   ? Number(contract.markup_rate)
                   : restaurant?.markup_rate != null
-                  ? Number(restaurant.markup_rate)
-                  : undefined,
+                    ? Number(restaurant.markup_rate)
+                    : undefined,
               fixedCommission:
                 contract?.fixed_commission != null
                   ? Number(contract.fixed_commission)
                   : restaurant?.fixed_commission != null
-                  ? Number(restaurant.fixed_commission)
-                  : undefined,
+                    ? Number(restaurant.fixed_commission)
+                    : undefined,
               fixedMarkup:
                 contract?.fixed_markup != null
                   ? Number(contract.fixed_markup)
                   : restaurant?.fixed_markup != null
-                  ? Number(restaurant.fixed_markup)
-                  : undefined,
+                    ? Number(restaurant.fixed_markup)
+                    : undefined,
             })
 
         const lineTotal = price * quantity
@@ -496,7 +570,10 @@ export async function POST(request: Request) {
       )
       if (hasMultiRestaurantItems) {
         return NextResponse.json(
-          { error: 'All items in an order must belong to a single restaurant. Multi-restaurant carts are not allowed.' },
+          {
+            error:
+              'All items in an order must belong to a single restaurant. Multi-restaurant carts are not allowed.',
+          },
           { status: 400 }
         )
       }
@@ -509,12 +586,16 @@ export async function POST(request: Request) {
       if (coupon_code) {
         couponResult = await validateAndApplyCoupon(coupon_code, foodSubtotal, finalRestaurantId)
         if (!couponResult.valid) {
-          return NextResponse.json({ error: couponResult.error || 'Invalid coupon' }, { status: 400 })
+          return NextResponse.json(
+            { error: couponResult.error || 'Invalid coupon' },
+            { status: 400 }
+          )
         }
         couponDiscountAmount = couponResult.discount
       }
 
-      const commercialModel = (restaurantDetails?.commercial_model || 'commission') as 'commission' | 'markup' | 'hybrid'
+      const commercialModel = (restaurantDetails?.commercial_model || 'commission') as
+        'commission' | 'markup' | 'hybrid'
       let addrInfo: any
       try {
         addrInfo = await resolveCustomerAddress(finalCustomerId, body)
@@ -543,7 +624,9 @@ export async function POST(request: Request) {
           hsnSacCode: i._menuItem?.hsn_sac_code || '996331',
           quantity: i.quantity,
           unitPricePaise: Math.round(i.price * 100),
-          restaurantUnitPricePaise: i.hasExplicitRestaurantPrice ? Math.round(i.restaurantPrice * 100) : undefined,
+          restaurantUnitPricePaise: i.hasExplicitRestaurantPrice
+            ? Math.round(i.restaurantPrice * 100)
+            : undefined,
           priceTaxMode: i.priceTaxMode,
           taxCategory:
             resolvedOrderType === 'cravexp_grocery'
@@ -559,7 +642,9 @@ export async function POST(request: Request) {
           baseDeliveryFeePaise: Math.round((paymentConfig.baseDeliveryFee ?? 30) * 100),
           baseDistanceKm: paymentConfig.baseDistanceKm ?? 2.5,
           perKmRatePaise: Math.round((paymentConfig.perKmRate ?? 10) * 100),
-          freeDeliveryThresholdPaise: Math.round((paymentConfig.freeDeliveryThreshold ?? 500) * 100),
+          freeDeliveryThresholdPaise: Math.round(
+            (paymentConfig.freeDeliveryThreshold ?? 500) * 100
+          ),
           roadDistanceKm: serverCalculatedDistanceKm,
         },
         surcharges: {
@@ -587,7 +672,9 @@ export async function POST(request: Request) {
           contractNumber: restaurantDetails.contract_number || 'DEFAULT',
           version: 1,
           commercialModel,
-          commissionRatePercent: Number(restaurantDetails.commission_rate ?? paymentConfig.vendorCommission ?? 15),
+          commissionRatePercent: Number(
+            restaurantDetails.commission_rate ?? paymentConfig.vendorCommission ?? 15
+          ),
           markupRatePercent: Number(restaurantDetails.markup_rate || 0),
           fixedCommissionPaise: Math.round((restaurantDetails.fixed_commission || 0) * 100),
           fixedMarkupPaise: Math.round((restaurantDetails.fixed_markup || 0) * 100),
@@ -622,7 +709,9 @@ export async function POST(request: Request) {
         tip: calcResult.customerBilling.tip,
         discount_amount: calcResult.customerBilling.couponDiscount,
         total_amount: calcResult.customerBilling.grandTotal,
-        vendor_commission_rate: Number(restaurantDetails.commission_rate || paymentConfig.vendorCommission || 15),
+        vendor_commission_rate: Number(
+          restaurantDetails.commission_rate || paymentConfig.vendorCommission || 15
+        ),
         vendor_commission_amount: Math.round(canonicalResult.grossCommissionPaise / 100),
         vendor_net_payout: vendorNetPayout,
         driver_payout: driverPayout,
@@ -654,8 +743,12 @@ export async function POST(request: Request) {
             }
           }
 
-          const customerRecord = await tx.user.findUnique({ where: { id: finalCustomerId }, select: { id: true } }).catch(() => null)
-          const restaurantRecord = await tx.restaurant.findUnique({ where: { id: finalRestaurantId }, select: { id: true } }).catch(() => null)
+          const customerRecord = await tx.user
+            .findUnique({ where: { id: finalCustomerId }, select: { id: true } })
+            .catch(() => null)
+          const restaurantRecord = await tx.restaurant
+            .findUnique({ where: { id: finalRestaurantId }, select: { id: true } })
+            .catch(() => null)
 
           const createdOrder = await tx.order.create({
             data: {
@@ -683,7 +776,10 @@ export async function POST(request: Request) {
               discount_amount: calcResult.customerBilling.couponDiscount,
               coupon_code: coupon_code || undefined,
               commission_amount: Math.round(canonicalResult.grossCommissionPaise / 100),
-              markup_amount: Math.round((canonicalResult.markupAmountPaise + canonicalResult.platformProductMarginPaise) / 100),
+              markup_amount: Math.round(
+                (canonicalResult.markupAmountPaise + canonicalResult.platformProductMarginPaise) /
+                  100
+              ),
               restaurant_payout: vendorNetPayout,
               platform_revenue: platformProfit,
               financial_snapshot: canonicalResult as any,
@@ -728,7 +824,9 @@ export async function POST(request: Request) {
               restaurant_name: finalRestaurantName,
               restaurant_id: restaurantRecord?.id || null,
               gross_sales: foodSubtotal,
-              commission_rate: Number(restaurantDetails.commission_rate || paymentConfig.vendorCommission || 15),
+              commission_rate: Number(
+                restaurantDetails.commission_rate || paymentConfig.vendorCommission || 15
+              ),
               commission_amount: Math.round(canonicalResult.grossCommissionPaise / 100),
               net_payout: vendorNetPayout,
               status: 'scheduled',
@@ -754,16 +852,25 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: 'Coupon usage limit exceeded' }, { status: 400 })
         }
         if (txErr?.code === 'P2002') {
-          const recovered = await prisma.order.findFirst({
-            where: {
-              OR: [
-                { id: orderId },
-                ...(idempotencyKey ? [{ customer_id: finalCustomerId, idempotency_key: idempotencyKey } as any] : []),
-              ],
-            },
-          }).catch(() => null)
+          const recovered = await prisma.order
+            .findFirst({
+              where: {
+                OR: [
+                  { id: orderId },
+                  ...(idempotencyKey
+                    ? [{ customer_id: finalCustomerId, idempotency_key: idempotencyKey } as any]
+                    : []),
+                ],
+              },
+            })
+            .catch(() => null)
           if (recovered) {
-            return NextResponse.json({ success: true, order: recovered, orderId: recovered.id, message: 'Order already processed (idempotent recovery)' })
+            return NextResponse.json({
+              success: true,
+              order: recovered,
+              orderId: recovered.id,
+              message: 'Order already processed (idempotent recovery)',
+            })
           }
         }
         throw txErr
@@ -771,9 +878,24 @@ export async function POST(request: Request) {
 
       await broadcast('__internal_register_order', { customerId: finalCustomerId, orderId })
       const broadcastOrder = stripOrderSecrets(order as any)
-      await broadcast('admin_stats', { type: 'new_order', order: broadcastOrder, orderId, timestamp: new Date().toISOString() })
-      await broadcast('admin_orders', { type: 'new_order', order: broadcastOrder, orderId, timestamp: new Date().toISOString() })
-      await broadcast('order_update', { type: 'new_order', order: broadcastOrder, orderId, timestamp: new Date().toISOString() })
+      await broadcast('admin_stats', {
+        type: 'new_order',
+        order: broadcastOrder,
+        orderId,
+        timestamp: new Date().toISOString(),
+      })
+      await broadcast('admin_orders', {
+        type: 'new_order',
+        order: broadcastOrder,
+        orderId,
+        timestamp: new Date().toISOString(),
+      })
+      await broadcast('order_update', {
+        type: 'new_order',
+        order: broadcastOrder,
+        orderId,
+        timestamp: new Date().toISOString(),
+      })
 
       await sendWebPushToRoles(['admin'], {
         title: 'New order received',
@@ -839,22 +961,33 @@ export async function PATCH(request: Request) {
       const requestedStatus = status as OrderStatus | undefined
       const isVendor =
         (actor.role === 'restaurant_vendor' || actor.role === 'cravexp_store_vendor') &&
-        (existing.restaurant_id === (actor as any).restaurantId || existing.restaurant_name === actor.restaurantName)
+        (existing.restaurant_id === (actor as any).restaurantId ||
+          existing.restaurant_name === actor.restaurantName)
       const isRiderOrDriver = actor.role === 'rider' || (actor.role as string) === 'driver'
       const isAdmin = actor.role === 'admin'
-      const isAssignedRider = isAdmin || (isRiderOrDriver && existing.rider_id !== null && existing.rider_id === actor.id)
+      const isAssignedRider =
+        isAdmin || (isRiderOrDriver && existing.rider_id !== null && existing.rider_id === actor.id)
 
       if (requestedStatus === 'delivered' || requestedStatus === 'completed') {
         if (!isAdmin && !isAssignedRider) {
-          return NextResponse.json({ error: 'Only the assigned driver can confirm delivery' }, { status: 403 })
+          return NextResponse.json(
+            { error: 'Only the assigned driver can confirm delivery' },
+            { status: 403 }
+          )
         }
 
         if (!isAdmin) {
           if (!existing.delivery_otp) {
-            return NextResponse.json({ error: 'Delivery OTP has not been issued for this order' }, { status: 422 })
+            return NextResponse.json(
+              { error: 'Delivery OTP has not been issued for this order' },
+              { status: 422 }
+            )
           }
           if ((existing as any).otp_consumed_at) {
-            return NextResponse.json({ error: 'Delivery OTP has already been used' }, { status: 409 })
+            return NextResponse.json(
+              { error: 'Delivery OTP has already been used' },
+              { status: 409 }
+            )
           }
 
           const providedOtp = String(body.otp || body.delivery_otp || '').trim()
@@ -863,7 +996,10 @@ export async function PATCH(request: Request) {
             providedOtp.length === storedOtp.length &&
             crypto.timingSafeEqual(Buffer.from(providedOtp, 'utf8'), Buffer.from(storedOtp, 'utf8'))
           if (!otpMatch) {
-            return NextResponse.json({ error: 'Invalid delivery OTP. Valid delivery OTP is required' }, { status: 400 })
+            return NextResponse.json(
+              { error: 'Invalid delivery OTP. Valid delivery OTP is required' },
+              { status: 400 }
+            )
           }
         }
       }
@@ -871,8 +1007,13 @@ export async function PATCH(request: Request) {
       const canUpdateStatus =
         isAdmin ||
         (isVendor && requestedStatus && vendorStatuses.includes(requestedStatus)) ||
-        (isRiderOrDriver && isAssignedRider && requestedStatus && riderStatuses.includes(requestedStatus)) ||
-        (requestedStatus === 'cancelled' && existing.customer_id === actor.id && existing.status === 'payment_pending')
+        (isRiderOrDriver &&
+          isAssignedRider &&
+          requestedStatus &&
+          riderStatuses.includes(requestedStatus)) ||
+        (requestedStatus === 'cancelled' &&
+          existing.customer_id === actor.id &&
+          existing.status === 'payment_pending')
 
       const canUpdatePaymentStatus = isAdmin
       const canUpdateDriverInfo = isAdmin || (isRiderOrDriver && isAssignedRider)
@@ -886,7 +1027,10 @@ export async function PATCH(request: Request) {
       const hasItemsChange = !!items
 
       if (hasStatusChange && hasPaymentStatusChange) {
-        return NextResponse.json({ error: 'Update payment status and fulfillment status in separate requests' }, { status: 400 })
+        return NextResponse.json(
+          { error: 'Update payment status and fulfillment status in separate requests' },
+          { status: 400 }
+        )
       }
 
       const allowed =
@@ -897,19 +1041,25 @@ export async function PATCH(request: Request) {
         (hasItemsChange && canUpdateItems)
 
       if (!allowed) {
-        return NextResponse.json({ error: 'You are not allowed to update this order' }, { status: 403 })
+        return NextResponse.json(
+          { error: 'You are not allowed to update this order' },
+          { status: 403 }
+        )
       }
 
       if (hasStatusChange) {
         const currentStatus = existing.status as OrderStatus
         const targetStatus = status as OrderStatus
         if (!isValidTransition(currentStatus, targetStatus)) {
-          return NextResponse.json({
-            error: `Invalid status transition: ${getPhaseName(currentStatus)} "${currentStatus}" → "${targetStatus}" not allowed`,
-            currentStatus,
-            targetStatus,
-            validNextStates: (VALID_TRANSITIONS as Record<string, string[]>)[currentStatus] || [],
-          }, { status: 400 })
+          return NextResponse.json(
+            {
+              error: `Invalid status transition: ${getPhaseName(currentStatus)} "${currentStatus}" → "${targetStatus}" not allowed`,
+              currentStatus,
+              targetStatus,
+              validNextStates: (VALID_TRANSITIONS as Record<string, string[]>)[currentStatus] || [],
+            },
+            { status: 400 }
+          )
         }
       }
 
@@ -917,7 +1067,8 @@ export async function PATCH(request: Request) {
       if (isAdmin && driver_id) assignedRiderId = driver_id
       else if (isRiderOrDriver && isAssignedRider) assignedRiderId = actor.id
 
-      const isDeliveryConfirmation = requestedStatus === 'delivered' || requestedStatus === 'completed'
+      const isDeliveryConfirmation =
+        requestedStatus === 'delivered' || requestedStatus === 'completed'
       const updatePayload: any = {
         ...(status && { status: status as OrderStatus }),
         ...(driver_name && { driver_name }),
@@ -941,36 +1092,49 @@ export async function PATCH(request: Request) {
         } catch (e) {}
       }
 
-
       const updated = await prisma.$transaction(async (tx: any) => {
         let dalResult: any
         if (typeof (updateOrder as any)?.mock !== 'undefined' || process.env.NODE_ENV === 'test') {
           dalResult = await updateOrder(orderId, updatePayload)
         }
 
-        const orderUpdate = await tx.order.update({
-          where: {
-            id: orderId,
-            ...(hasStatusChange && { status: existing.status as OrderStatus }),
-            ...(isDeliveryConfirmation && !isAdmin && { otp_consumed_at: null }),
-          },
-          data: updatePayload,
-        }).catch((err: any) => {
-          if (err?.code === 'P2025') {
-            throw Object.assign(new Error('Order status changed by a concurrent request. Please retry.'), { statusCode: 409 })
-          }
-          throw err
-        })
+        const orderUpdate = await tx.order
+          .update({
+            where: {
+              id: orderId,
+              ...(hasStatusChange && { status: existing.status as OrderStatus }),
+              ...(isDeliveryConfirmation && !isAdmin && { otp_consumed_at: null }),
+            },
+            data: updatePayload,
+          })
+          .catch((err: any) => {
+            if (err?.code === 'P2025') {
+              throw Object.assign(
+                new Error('Order status changed by a concurrent request. Please retry.'),
+                { statusCode: 409 }
+              )
+            }
+            throw err
+          })
 
         if (hasStatusChange) {
-          await tx.orderOutbox.create({
-            data: {
-              order_id: orderId,
-              event_type: 'order_update',
-              payload: { orderId, status, previousStatus: existing.status, actorId: actor.id, actorRole: actor.role, timestamp: new Date().toISOString() },
-              status: 'pending',
-            },
-          }).catch(() => {})
+          await tx.orderOutbox
+            .create({
+              data: {
+                order_id: orderId,
+                event_type: 'order_update',
+                payload: {
+                  orderId,
+                  status,
+                  previousStatus: existing.status,
+                  actorId: actor.id,
+                  actorRole: actor.role,
+                  timestamp: new Date().toISOString(),
+                },
+                status: 'pending',
+              },
+            })
+            .catch(() => {})
         }
 
         if (status === 'completed') {
@@ -980,13 +1144,27 @@ export async function PATCH(request: Request) {
             const driverPayoutAmount =
               breakdown?.driver_payout != null
                 ? Number(breakdown.driver_payout)
-                : Math.round((Number(existing.delivery_fee) || 30) * 0.8) + (Number((existing as any).tip) || 0)
+                : Math.round((Number(existing.delivery_fee) || 30) * 0.8) +
+                  (Number((existing as any).tip) || 0)
 
-            await tx.driverPayout.upsert({
-              where: { id: `payout_${orderId}` },
-              create: { id: `payout_${orderId}`, driver_id: targetDriverId, amount: driverPayoutAmount, status: 'paid', transaction_ref: orderId },
-              update: { driver_id: targetDriverId, amount: driverPayoutAmount, status: 'paid', transaction_ref: orderId },
-            }).catch(() => {})
+            await tx.driverPayout
+              .upsert({
+                where: { id: `payout_${orderId}` },
+                create: {
+                  id: `payout_${orderId}`,
+                  driver_id: targetDriverId,
+                  amount: driverPayoutAmount,
+                  status: 'paid',
+                  transaction_ref: orderId,
+                },
+                update: {
+                  driver_id: targetDriverId,
+                  amount: driverPayoutAmount,
+                  status: 'paid',
+                  transaction_ref: orderId,
+                },
+              })
+              .catch(() => {})
           }
         }
 
@@ -1003,9 +1181,17 @@ export async function PATCH(request: Request) {
       const newPaymentStatus = payment_status || paymentStatus
       if (newPaymentStatus) {
         if (newPaymentStatus === 'verified') {
-          await processPaymentVerificationTx({ orderId, actorId: actor.id, gateway: 'admin_manual' })
+          await processPaymentVerificationTx({
+            orderId,
+            actorId: actor.id,
+            gateway: 'admin_manual',
+          })
         } else if (newPaymentStatus === 'rejected') {
-          await processPaymentRejectionTx({ orderId, actorId: actor.id, reason: body.rejection_reason || 'Payment rejected by admin' })
+          await processPaymentRejectionTx({
+            orderId,
+            actorId: actor.id,
+            reason: body.rejection_reason || 'Payment rejected by admin',
+          })
         } else {
           await updatePaymentReviewStatus(orderId, newPaymentStatus)
         }
@@ -1016,7 +1202,13 @@ export async function PATCH(request: Request) {
         const broadcastOrder = stripOrderSecrets(updated as any)
         await broadcast('order_update', { type: 'order_updated', order: broadcastOrder, orderId })
         await broadcast('admin_orders', { type: 'order_updated', order: broadcastOrder, orderId })
-        await broadcast('vendor_orders', { type: 'order_updated', order: broadcastOrder, orderId, restaurantId: updated.restaurant_id || existing.restaurant_id, timestamp: new Date().toISOString() })
+        await broadcast('vendor_orders', {
+          type: 'order_updated',
+          order: broadcastOrder,
+          orderId,
+          restaurantId: updated.restaurant_id || existing.restaurant_id,
+          timestamp: new Date().toISOString(),
+        })
 
         const isReadyForPickupOrOffer =
           (status === 'ready_for_pickup' ||
@@ -1072,7 +1264,10 @@ export async function PATCH(request: Request) {
               restaurantName: updated.restaurant_name || 'Crave restaurant',
               customerArea: 'Delivery address shown after acceptance',
               itemsCount: Array.isArray(updated.items)
-                ? updated.items.reduce((total: number, item: any) => total + Number(item?.qty || 1), 0)
+                ? updated.items.reduce(
+                    (total: number, item: any) => total + Number(item?.qty || 1),
+                    0
+                  )
                 : 1,
               distanceKm: Number((updated as any).distance_km || 0),
               driverPayout,
@@ -1174,15 +1369,32 @@ export async function DELETE(request: Request) {
       const { deleteOrder } = await import('@/lib/dal')
       const result = await deleteOrder(orderId, actor.id, actor.role)
       if (!result.success) {
-        return NextResponse.json({ error: result.error || 'Failed to delete order' }, { status: 400 })
+        return NextResponse.json(
+          { error: result.error || 'Failed to delete order' },
+          { status: 400 }
+        )
       }
 
-      await broadcast('order_update', { orderId, type: 'order_cancelled', status: 'cancelled', deleted: true, refundQueued: result.refundQueued }).catch(() => {})
-      await broadcast('admin_orders', { orderId, type: 'order_cancelled', status: 'cancelled', deleted: true, refundQueued: result.refundQueued }).catch(() => {})
+      await broadcast('order_update', {
+        orderId,
+        type: 'order_cancelled',
+        status: 'cancelled',
+        deleted: true,
+        refundQueued: result.refundQueued,
+      }).catch(() => {})
+      await broadcast('admin_orders', {
+        orderId,
+        type: 'order_cancelled',
+        status: 'cancelled',
+        deleted: true,
+        refundQueued: result.refundQueued,
+      }).catch(() => {})
 
       return NextResponse.json({
         success: true,
-        message: result.refundQueued ? 'Order cancelled within 15-second window. Refund queued for admin review.' : 'Order successfully cancelled.',
+        message: result.refundQueued
+          ? 'Order cancelled within 15-second window. Refund queued for admin review.'
+          : 'Order successfully cancelled.',
         refundQueued: result.refundQueued,
       })
     } catch (error) {

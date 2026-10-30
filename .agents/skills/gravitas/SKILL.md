@@ -29,7 +29,7 @@ machine-checkable ones at hook level; the rest are on you.
 2. **Stay in declared scope.** Writes outside `allowed_write_scope` are
    denied. If the scope is wrong, amend the contract -- don't route around it.
 3. **Completion needs evidence.** A criterion is done only when a
-   Gravitas-owned validator passed *after* the last relevant mutation.
+   Gravitas-owned validator passed _after_ the last relevant mutation.
    Stale evidence and self-review don't count.
 4. **Never exact-retry a failure.** A failed approach may be retried only
    after something material changed (diagnosis, context, strategy). The
@@ -71,11 +71,11 @@ Before multi-file or risky work, emit the planning-policy record
 
 ## MODES
 
-| Mode | Writes | Meaning |
-|------|:------:|---------|
-| answer, research, plan, review, security-review | None | Read-only. Hooks deny writes and non-query shell. |
-| implement, debug | Scoped | Normal work inside `allowed_write_scope`. |
-| migration | Confirmed | Destructive-risk work. User checkpoint required. |
+| Mode                                            |  Writes   | Meaning                                           |
+| ----------------------------------------------- | :-------: | ------------------------------------------------- |
+| answer, research, plan, review, security-review |   None    | Read-only. Hooks deny writes and non-query shell. |
+| implement, debug                                |  Scoped   | Normal work inside `allowed_write_scope`.         |
+| migration                                       | Confirmed | Destructive-risk work. User checkpoint required.  |
 
 Legacy `plan-only` / `review-only` are accepted as aliases. See
 `references/task-contract.md`.
@@ -87,13 +87,11 @@ Legacy `plan-only` / `review-only` are accepted as aliases. See
 For non-trivial actions, emit a decision record before executing:
 
 decision:
-  action: modify src/auth/session.ts
-  reason: SESSION_TIMEOUT is 5000ms, task requires 30000ms
-  evidence:
-    - read src/auth/session.ts line 23: SESSION_TIMEOUT = 5000
-    - failing test: auth/session.test.ts:47 expects 5000 (will need update)
-  risk: low
-  allowed_by_contract: true
+action: modify src/auth/session.ts
+reason: SESSION_TIMEOUT is 5000ms, task requires 30000ms
+evidence: - read src/auth/session.ts line 23: SESSION_TIMEOUT = 5000 - failing test: auth/session.test.ts:47 expects 5000 (will need update)
+risk: low
+allowed_by_contract: true
 
 ---
 
@@ -123,11 +121,11 @@ See `references/verification.md` for validator discovery and escalation
 
 ## EFFORT PROFILES
 
-| Profile | Planning | Delegation | Verification |
-|---------|----------|------------|--------------|
-| eco | direct-first | none unless blocked | targeted only |
-| balanced | adaptive (default) | conditional | targeted + affected |
-| deep | deep-first | conditional verifier | full suite + independent check |
+| Profile  | Planning           | Delegation           | Verification                   |
+| -------- | ------------------ | -------------------- | ------------------------------ |
+| eco      | direct-first       | none unless blocked  | targeted only                  |
+| balanced | adaptive (default) | conditional          | targeted + affected            |
+| deep     | deep-first         | conditional verifier | full suite + independent check |
 
 `eco` never bypasses scope or evidence gates. `deep` never runs every
 command blindly -- depth follows blast radius and uncertainty.
@@ -138,12 +136,12 @@ command blindly -- depth follows blast radius and uncertainty.
 
 Default to one capable agent. Delegate only when the policy record says so:
 
-| Signal | Role |
-|--------|------|
-| Localization uncertain, read-only | investigator |
-| Risky implementation | reviewer |
-| Broad dependency fanout | impact-auditor |
-| Strict security work | test-adversary |
+| Signal                            | Role           |
+| --------------------------------- | -------------- |
+| Localization uncertain, read-only | investigator   |
+| Risky implementation              | reviewer       |
+| Broad dependency fanout           | impact-auditor |
+| Strict security work              | test-adversary |
 
 Subagents get minimum necessary context plus explicit permissions. Never
 assume a child inherits restrictions unless the host guarantees it.
@@ -155,12 +153,15 @@ assume a child inherits restrictions unless the host guarantees it.
 Every non-trivial response:
 
 ## What Changed
+
 [files modified, lines changed, behavior delta]
 
 ## Evidence
+
 [actual command output -- pass counts, lint results, build output]
 
 ## Why
+
 [rationale for the key decision]
 
 ---
@@ -169,15 +170,15 @@ Every non-trivial response:
 
 Load when the task requires:
 
-| Reference | Load when |
-|-----------|-----------|
-| references/task-contract.md | establishing a formal task contract |
-| references/reasoning.md | calibrating reasoning depth |
-| references/reconnaissance.md | large/unfamiliar codebase recon |
-| references/verification.md | complex verification requirements |
-| references/delegation.md | considering subagent spawning |
-| references/recovery.md | resuming after interruption or failure |
-| references/model-routing.md | budget/model selection decisions |
+| Reference                    | Load when                              |
+| ---------------------------- | -------------------------------------- |
+| references/task-contract.md  | establishing a formal task contract    |
+| references/reasoning.md      | calibrating reasoning depth            |
+| references/reconnaissance.md | large/unfamiliar codebase recon        |
+| references/verification.md   | complex verification requirements      |
+| references/delegation.md     | considering subagent spawning          |
+| references/recovery.md       | resuming after interruption or failure |
+| references/model-routing.md  | budget/model selection decisions       |
 
 ---
 

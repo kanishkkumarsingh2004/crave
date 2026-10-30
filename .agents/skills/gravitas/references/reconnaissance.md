@@ -7,6 +7,7 @@ Inspect enough context to reduce relevant uncertainty -- not the whole repositor
 ## Standard Recon (Tier 1 tasks)
 
 Run these in parallel:
+
 - Read the target file
 - Find and read direct importers: grep_search for imports of target
 - Read the test file
@@ -16,6 +17,7 @@ Run these in parallel:
 ## Extended Recon (unfamiliar codebase or high fan-out)
 
 Add:
+
 - Architecture overview: list_dir src/, read README.md
 - Pattern discovery: grep similar patterns across codebase
 - Full caller graph for changed symbol
@@ -24,6 +26,7 @@ Add:
 ## Dependency-Directed Recon
 
 For functions or APIs with high caller counts, recon must cover:
+
 - Changed symbol
   -> direct callers (read all)
   -> public interface files (read all)
@@ -42,6 +45,7 @@ This is the impact graph. It determines verification scope too.
 ## Recon Completeness Check
 
 Before moving to planning, confirm:
+
 - I have read the target file (not assumed its content)
 - I know which files import or call the target
 - I know the test coverage for the target

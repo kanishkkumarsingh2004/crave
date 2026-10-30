@@ -27,16 +27,16 @@ Would the results dump fill my context window unnecessarily?
 
 ## When to Spawn
 
-| Scenario | Action |
-|----------|--------|
-| Single file lookup | Act directly |
-| Find a symbol in known file | Act directly (grep) |
-| Unknown codebase — need to map | Spawn Explore |
-| Multi-file refactor | Spawn Plan → General → Verify |
-| Independent feature areas | Spawn parallel General agents |
-| Complex architecture decision | Spawn Plan with adversarial mode |
-| Full verification pass | Spawn Verify |
-| Security review | Spawn Verify with security mode |
+| Scenario                       | Action                           |
+| ------------------------------ | -------------------------------- |
+| Single file lookup             | Act directly                     |
+| Find a symbol in known file    | Act directly (grep)              |
+| Unknown codebase — need to map | Spawn Explore                    |
+| Multi-file refactor            | Spawn Plan → General → Verify    |
+| Independent feature areas      | Spawn parallel General agents    |
+| Complex architecture decision  | Spawn Plan with adversarial mode |
+| Full verification pass         | Spawn Verify                     |
+| Security review                | Spawn Verify with security mode  |
 
 ---
 
@@ -115,6 +115,7 @@ Every dispatch message must include:
 
 ```markdown
 ## Task for [AgentType]
+
 **Task:** [One precise sentence]
 **Scope:** [Specific files, directories, or "find with grep"]
 **Constraints:** [What NOT to do]
@@ -126,44 +127,51 @@ Every dispatch message must include:
 
 ```markdown
 ## Task for Explore
+
 **Task:** Map the authentication module to understand session timeout handling.
 **Scope:** src/auth/ and any files that import from it
 **Constraints:** Read-only. Don't edit anything.
 **Return:**
-  - File map with key line numbers
-  - Dependency graph (imports/exports)
-  - Recent git changes to the auth module
-  - Any risk flags (⚠️)
+
+- File map with key line numbers
+- Dependency graph (imports/exports)
+- Recent git changes to the auth module
+- Any risk flags (⚠️)
 ```
 
 ### Example Dispatch: General
 
 ```markdown
 ## Task for General
+
 **Task:** Update SESSION_TIMEOUT from 5_000 to 30_000ms.
 **Scope:** src/auth/session.ts and src/auth/session.test.ts
 **Plan:**
-  1. src/auth/session.ts:23 — change constant value
-  2. src/auth/session.test.ts:47 — update assertion to toBe(30_000)
-**Constraints:**
-  - Stay in these two files only
-  - Do not refactor unrelated code
-  - Read both files before editing
-**Return:** VERDICT: PASS or VERDICT: FAIL with test output
+
+1. src/auth/session.ts:23 — change constant value
+2. src/auth/session.test.ts:47 — update assertion to toBe(30_000)
+   **Constraints:**
+
+- Stay in these two files only
+- Do not refactor unrelated code
+- Read both files before editing
+  **Return:** VERDICT: PASS or VERDICT: FAIL with test output
 ```
 
 ### Example Dispatch: Verify
 
 ```markdown
 ## Task for Verify
+
 **Task:** Verify the session timeout fix is correct.
 **Scope:** src/auth/
 **Baseline:** 47/47 tests passing before change
 **Required:**
-  - Run: tsc --noEmit && eslint . && vitest run
-  - Compare to baseline
-  - Check edge cases: null session, expired session, concurrent sessions
-**Return:** VERDICT: PASS or VERDICT: FAIL with full output
+
+- Run: tsc --noEmit && eslint . && vitest run
+- Compare to baseline
+- Check edge cases: null session, expired session, concurrent sessions
+  **Return:** VERDICT: PASS or VERDICT: FAIL with full output
 ```
 
 ---
@@ -204,11 +212,11 @@ Verify confirms: VERDICT: PASS, 47/47 tests, lint clean
 
 ## Anti-Patterns
 
-| Anti-Pattern | Why Wrong | Fix |
-|-------------|-----------|-----|
-| Spawn for single-file lookup | Overhead > benefit | Act directly |
-| Sequential when parallel possible | Wastes time | Batch independent spawns |
-| Relay raw file dump to user | Clutters context | Synthesize findings |
-| Spawn without precise task | Agent does wrong thing | Write exact task + scope |
-| Mark done before VERDICT: PASS | Ships bugs | Always verify before claiming done |
-| Re-spawn same agent on same task | Retry loop | Change the task or the approach |
+| Anti-Pattern                      | Why Wrong              | Fix                                |
+| --------------------------------- | ---------------------- | ---------------------------------- |
+| Spawn for single-file lookup      | Overhead > benefit     | Act directly                       |
+| Sequential when parallel possible | Wastes time            | Batch independent spawns           |
+| Relay raw file dump to user       | Clutters context       | Synthesize findings                |
+| Spawn without precise task        | Agent does wrong thing | Write exact task + scope           |
+| Mark done before VERDICT: PASS    | Ships bugs             | Always verify before claiming done |
+| Re-spawn same agent on same task  | Retry loop             | Change the task or the approach    |

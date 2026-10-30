@@ -8,11 +8,22 @@ import HelpView from '@/components/customer/HelpView'
 import LiveOrderView from '@/components/customer/LiveOrderView'
 import OrdersView from '@/components/customer/OrdersView'
 import ProfileView from '@/components/customer/ProfileView'
-import type { CartItem, CustomerAddress, LatLngCoords, MenuItem, MenuItemVariant, PastOrder, Restaurant } from '@/components/customer/types'
+import type {
+  CartItem,
+  CustomerAddress,
+  LatLngCoords,
+  MenuItem,
+  MenuItemVariant,
+  PastOrder,
+  Restaurant,
+} from '@/components/customer/types'
 import { useAuth } from '@/lib/auth-context'
 import { useCart } from '@/lib/cart-context'
 import { getCachedLocation } from '@/lib/client-location'
-import { getOrderStatusNotification, showBrowserNotification } from '@/lib/notifications/web-notification'
+import {
+  getOrderStatusNotification,
+  showBrowserNotification,
+} from '@/lib/notifications/web-notification'
 import { useToast } from '@/lib/toast-context'
 import { useDriverLocation, useMenuItemUpdates, useOrderUpdates } from '@/lib/websocket'
 import {
@@ -46,7 +57,14 @@ export default function CustomerDashboard({
   const pathname = usePathname()
   const { toast } = useToast()
 
-  const { items: cart, addItem, updateItemQty, removeItem, clearCart, totalCount: totalCartItemCount } = useCart()
+  const {
+    items: cart,
+    addItem,
+    updateItemQty,
+    removeItem,
+    clearCart,
+    totalCount: totalCartItemCount,
+  } = useCart()
 
   // Tab State & Navigation
   const currentTabFromPath = useMemo(() => {
@@ -137,7 +155,8 @@ export default function CustomerDashboard({
           }))
           setSavedAddresses(mapped)
           const primary = mapped.find((a) => a.isDefault) || mapped[0]
-          const stored = typeof window !== 'undefined' ? localStorage.getItem('crave_selected_address') : null
+          const stored =
+            typeof window !== 'undefined' ? localStorage.getItem('crave_selected_address') : null
           const chosen = stored || primary?.address || user?.address || ''
           if (chosen) {
             setDeliveryAddress(chosen)
@@ -198,7 +217,10 @@ export default function CustomerDashboard({
             let found = parsed.find((p: any) => p.id === targetId)
             if (!found) {
               try {
-                const singleRes = await fetch(`/api/restaurants?restaurantId=${encodeURIComponent(targetId)}`, { cache: 'no-store' })
+                const singleRes = await fetch(
+                  `/api/restaurants?restaurantId=${encodeURIComponent(targetId)}`,
+                  { cache: 'no-store' }
+                )
                 const singleJson = await singleRes.json()
                 const r = singleJson.restaurants?.[0]
                 if (r) {
@@ -207,11 +229,14 @@ export default function CustomerDashboard({
                     name: r.name,
                     cuisine: r.cuisine ?? '',
                     rating: r.rating != null ? String(r.rating) : '4.8',
-                    ratingCount: r.rating_count != null ? Number(r.rating_count).toLocaleString() : '50',
+                    ratingCount:
+                      r.rating_count != null ? Number(r.rating_count).toLocaleString() : '50',
                     eta: r.delivery_minutes != null ? `${r.delivery_minutes} min` : '25 min',
                     distance: r.distance ? String(r.distance) : '',
                     costForTwo: r.cost_for_two != null ? `₹${r.cost_for_two} for two` : '',
-                    image: r.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
+                    image:
+                      r.image ||
+                      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
                     tag: r.cuisine?.split(' ')[0] ?? '',
                     address: r.address ?? '',
                     offer: r.offer ? String(r.offer) : undefined,
@@ -247,7 +272,10 @@ export default function CustomerDashboard({
         let found = restaurantsList.find((r) => r.id === targetId)
         if (!found) {
           try {
-            const singleRes = await fetch(`/api/restaurants?restaurantId=${encodeURIComponent(targetId)}`, { cache: 'no-store' })
+            const singleRes = await fetch(
+              `/api/restaurants?restaurantId=${encodeURIComponent(targetId)}`,
+              { cache: 'no-store' }
+            )
             const singleJson = await singleRes.json()
             const r = singleJson.restaurants?.[0]
             if (r) {
@@ -256,11 +284,13 @@ export default function CustomerDashboard({
                 name: r.name,
                 cuisine: r.cuisine ?? '',
                 rating: r.rating != null ? String(r.rating) : '4.8',
-                ratingCount: r.rating_count != null ? Number(r.rating_count).toLocaleString() : '50',
+                ratingCount:
+                  r.rating_count != null ? Number(r.rating_count).toLocaleString() : '50',
                 eta: r.delivery_minutes != null ? `${r.delivery_minutes} min` : '25 min',
                 distance: r.distance ? String(r.distance) : '',
                 costForTwo: r.cost_for_two != null ? `₹${r.cost_for_two} for two` : '',
-                image: r.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
+                image:
+                  r.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
                 tag: r.cuisine?.split(' ')[0] ?? '',
                 address: r.address ?? '',
                 offer: r.offer ? String(r.offer) : undefined,
@@ -308,7 +338,9 @@ export default function CustomerDashboard({
         return
       }
       try {
-        const res = await fetch(`/api/menu-items?restaurantId=${selectedRestaurant.id}`, { cache: 'no-store' })
+        const res = await fetch(`/api/menu-items?restaurantId=${selectedRestaurant.id}`, {
+          cache: 'no-store',
+        })
         const json = await res.json()
         const items = json.items || []
         setMenuItemsList(
@@ -326,7 +358,7 @@ export default function CustomerDashboard({
             in_stock: item.in_stock !== false && (item.stock_count == null || item.stock_count > 0),
             inStock: item.in_stock !== false && (item.stock_count == null || item.stock_count > 0),
             stock_count: item.stock_count ?? 10,
-            bestseller: item.bestseller ?? (item.price >= 250),
+            bestseller: item.bestseller ?? item.price >= 250,
             variants: Array.isArray(item.variants)
               ? item.variants
                   .filter((v: any) => v.in_stock !== false)
@@ -402,7 +434,12 @@ export default function CustomerDashboard({
         if (prevStatus && prevStatus !== o.status) {
           const notif = getOrderStatusNotification(o)
           if (notif) {
-            void showBrowserNotification({ title: notif.title, body: notif.body, tag: `order-${o.id}`, sound: true })
+            void showBrowserNotification({
+              title: notif.title,
+              body: notif.body,
+              tag: `order-${o.id}`,
+              sound: true,
+            })
             toast(`${notif.title} — ${notif.body}`, 'info')
           }
         }
@@ -430,13 +467,20 @@ export default function CustomerDashboard({
 
   const activeOrder = useMemo(() => {
     if (!ordersData.length) return null
-    let found = selectedOrderId ? ordersData.find((o) => String(o.id) === String(selectedOrderId)) : null
+    let found = selectedOrderId
+      ? ordersData.find((o) => String(o.id) === String(selectedOrderId))
+      : null
     if (!found && inProgressOrders.length > 0) found = inProgressOrders[0]
     if (!found) return null
 
     let statusStep = 1
     if (found.status === 'delivered' || found.status === 'completed') statusStep = 4
-    else if (found.status === 'out_for_delivery' || found.status === 'picked_up' || found.status === 'arrived_customer') statusStep = 3
+    else if (
+      found.status === 'out_for_delivery' ||
+      found.status === 'picked_up' ||
+      found.status === 'arrived_customer'
+    )
+      statusStep = 3
     else if (
       found.status === 'sent_to_vendor' ||
       found.status === 'accepted' ||
@@ -447,7 +491,8 @@ export default function CustomerDashboard({
       found.status === 'ready_for_pickup' ||
       found.status === 'rider_assigned' ||
       found.status === 'at_restaurant'
-    ) statusStep = 2
+    )
+      statusStep = 2
 
     const statusTextMap: Record<string, string> = {
       new: 'Order Placed',
@@ -476,12 +521,30 @@ export default function CustomerDashboard({
     } catch {}
 
     const rawDate = found.createdAt || found.created_at
-    const timeStr = rawDate ? new Date(rawDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+    const timeStr = rawDate
+      ? new Date(rawDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : ''
 
-    const restLat = Number(found.restaurant?.latitude ?? found.restaurant_latitude ?? found.restaurantLat ?? 12.9716)
-    const restLng = Number(found.restaurant?.longitude ?? found.restaurant_longitude ?? found.restaurantLng ?? 77.6412)
-    const custLat = Number(found.delivery_latitude ?? found.customer_lat ?? found.customerLat ?? selectedMapPin?.lat ?? 12.9716)
-    const custLng = Number(found.delivery_longitude ?? found.customer_lng ?? found.customerLng ?? selectedMapPin?.lng ?? 77.5946)
+    const restLat = Number(
+      found.restaurant?.latitude ?? found.restaurant_latitude ?? found.restaurantLat ?? 12.9716
+    )
+    const restLng = Number(
+      found.restaurant?.longitude ?? found.restaurant_longitude ?? found.restaurantLng ?? 77.6412
+    )
+    const custLat = Number(
+      found.delivery_latitude ??
+        found.customer_lat ??
+        found.customerLat ??
+        selectedMapPin?.lat ??
+        12.9716
+    )
+    const custLng = Number(
+      found.delivery_longitude ??
+        found.customer_lng ??
+        found.customerLng ??
+        selectedMapPin?.lng ??
+        77.5946
+    )
 
     return {
       ...found,
@@ -495,7 +558,11 @@ export default function CustomerDashboard({
       restaurantLng: restLng,
       customerLat: custLat,
       customerLng: custLng,
-      restaurantName: found.restaurant?.name || found.restaurant_name || found.restaurantName || 'Crave Kitchen Store',
+      restaurantName:
+        found.restaurant?.name ||
+        found.restaurant_name ||
+        found.restaurantName ||
+        'Crave Kitchen Store',
       driverName: found.driver_name || null,
       driverPhone: found.driver_phone || null,
       otp: found.delivery_otp || found.otp || null,
@@ -525,7 +592,10 @@ export default function CustomerDashboard({
               return Array.from(map.values())
             })
             if (data.driverLocation?.lat != null && data.driverLocation?.lng != null) {
-              setLiveDriverPos({ lat: Number(data.driverLocation.lat), lng: Number(data.driverLocation.lng) })
+              setLiveDriverPos({
+                lat: Number(data.driverLocation.lat),
+                lng: Number(data.driverLocation.lng),
+              })
               setIsDriverGpsStale(Boolean(data.driverLocation.isStale))
             }
           }
@@ -534,7 +604,6 @@ export default function CustomerDashboard({
     }, 3000)
     return () => clearInterval(pollTimer)
   }, [activeOrder?.id, activeOrder?.statusStep])
-
 
   // Past Orders List
   const pastOrders: PastOrder[] = useMemo(() => {
@@ -569,8 +638,16 @@ export default function CustomerDashboard({
         subtotal: Number(o.subtotal ?? 0),
         discount: Number(o.discount_amount ?? 0),
         total: Number(o.total_amount ?? 0),
-        date: rawDate ? new Date(rawDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
-        time: rawDate ? new Date(rawDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+        date: rawDate
+          ? new Date(rawDate).toLocaleDateString('en-IN', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            })
+          : '',
+        time: rawDate
+          ? new Date(rawDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : '',
         status: statusMap[o.status] ?? 'In Progress',
         deliveryTime: '',
         driverName: o.driver_name || undefined,
@@ -613,7 +690,9 @@ export default function CustomerDashboard({
       })
       if (res.ok) {
         toast('Order cancelled successfully. Refund queued.', 'success')
-        setOrdersData((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: 'cancelled' } : o)))
+        setOrdersData((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, status: 'cancelled' } : o))
+        )
       } else {
         const json = await res.json()
         toast(json.error || 'Cancellation window has expired.', 'error')
@@ -688,7 +767,9 @@ export default function CustomerDashboard({
   }
 
   const handleDeleteSavedAddress = async (id: string, label: string) => {
-    const res = await fetch(`/api/user/addresses?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+    const res = await fetch(`/api/user/addresses?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    })
     if (res.ok) {
       setSavedAddresses((prev) => prev.filter((a) => a.id !== id))
       toast(`Address "${label}" deleted`, 'success')
@@ -708,7 +789,11 @@ export default function CustomerDashboard({
         <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-1.5 sm:gap-4">
           {/* Logo & Location */}
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            <Link href="/" className="shrink-0 hover:opacity-90 flex items-center" aria-label="crave home">
+            <Link
+              href="/"
+              className="shrink-0 hover:opacity-90 flex items-center"
+              aria-label="crave home"
+            >
               <CraveLogo variant="full" size="md" />
             </Link>
 
@@ -717,7 +802,9 @@ export default function CustomerDashboard({
               className="flex items-center gap-1.5 rounded-full border border-gray-200/80 dark:border-white/10 bg-gray-50/80 dark:bg-white/5 px-2.5 py-1 text-xs font-bold text-gray-700 dark:text-gray-300 hover:border-[#86a018] transition max-w-[180px] sm:max-w-xs truncate cursor-pointer"
             >
               <MapPin className="size-3 text-[#86a018] shrink-0" />
-              <span className="truncate">{deliveryAddress ? deliveryAddress.split(',')[0] : 'Set Location'}</span>
+              <span className="truncate">
+                {deliveryAddress ? deliveryAddress.split(',')[0] : 'Set Location'}
+              </span>
             </button>
           </div>
 
@@ -731,7 +818,9 @@ export default function CustomerDashboard({
                   : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
               }`}
             >
-              <Compass className={`size-4 ${activeTab === 'explore' ? 'text-[#86a018] dark:text-[#d9f447]' : 'text-gray-400'}`} />
+              <Compass
+                className={`size-4 ${activeTab === 'explore' ? 'text-[#86a018] dark:text-[#d9f447]' : 'text-gray-400'}`}
+              />
               <span>Explore</span>
             </button>
 
@@ -891,7 +980,10 @@ export default function CustomerDashboard({
                   image: order.restaurantImage || '',
                 })
               })
-              toast(`Added ${order.items.length} ${order.items.length === 1 ? 'item' : 'items'} to cart!`, 'success')
+              toast(
+                `Added ${order.items.length} ${order.items.length === 1 ? 'item' : 'items'} to cart!`,
+                'success'
+              )
               router.push('/user/cart')
             }}
           />
@@ -917,9 +1009,7 @@ export default function CustomerDashboard({
           />
         )}
 
-        {activeTab === 'help' && (
-          <HelpView onViewActiveOrder={() => navigateToTab('live-order')} />
-        )}
+        {activeTab === 'help' && <HelpView onViewActiveOrder={() => navigateToTab('live-order')} />}
       </main>
 
       {/* Floating Mobile Bottom Navigation Bar */}
@@ -1039,14 +1129,22 @@ export default function CustomerDashboard({
       {conflictModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-3xl bg-white dark:bg-[#18201c] p-6 shadow-2xl space-y-4">
-            <h3 className="font-black text-lg text-[#18201c] dark:text-white">Replace Cart Items?</h3>
+            <h3 className="font-black text-lg text-[#18201c] dark:text-white">
+              Replace Cart Items?
+            </h3>
             <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-              Your cart already contains dishes from <strong className="text-[#18201c] dark:text-white">{conflictModal.currentRest}</strong>.
-              Would you like to discard them and add items from <strong className="text-[#18201c] dark:text-white">{conflictModal.newRest}</strong>?
+              Your cart already contains dishes from{' '}
+              <strong className="text-[#18201c] dark:text-white">
+                {conflictModal.currentRest}
+              </strong>
+              . Would you like to discard them and add items from{' '}
+              <strong className="text-[#18201c] dark:text-white">{conflictModal.newRest}</strong>?
             </p>
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
-                onClick={() => setConflictModal({ open: false, currentRest: '', newRest: '', newItem: null })}
+                onClick={() =>
+                  setConflictModal({ open: false, currentRest: '', newRest: '', newItem: null })
+                }
                 className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:text-black dark:hover:text-white cursor-pointer"
               >
                 Keep Current

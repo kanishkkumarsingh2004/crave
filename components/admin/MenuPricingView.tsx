@@ -49,7 +49,9 @@ export default function MenuPricingView({
                       {vendor.commissionRate}% Cut
                     </span>
                   </div>
-                  <h4 className="font-bold text-base text-[#18201c] dark:text-white">{vendor.storeName}</h4>
+                  <h4 className="font-bold text-base text-[#18201c] dark:text-white">
+                    {vendor.storeName}
+                  </h4>
                   <p className="text-xs text-gray-500 dark:text-[#9eb3a4] mt-0.5 truncate">
                     {vendor.address || 'Bengaluru, India'}
                   </p>

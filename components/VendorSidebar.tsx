@@ -63,7 +63,11 @@ export default function VendorSidebar() {
       {/* Desktop Left Fixed Sidebar */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-stone-200/80 dark:border-white/[0.08] bg-white dark:bg-[#121815] text-[#121815] dark:text-white lg:flex transition-colors duration-200">
         <div className="border-b border-stone-200/80 dark:border-white/[0.08] p-6">
-          <Link href="/vendor/dashboard" className="flex items-center gap-2.5" aria-label="crave vendor dashboard">
+          <Link
+            href="/vendor/dashboard"
+            className="flex items-center gap-2.5"
+            aria-label="crave vendor dashboard"
+          >
             <CraveLogo variant="full" size="md" />
           </Link>
           <div className="mt-5 rounded-2xl bg-stone-100/80 dark:bg-white/[0.04] border border-stone-200/60 dark:border-white/10 p-3.5">
@@ -100,7 +104,9 @@ export default function VendorSidebar() {
 
         <div className="border-t border-stone-200/80 dark:border-white/[0.08] p-4 space-y-2">
           <div className="flex items-center justify-between px-1">
-            <span className="text-[11px] font-medium text-stone-500 dark:text-stone-400">Theme</span>
+            <span className="text-[11px] font-medium text-stone-500 dark:text-stone-400">
+              Theme
+            </span>
             <ThemeToggle />
           </div>
           <button
@@ -118,11 +124,7 @@ export default function VendorSidebar() {
         <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-3 w-full min-w-0">
           {/* Brand Logo & Kitchen Name */}
           <div className="flex items-center gap-3 min-w-0">
-            <Link
-              href="/"
-              className="shrink-0 lg:hidden flex items-center"
-              aria-label="crave home"
-            >
+            <Link href="/" className="shrink-0 lg:hidden flex items-center" aria-label="crave home">
               <CraveLogo variant="full" size="md" />
             </Link>
             <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">

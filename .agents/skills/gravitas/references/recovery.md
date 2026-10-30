@@ -11,15 +11,15 @@ Gravitas maintains minimal durable state that survives interruption.
 ## State File: .gravitas/sessions/<task-id>/state.json
 
 {
-  "task_id": "add-cursor-pagination-2026-09-11",
-  "contract": "./contract.json",
-  "phase": "verify",
-  "completed_criteria": ["AC1", "AC2"],
-  "pending_criteria": ["AC3"],
-  "files_touched": ["src/routes/posts.ts", "tests/posts.test.ts"],
-  "known_failures": [],
-  "last_successful_action": "wrote cursor parameter handling in posts.ts",
-  "next_action": "run cursor pagination test suite"
+"task_id": "add-cursor-pagination-2026-09-11",
+"contract": "./contract.json",
+"phase": "verify",
+"completed_criteria": ["AC1", "AC2"],
+"pending_criteria": ["AC3"],
+"files_touched": ["src/routes/posts.ts", "tests/posts.test.ts"],
+"known_failures": [],
+"last_successful_action": "wrote cursor parameter handling in posts.ts",
+"next_action": "run cursor pagination test suite"
 }
 
 ## Evidence Ledger: .gravitas/sessions/<task-id>/evidence.jsonl
@@ -31,6 +31,7 @@ Append-only log of completed verifications:
 ## Recovery Protocol
 
 When resuming after interruption:
+
 1. Check for .gravitas/sessions/ directory
 2. Find the most recent session matching the task description
 3. Read state.json -- determine current phase and pending criteria
@@ -86,6 +87,7 @@ stay unresolved by design; re-resolve them with
 ## Circuit Breaker
 
 If recovery leads to the same failure repeatedly:
+
 - Same failure x2: force diagnosis mode (why is this failing?)
 - Same strategy x2: replan (this approach does not work)
 - Verification cycles >3: report blocked, request user input

@@ -3,6 +3,7 @@
 ## The Hierarchy
 
 Prefer external, deterministic evidence over model self-assessment:
+
 1. Compiler / type checker
 2. Unit test runner (actual output)
 3. Integration test runner
@@ -15,14 +16,14 @@ Model self-critique is not verification. It is a weak signal to use when better 
 
 ## Evidence Requirements by Claim
 
-| Claim | Minimum Required Evidence |
-|-------|------------------------|
-| Tests pass | Pass count + total + 0 failures from actual run |
-| Lint clean | Linter output with 0 warnings |
-| Type-safe | tsc/mypy/pyright output clean |
-| Build succeeds | Build output last line |
-| No regressions | Before count vs after count, both shown |
-| Fixed | Before behavior observed, after behavior observed |
+| Claim               | Minimum Required Evidence                           |
+| ------------------- | --------------------------------------------------- |
+| Tests pass          | Pass count + total + 0 failures from actual run     |
+| Lint clean          | Linter output with 0 warnings                       |
+| Type-safe           | tsc/mypy/pyright output clean                       |
+| Build succeeds      | Build output last line                              |
+| No regressions      | Before count vs after count, both shown             |
+| Fixed               | Before behavior observed, after behavior observed   |
 | Requirement covered | Evidence entry in ledger linking criterion to proof |
 
 ## VERDICT Format
@@ -39,10 +40,12 @@ Never: VERDICT: PARTIAL PASS -- that is a FAIL.
 ## Regression Baseline
 
 Before any change:
+
 1. Run full test suite, record exact count
 2. Note existing lint warnings (do not introduce new ones)
 
 After changes:
+
 1. Run full test suite
 2. After count >= before count -- not a regression
 3. New lint warnings -- must fix before VERDICT: PASS
@@ -55,23 +58,23 @@ Never run every validator blindly. Discover first, then escalate:
 gravitas validators --root . --changed src/auth/session.ts --depth impact
 ```
 
-| Depth | Runs | Expands when |
-|-------|------|--------------|
-| targeted | test validators scoped to changed files | always (baseline) |
-| impact | + callers/tests/configs from the repo graph | depth=impact, failure evidence, broad fanout |
-| suite | + all project validators | depth=full, failure evidence, release context |
-| full | + CI workflows | release context only |
+| Depth    | Runs                                        | Expands when                                  |
+| -------- | ------------------------------------------- | --------------------------------------------- |
+| targeted | test validators scoped to changed files     | always (baseline)                             |
+| impact   | + callers/tests/configs from the repo graph | depth=impact, failure evidence, broad fanout  |
+| suite    | + all project validators                    | depth=full, failure evidence, release context |
+| full     | + CI workflows                              | release context only                          |
 
 Validators come from `gravitas_verify.discover_validators`: project
 config + resolvable binary = catalog entry with provenance. Nothing is
 assumed from language. Empty catalog means "say so", not "invent commands".
 
-| Scope | Verification |
-|-------|-------------|
-| Single function change | Targeted: run tests for that module |
-| Multi-file feature | Impact: run all tests for changed modules + callers |
-| Shared utility change | Suite: run full test suite |
-| Auth/security/schema | Full: complete suite + static analysis |
+| Scope                  | Verification                                        |
+| ---------------------- | --------------------------------------------------- |
+| Single function change | Targeted: run tests for that module                 |
+| Multi-file feature     | Impact: run all tests for changed modules + callers |
+| Shared utility change  | Suite: run full test suite                          |
+| Auth/security/schema   | Full: complete suite + static analysis              |
 
 ## Requirement-Evidence States
 
@@ -130,6 +133,7 @@ VERDICT: CONDITIONAL PASS -- requires human test execution before merge.
 ## Completion Gating
 
 The Stop hook will not allow task completion until:
+
 - All acceptance criteria have evidence entries in the ledger
 - Required validators have been observed to run
 - No known failures are unresolved

@@ -112,7 +112,14 @@ export default function CraveXPStore() {
 
   // Rotating search placeholder state (matching Zepto)
   const placeholderPhrases = useMemo(
-    () => ['"cheese slices"', '"milk & bread"', '"chilled coke"', '"maggi noodles"', '"farm eggs"', '"ice cream"'],
+    () => [
+      '"cheese slices"',
+      '"milk & bread"',
+      '"chilled coke"',
+      '"maggi noodles"',
+      '"farm eggs"',
+      '"ice cream"',
+    ],
     []
   )
   const [currentPlaceholderIdx, setCurrentPlaceholderIdx] = useState(0)
@@ -200,7 +207,10 @@ export default function CraveXPStore() {
     if (!searchQuery.trim()) return []
     const q = searchQuery.toLowerCase().trim()
     return groceryItems
-      .filter((i) => i.name.toLowerCase().includes(q) || (i.category && i.category.toLowerCase().includes(q)))
+      .filter(
+        (i) =>
+          i.name.toLowerCase().includes(q) || (i.category && i.category.toLowerCase().includes(q))
+      )
       .slice(0, 5)
   }, [groceryItems, searchQuery])
 
@@ -332,9 +342,7 @@ export default function CraveXPStore() {
               </div>
 
               {searchSuggestions.length === 0 ? (
-                <p className="text-xs text-gray-400 py-4 text-center">
-                  No products found.
-                </p>
+                <p className="text-xs text-gray-400 py-4 text-center">No products found.</p>
               ) : (
                 <div className="divide-y divide-gray-50 mt-1">
                   {searchSuggestions.map((item) => {
@@ -355,25 +363,41 @@ export default function CraveXPStore() {
                               {item.name}
                             </p>
                             <p className="text-[11px] text-gray-400 font-medium mt-0.5">
-                              {item.unit} &bull; <span className="font-black text-[#1A1A1A]">₹{item.price}</span>
+                              {item.unit} &bull;{' '}
+                              <span className="font-black text-[#1A1A1A]">₹{item.price}</span>
                             </p>
                           </div>
                         </div>
 
                         {qty === 0 ? (
                           <button
-                            onMouseDown={(e) => { e.preventDefault(); updateItemQty(item, 1) }}
+                            onMouseDown={(e) => {
+                              e.preventDefault()
+                              updateItemQty(item, 1)
+                            }}
                             className="rounded-lg border border-[#FF3269] text-[#FF3269] bg-white hover:bg-[#FFF0F4] active:scale-95 px-3.5 py-1 text-xs font-black uppercase transition shadow-xs cursor-pointer"
                           >
                             ADD
                           </button>
                         ) : (
                           <div className="flex items-center gap-1.5 rounded-lg bg-[#FF3269] px-2 py-0.5 text-white">
-                            <button onMouseDown={(e) => { e.preventDefault(); updateItemQty(item, -1) }} className="size-4 grid place-items-center cursor-pointer">
+                            <button
+                              onMouseDown={(e) => {
+                                e.preventDefault()
+                                updateItemQty(item, -1)
+                              }}
+                              className="size-4 grid place-items-center cursor-pointer"
+                            >
                               <Minus className="size-2.5" />
                             </button>
                             <span className="text-xs font-black px-1">{qty}</span>
-                            <button onMouseDown={(e) => { e.preventDefault(); updateItemQty(item, 1) }} className="size-4 grid place-items-center cursor-pointer">
+                            <button
+                              onMouseDown={(e) => {
+                                e.preventDefault()
+                                updateItemQty(item, 1)
+                              }}
+                              className="size-4 grid place-items-center cursor-pointer"
+                            >
                               <Plus className="size-2.5" />
                             </button>
                           </div>
@@ -391,7 +415,10 @@ export default function CraveXPStore() {
         <div className="border-t border-gray-100 bg-white">
           <div className="mx-auto flex max-w-[1440px] items-center gap-6 sm:gap-8 px-4 sm:px-8 lg:px-10 overflow-x-auto scrollbar-none text-xs sm:text-[13px] font-bold">
             <button
-              onClick={() => { setSelectedCategory('All Items'); setSearchQuery('') }}
+              onClick={() => {
+                setSelectedCategory('All Items')
+                setSearchQuery('')
+              }}
               className={`flex items-center gap-1.5 py-2.5 sm:py-3 border-b-2 whitespace-nowrap transition-all cursor-pointer shrink-0 ${
                 selectedCategory === 'All Items'
                   ? 'border-[#8B1EEF] text-[#8B1EEF] font-black'
@@ -407,7 +434,10 @@ export default function CraveXPStore() {
               return (
                 <button
                   key={cat.id}
-                  onClick={() => { setSelectedCategory(cat.id); setSearchQuery('') }}
+                  onClick={() => {
+                    setSelectedCategory(cat.id)
+                    setSearchQuery('')
+                  }}
                   className={`flex items-center gap-1.5 py-2.5 sm:py-3 border-b-2 whitespace-nowrap transition-all cursor-pointer shrink-0 ${
                     isActive
                       ? 'border-[#8B1EEF] text-[#8B1EEF] font-black'
@@ -437,7 +467,8 @@ export default function CraveXPStore() {
                 CraveXP Grocery Hub
               </h1>
               <p className="mt-2 text-sm sm:text-base font-semibold text-[#026E80] leading-relaxed max-w-lg">
-                Farm-fresh produce, chilled dairy, snacks &amp; daily essentials delivered in 10 minutes!
+                Farm-fresh produce, chilled dairy, snacks &amp; daily essentials delivered in 10
+                minutes!
               </p>
               <div className="mt-5 flex flex-wrap items-center justify-center md:justify-start gap-3">
                 <button
@@ -487,7 +518,10 @@ export default function CraveXPStore() {
 
       {/* ── SHOP BY CATEGORY GRID (Full-bleed images — single source of truth) ── */}
       {selectedCategory === 'All Items' && !searchQuery && (
-        <section id="shop-by-category" className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-10 pt-6 sm:pt-8">
+        <section
+          id="shop-by-category"
+          className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-10 pt-6 sm:pt-8"
+        >
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg sm:text-xl font-black text-[#1A1A1A] tracking-tight">
@@ -797,9 +831,7 @@ export default function CraveXPStore() {
                   <p className="text-[10px] font-black uppercase tracking-wider text-purple-200">
                     {cartTotalItems} {cartTotalItems === 1 ? 'ITEM' : 'ITEMS'} IN CART
                   </p>
-                  <p className="text-base font-black text-white leading-tight">
-                    ₹{cartSubtotal}
-                  </p>
+                  <p className="text-base font-black text-white leading-tight">₹{cartSubtotal}</p>
                 </div>
               </div>
 
@@ -828,9 +860,7 @@ interface CraveXPProductCardProps {
 
 function CraveXPProductCard({ item, qty, onUpdateQty, onQuickView }: CraveXPProductCardProps) {
   const hasDiscount = item.mrp > item.price
-  const discountPercent = hasDiscount
-    ? Math.round(((item.mrp - item.price) / item.mrp) * 100)
-    : 0
+  const discountPercent = hasDiscount ? Math.round(((item.mrp - item.price) / item.mrp) * 100) : 0
 
   return (
     <div className="group relative flex flex-col justify-between rounded-2xl bg-white p-3 sm:p-3.5 border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all duration-300 min-w-[185px] sm:min-w-[215px] max-w-[235px] shrink-0">
@@ -919,13 +949,9 @@ function CraveXPProductCard({ item, qty, onUpdateQty, onQuickView }: CraveXPProd
 
         {/* Price & MRP Row */}
         <div className="flex items-baseline gap-1.5 mt-1">
-          <span className="text-sm sm:text-base font-black text-[#1A1A1A]">
-            ₹{item.price}
-          </span>
+          <span className="text-sm sm:text-base font-black text-[#1A1A1A]">₹{item.price}</span>
           {hasDiscount && (
-            <span className="text-xs text-gray-400 line-through font-medium">
-              ₹{item.mrp}
-            </span>
+            <span className="text-xs text-gray-400 line-through font-medium">₹{item.mrp}</span>
           )}
         </div>
 

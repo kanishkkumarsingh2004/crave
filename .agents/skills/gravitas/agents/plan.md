@@ -91,32 +91,39 @@ and its recent git history before writing a single line of the plan.
 ## Plan — [task] — Tier [0/1/2]
 
 ### Context
+
 [One paragraph: what the code currently does, what broke, what the task requires]
 
 ### Approach
+
 [One paragraph: this approach, why not alternatives, key design decision]
 
 ### Alternatives Considered
-| Approach | Pros | Cons | Decision |
-|----------|------|------|----------|
-| [chosen] | [why] | [none material] | ✅ chosen |
-| [alt 1] | [pros] | [too risky / too much scope] | ❌ rejected |
+
+| Approach | Pros   | Cons                         | Decision    |
+| -------- | ------ | ---------------------------- | ----------- |
+| [chosen] | [why]  | [none material]              | ✅ chosen   |
+| [alt 1]  | [pros] | [too risky / too much scope] | ❌ rejected |
 
 ### Changes
-| # | File | Location | What Changes | Risk |
-|---|------|----------|-------------|------|
-| 1 | src/auth/session.ts | line 23 | TIMEOUT 5000→30000 | test at line 47 |
-| 2 | src/auth/session.test.ts | line 47 | assertion update | none |
+
+| #   | File                     | Location | What Changes       | Risk            |
+| --- | ------------------------ | -------- | ------------------ | --------------- |
+| 1   | src/auth/session.ts      | line 23  | TIMEOUT 5000→30000 | test at line 47 |
+| 2   | src/auth/session.test.ts | line 47  | assertion update   | none            |
 
 ### New Files Required
+
 [List any new files with their purpose]
 
 ### Verification Plan
+
 - Pre: `vitest run` → baseline N/N pass
 - Post: `tsc --noEmit && eslint . && vitest run` → N+delta/N+delta pass
 - Regression: full suite, not just target module
 
 ### Rollback
+
 1. git stash (or git revert [commit])
 2. Verify clean: run tests
 3. Root-cause from error output before re-attempting
@@ -155,13 +162,15 @@ For each attack that lands: revise the plan. Keep attacking until nothing new br
 
 ```markdown
 ### Failure Modes
-| Scenario | Probability | Mitigation | Rollback |
-|----------|-------------|------------|---------|
-| Other tests assert old timeout | Medium | grep for '5000' first | git stash |
-| Middleware breaks silently | Low | run full suite, not just auth | git stash |
-| Build fails — type mismatch | Low | tsc --noEmit before commit | fix types |
+
+| Scenario                       | Probability | Mitigation                    | Rollback  |
+| ------------------------------ | ----------- | ----------------------------- | --------- |
+| Other tests assert old timeout | Medium      | grep for '5000' first         | git stash |
+| Middleware breaks silently     | Low         | run full suite, not just auth | git stash |
+| Build fails — type mismatch    | Low         | tsc --noEmit before commit    | fix types |
 
 ### Pre-Implementation Checklist
+
 □ Grep confirms exact file paths
 □ Test file read and line numbers verified
 □ Rollback command ready: git stash
@@ -174,61 +183,78 @@ For each attack that lands: revise the plan. Keep attacking until nothing new br
 ## Plan Templates
 
 ### Tier 0 — Trivial
+
 ```markdown
 ## Plan — [task] — Tier 0
+
 Target: [file]:[line] — [exact change]
 Tests affected: none / [specific test]
 Proceed immediately.
 ```
 
 ### Tier 1 — Moderate
+
 ```markdown
 ## Plan — [task] — Tier 1
 
 ### Context
+
 [What currently exists, what needs to change]
 
 ### Approach
+
 [This approach, why chosen, alternatives rejected]
 
 ### Changes
-| # | File | Location | What | Risk |
-|---|------|----------|------|------|
+
+| #   | File | Location | What | Risk |
+| --- | ---- | -------- | ---- | ---- |
 
 ### Failure Modes
+
 | Scenario | Probability | Mitigation |
 
 ### Verification
+
 - Command: [exact command]
 - Expected: [N/N pass, 0 lint warnings, clean types]
 ```
 
 ### Tier 2 — High Stakes
+
 ```markdown
 ## Plan — [task] — Tier 2 ⚠️ HIGH STAKES
 
 ### Scope
+
 [What this changes in production behavior, who is affected]
 
 ### Context
+
 [Full background — what exists, what broke, what the business needs]
 
 ### Approach
+
 [Detailed paragraph — design decision rationale, tradeoffs, why now]
 
 ### Alternatives Considered
+
 | Approach | Pros | Cons | Decision |
 
 ### Changes
+
 | # | File | Location | What | Risk |
 
 ### Adversarial Critique
+
 [What I tried to break in this plan and what I found]
 
 ### Failure Modes
+
 | Scenario | Probability | Mitigation | Rollback |
 
 ### Pre-flight Checklist
+
 □ Backup strategy: [what]
 □ Feature flag: [yes/no — why]
 □ Migration reversible: [yes/no]
@@ -236,12 +262,14 @@ Proceed immediately.
 □ Monitoring in place: [yes/no]
 
 ### Verification
+
 - Baseline: full suite before any changes
 - Post-change: full suite + integration tests
 - Canary: [if applicable]
 - Rollback drill: [exact commands]
 
 ### ⚠️ USER CHECKPOINT REQUIRED
+
 Present this plan. Wait for explicit approval. Do not proceed.
 ```
 
@@ -250,12 +278,14 @@ Present this plan. Wait for explicit approval. Do not proceed.
 ## Complexity Heuristics
 
 **Under-specified plan (reject and revise):**
+
 - Any step says "update [file]" without line numbers
 - Risk column says "none" without explanation of why
 - Verification is "run tests" without specifying the exact command
 - No failure modes section
 
 **Over-complicated plan (simplify):**
+
 - Introduces dependencies the task doesn't require
 - Changes more than the task asks for
 - Has steps that "clean up" things not in the task

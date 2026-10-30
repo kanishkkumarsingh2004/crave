@@ -23,6 +23,7 @@ worse than a false FAIL — it ships bugs to production.
 Run everything. Never skip.
 
 ### TypeScript
+
 ```bash
 tsc --noEmit                  # type correctness
 eslint . --max-warnings 0     # no lint warnings allowed
@@ -30,6 +31,7 @@ vitest run --reporter=verbose # all tests, verbose output
 ```
 
 ### Python
+
 ```bash
 mypy . --strict               # type correctness
 ruff check .                  # lint
@@ -37,6 +39,7 @@ pytest -v --tb=short          # all tests, verbose
 ```
 
 ### Rust
+
 ```bash
 cargo check                   # syntax + types
 cargo clippy -- -D warnings   # lint (warnings = errors)
@@ -44,6 +47,7 @@ cargo test                    # all tests
 ```
 
 ### Go
+
 ```bash
 go vet ./...                  # vet
 staticcheck ./...             # lint
@@ -51,6 +55,7 @@ go test ./... -v              # all tests, verbose
 ```
 
 ### Other Languages
+
 ```bash
 # Java
 ./mvnw verify -q
@@ -86,6 +91,7 @@ Flag if coverage < 70% on changed files.
 ### 2. Test quality check
 
 Look for:
+
 - Tests that always pass (no assertion)
 - Tests that test implementation, not behavior
 - Missing edge cases: null, empty, max value, min value
@@ -109,6 +115,7 @@ grep -rn "password\s*=\s*['\"]" src/ --include="*.ts"
 ## Regression Check
 
 ### Required
+
 Compare to baseline (run before implementation):
 
 ```
@@ -126,13 +133,13 @@ Regression check:
 
 For every changed function, verify:
 
-| Input | Expected | Actual | Pass? |
-|-------|----------|--------|-------|
-| Normal | [x] | [x] | ✅ |
-| Empty string | [err] | [err] | ✅ |
-| Null | [err] | [err] | ✅ |
-| Max value | [x] | [x] | ✅ |
-| Min value | [x] | [x] | ✅ |
+| Input        | Expected | Actual | Pass? |
+| ------------ | -------- | ------ | ----- |
+| Normal       | [x]      | [x]    | ✅    |
+| Empty string | [err]    | [err]  | ✅    |
+| Null         | [err]    | [err]  | ✅    |
+| Max value    | [x]      | [x]    | ✅    |
+| Min value    | [x]      | [x]    | ✅    |
 
 ---
 
@@ -141,6 +148,7 @@ For every changed function, verify:
 ### VERDICT: PASS
 
 Requirements:
+
 - All tests pass (pass count ≥ baseline)
 - Zero new lint warnings
 - Type-check clean
@@ -160,6 +168,7 @@ Security: no new issues
 ### VERDICT: FAIL
 
 Requirements to issue FAIL:
+
 - Any test failing
 - Any new lint warning (in strict mode)
 - Any type error
@@ -201,6 +210,7 @@ Required actions:
 ## Escalation
 
 After VERDICT: FAIL, return to Coordinator with:
+
 1. Exact failing tests (copy output verbatim)
 2. Root cause diagnosis (your assessment)
 3. Specific fix required (not "fix the tests" — what specifically)

@@ -105,33 +105,41 @@ Check:
 ## Adversarial Critique — [plan name]
 
 ### Vector 1: Wrong Location
+
 - Risk: LOW — grepped and confirmed auth.ts at src/auth/session.ts:23
 - Evidence: `grep -rn "SESSION_TIMEOUT" src/` → one result
 
 ### Vector 2: Downstream
+
 - Risk: MEDIUM — 2 middleware files import from session.ts
   - src/middleware/auth.ts:7 — calls validateSession()
   - src/routes/auth.ts:4 — calls createSession()
 - Mitigation: run full test suite after, not just session.test.ts
 
 ### Vector 3: Test Coverage
+
 - Risk: LOW — 23 tests cover normal cases
 - GAP: No test for concurrent session creation
 - Mitigation: add one concurrency test before shipping
 
 ### Vector 4: Config
+
 - Risk: LOW — TypeScript strict mode on, change is fully typed
 
 ### Vector 5: Concurrency
+
 - Risk: LOW — session creation uses DB transaction (line 45)
 
 ### Vector 6: Rollback
+
 - Risk: LOW — timeout change is reversible, no data migration
 
 ### Vector 7: Security
+
 - Risk: LOW — change only affects timeout value, no auth logic
 
 ### Overall Risk: MEDIUM (due to Vector 2)
+
 ### Recommendation: proceed with full test suite run
 ```
 
@@ -139,12 +147,12 @@ Check:
 
 ## Critique Thresholds
 
-| Risk Level | Protocol |
-|-----------|---------|
-| ALL LOW | Proceed to implementation |
-| ANY MEDIUM | Proceed, but run full test suite (not just target tests) |
-| ANY HIGH | Stop, revise plan, address risk, re-critique |
-| Unmitigated HIGH | Escalate to Tier 2, get user checkpoint |
+| Risk Level       | Protocol                                                 |
+| ---------------- | -------------------------------------------------------- |
+| ALL LOW          | Proceed to implementation                                |
+| ANY MEDIUM       | Proceed, but run full test suite (not just target tests) |
+| ANY HIGH         | Stop, revise plan, address risk, re-critique             |
+| Unmitigated HIGH | Escalate to Tier 2, get user checkpoint                  |
 
 ---
 
@@ -153,28 +161,36 @@ Check:
 These are the failures that actually happen. Check for all of them.
 
 ### Timeout / Constant Changed in Wrong File
+
 Multiple files often define similar constants. The bug file is rarely the obvious one.
+
 ```bash
 grep -rn "SESSION_TIMEOUT\|timeout.*=.*[0-9]" src/ --include="*.ts"
 ```
 
 ### Test Assertion Mismatch
+
 Plan says "update function" but the test still asserts on the old value.
+
 ```bash
 grep -rn "toBe(5000)\|assertEqual.*5000\|expect.*5000" src/
 ```
 
 ### Import Style Breaks Tree Shaking
+
 Changing named export to default export breaks all importers.
+
 ```bash
 grep -rn "import.*from.*auth" src/ --include="*.ts"
 ```
 
 ### DB Migration Without Transaction
+
 Migration fails halfway, leaves DB in inconsistent state.
 Check: does `down()` exist? Is the `up()` in a transaction?
 
 ### Auth Middleware Order
+
 Adding middleware in wrong order bypasses auth checks.
 Check: middleware registration order in app setup file.
 

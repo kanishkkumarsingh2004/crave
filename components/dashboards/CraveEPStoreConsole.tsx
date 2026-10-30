@@ -28,7 +28,9 @@ export default function CraveEPStoreConsole() {
   const [activeTab, setActiveTab] = useState<'orders' | 'inventory'>('orders')
   const [orderFilter, setOrderFilter] = useState<'all' | 'new' | 'packing' | 'ready'>('all')
   const [categoryFilter, setCategoryFilter] = useState('All')
-  const [stockFilter, setStockFilter] = useState<'all' | 'instock' | 'lowstock' | 'outofstock'>('all')
+  const [stockFilter, setStockFilter] = useState<'all' | 'instock' | 'lowstock' | 'outofstock'>(
+    'all'
+  )
   const [searchQuery, setSearchQuery] = useState('')
   const [barcodeQuery, setBarcodeQuery] = useState('')
 
@@ -46,7 +48,9 @@ export default function CraveEPStoreConsole() {
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false)
   const [showCameraScanner, setShowCameraScanner] = useState(false)
-  const [scannerTarget, setScannerTarget] = useState<'add_item' | 'packing' | 'inventory_search'>('add_item')
+  const [scannerTarget, setScannerTarget] = useState<'add_item' | 'packing' | 'inventory_search'>(
+    'add_item'
+  )
   const [newItemBarcode, setNewItemBarcode] = useState('')
 
   const pendingOrderStatusRef = useRef<Record<string, boolean>>({})
@@ -94,7 +98,9 @@ export default function CraveEPStoreConsole() {
 
         const [ordersResponse, inventoryResponse] = await Promise.all([
           fetch(`/api/orders?vendorId=${encodeURIComponent(vendorId)}`, { cache: 'no-store' }),
-          fetch(`/api/menu-items?restaurantId=${encodeURIComponent(vendorId)}`, { cache: 'no-store' }),
+          fetch(`/api/menu-items?restaurantId=${encodeURIComponent(vendorId)}`, {
+            cache: 'no-store',
+          }),
         ])
         if (!ordersResponse.ok || !inventoryResponse.ok) {
           throw new Error('Failed to load CraveXP data from the local database')
@@ -180,7 +186,10 @@ export default function CraveEPStoreConsole() {
   useVendorOrderUpdates((evtData) => {
     const o = evtData?.order || evtData
     const isApproved =
-      !o || !o.id || o.payment_status === 'verified' || (o.status && !['payment_pending', 'payment_submitted'].includes(o.status))
+      !o ||
+      !o.id ||
+      o.payment_status === 'verified' ||
+      (o.status && !['payment_pending', 'payment_submitted'].includes(o.status))
 
     if (isApproved && restaurantId) {
       fetch(`/api/orders?vendorId=${encodeURIComponent(restaurantId)}`, { cache: 'no-store' })
@@ -188,11 +197,14 @@ export default function CraveEPStoreConsole() {
         .then((data) => {
           if (data.success && Array.isArray(data.orders)) {
             const approvedOrders = data.orders.filter(
-              (order: any) => order.payment_status === 'verified' || !['payment_pending', 'payment_submitted'].includes(order.status)
+              (order: any) =>
+                order.payment_status === 'verified' ||
+                !['payment_pending', 'payment_submitted'].includes(order.status)
             )
             setOrders(
               approvedOrders.map((order: any) => {
-                const rawItems = typeof order.items === 'string' ? JSON.parse(order.items) : order.items
+                const rawItems =
+                  typeof order.items === 'string' ? JSON.parse(order.items) : order.items
                 const items = Array.isArray(rawItems)
                   ? rawItems.map((item: Record<string, unknown>) => ({
                       name: String(item.name ?? ''),
@@ -262,7 +274,8 @@ export default function CraveEPStoreConsole() {
 
       if (nextStatus === 'packing') toast(`Order #${orderId} assigned to picker!`, 'success')
       else if (nextStatus === 'ready') toast(`Order #${orderId} marked ready for rider!`, 'success')
-      else if (nextStatus === 'picked_up') toast(`Order #${orderId} handed over to rider!`, 'success')
+      else if (nextStatus === 'picked_up')
+        toast(`Order #${orderId} handed over to rider!`, 'success')
     } finally {
       pendingOrderStatusRef.current[orderId] = false
     }
@@ -307,7 +320,8 @@ export default function CraveEPStoreConsole() {
       const updates = orders.flatMap((order) => {
         if (order.status !== 'packing' && order.status !== 'new') return []
         const itemIndex = order.items.findIndex(
-          (item) => item.skuCode.toUpperCase() === cleanCode || item.name.toUpperCase().includes(cleanCode)
+          (item) =>
+            item.skuCode.toUpperCase() === cleanCode || item.name.toUpperCase().includes(cleanCode)
         )
         if (itemIndex < 0) return []
         return [{ orderId: order.id, itemIndex }]
@@ -368,7 +382,9 @@ export default function CraveEPStoreConsole() {
       return
     }
     setInventory((prev) =>
-      prev.map((entry) => (entry.id === itemId ? { ...entry, inStock: nextStock, stockCount: nextCount } : entry))
+      prev.map((entry) =>
+        entry.id === itemId ? { ...entry, inStock: nextStock, stockCount: nextCount } : entry
+      )
     )
   }
 
@@ -388,7 +404,9 @@ export default function CraveEPStoreConsole() {
       return
     }
     setInventory((prev) =>
-      prev.map((entry) => (entry.id === itemId ? { ...entry, stockCount: newCount, inStock: newCount > 0 } : entry))
+      prev.map((entry) =>
+        entry.id === itemId ? { ...entry, stockCount: newCount, inStock: newCount > 0 } : entry
+      )
     )
   }
 
@@ -427,10 +445,14 @@ export default function CraveEPStoreConsole() {
               onClick={() => void handleToggleStoreOnline()}
               disabled={!restaurantId}
               className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl px-3 py-2.5 text-[10px] font-black border transition sm:flex-none sm:px-4 sm:text-xs cursor-pointer ${
-                storeOnline ? 'bg-emerald-50 border-emerald-300 text-emerald-900' : 'bg-rose-50 border-rose-300 text-rose-900'
+                storeOnline
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                  : 'bg-rose-50 border-rose-300 text-rose-900'
               }`}
             >
-              <span className={`size-2.5 rounded-full ${storeOnline ? 'bg-emerald-600 animate-ping' : 'bg-rose-600'}`} />
+              <span
+                className={`size-2.5 rounded-full ${storeOnline ? 'bg-emerald-600 animate-ping' : 'bg-rose-600'}`}
+              />
               <span>{storeOnline ? 'STORE ONLINE' : 'PAUSED'}</span>
             </button>
 
@@ -448,7 +470,10 @@ export default function CraveEPStoreConsole() {
       {/* Main Console Container */}
       <main className="mx-auto max-w-[1280px] px-3 pt-4 sm:px-6 sm:pt-6">
         {dashboardError && (
-          <p role="alert" className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
+          <p
+            role="alert"
+            className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800"
+          >
             {dashboardError}
           </p>
         )}
@@ -463,7 +488,9 @@ export default function CraveEPStoreConsole() {
             <p className="text-2xl font-black text-[#18201c] sm:text-3xl">
               {orders.filter((o) => o.status === 'new' || o.status === 'packing').length}
             </p>
-            <p className="mt-2 text-[9px] font-semibold text-emerald-700 sm:text-[11px]">{orders.length} orders loaded</p>
+            <p className="mt-2 text-[9px] font-semibold text-emerald-700 sm:text-[11px]">
+              {orders.length} orders loaded
+            </p>
           </div>
 
           <div className="relative overflow-hidden rounded-2xl border border-[#e2e7dc] bg-white p-3.5 shadow-xs sm:rounded-3xl sm:p-5">
@@ -471,8 +498,12 @@ export default function CraveEPStoreConsole() {
               <span className="font-bold uppercase tracking-wider">Store Status</span>
               <Zap className="size-4 text-amber-600" />
             </div>
-            <p className="text-2xl font-black text-amber-700 sm:text-3xl">{storeOnline ? 'Active' : 'Paused'}</p>
-            <p className="mt-2 text-[9px] font-semibold text-[#5c6861] sm:text-[11px]">Real-time customer dispatch</p>
+            <p className="text-2xl font-black text-amber-700 sm:text-3xl">
+              {storeOnline ? 'Active' : 'Paused'}
+            </p>
+            <p className="mt-2 text-[9px] font-semibold text-[#5c6861] sm:text-[11px]">
+              Real-time customer dispatch
+            </p>
           </div>
 
           <div className="relative overflow-hidden rounded-2xl border border-[#e2e7dc] bg-white p-3.5 shadow-xs sm:rounded-3xl sm:p-5">
@@ -480,8 +511,12 @@ export default function CraveEPStoreConsole() {
               <span className="font-bold uppercase tracking-wider">Store Revenue Today</span>
               <TrendingUp className="size-4 text-purple-600" />
             </div>
-            <p className="text-2xl font-black text-[#18201c] sm:text-3xl">₹{dailyRevenue.toLocaleString()}</p>
-            <p className="mt-2 text-[9px] font-semibold text-purple-700 sm:text-[11px]">{completedDrops} completed drops</p>
+            <p className="text-2xl font-black text-[#18201c] sm:text-3xl">
+              ₹{dailyRevenue.toLocaleString()}
+            </p>
+            <p className="mt-2 text-[9px] font-semibold text-purple-700 sm:text-[11px]">
+              {completedDrops} completed drops
+            </p>
           </div>
 
           <div className="relative overflow-hidden rounded-2xl border border-[#e2e7dc] bg-white p-3.5 shadow-xs sm:rounded-3xl sm:p-5">
@@ -504,7 +539,9 @@ export default function CraveEPStoreConsole() {
             <button
               onClick={() => setActiveTab('orders')}
               className={`flex min-h-11 shrink-0 snap-start items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2.5 transition touch-manipulation cursor-pointer sm:px-4 ${
-                activeTab === 'orders' ? 'bg-white text-[#18201c] shadow-sm' : 'text-[#627068] hover:text-[#18201c]'
+                activeTab === 'orders'
+                  ? 'bg-white text-[#18201c] shadow-sm'
+                  : 'text-[#627068] hover:text-[#18201c]'
               }`}
             >
               <Package className="size-4 text-[#86a018]" />
@@ -513,7 +550,9 @@ export default function CraveEPStoreConsole() {
             <button
               onClick={() => setActiveTab('inventory')}
               className={`flex min-h-11 shrink-0 snap-start items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2.5 transition touch-manipulation cursor-pointer sm:px-4 ${
-                activeTab === 'inventory' ? 'bg-white text-[#18201c] shadow-sm' : 'text-[#627068] hover:text-[#18201c]'
+                activeTab === 'inventory'
+                  ? 'bg-white text-[#18201c] shadow-sm'
+                  : 'text-[#627068] hover:text-[#18201c]'
               }`}
             >
               <Layers className="size-4 text-[#86a018]" />

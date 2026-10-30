@@ -60,7 +60,8 @@ export async function POST(request: Request) {
 
     const passwordMatches =
       verifyPassword(password, profile.password_hash, profile.email) ||
-      (password.startsWith('-') && verifyPassword(password.slice(1), profile.password_hash, profile.email)) ||
+      (password.startsWith('-') &&
+        verifyPassword(password.slice(1), profile.password_hash, profile.email)) ||
       verifyPassword(`-${password}`, profile.password_hash, profile.email)
 
     if (!passwordMatches) {

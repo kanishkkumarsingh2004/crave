@@ -288,10 +288,7 @@ export function calculateFullBreakdown(
       markupAmount +
       grossDeliveryFee * (1 - deliveryShareMultiplier)
   )
-  const platformNetProfit = Math.max(
-    0,
-    Math.round(platformGrossRevenue - platformGstLiability)
-  )
+  const platformNetProfit = Math.max(0, Math.round(platformGrossRevenue - platformGstLiability))
 
   const profitMarginPercent =
     totalCollectedFromCustomer > 0

@@ -39,7 +39,9 @@ export default function UserAccountsView({
       <div className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-sm font-bold text-[#18201c] dark:text-white">Registered Store Vendors</h3>
+            <h3 className="text-sm font-bold text-[#18201c] dark:text-white">
+              Registered Store Vendors
+            </h3>
             <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">
               Admin-only restaurant onboarding. Manage profiles, alter pricing, or access menus.
             </p>
@@ -60,7 +62,8 @@ export default function UserAccountsView({
             </div>
           ) : (
             vendorAccounts.map((account) => {
-              const isXP = account.vendorType === 'XP Store' || account.detail?.toLowerCase().includes('xp')
+              const isXP =
+                account.vendorType === 'XP Store' || account.detail?.toLowerCase().includes('xp')
               return (
                 <div
                   key={account.id}
@@ -78,7 +81,9 @@ export default function UserAccountsView({
                         <Store className="size-4" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-sm truncate">{account.restaurantName || account.detail}</p>
+                        <p className="font-bold text-sm truncate">
+                          {account.restaurantName || account.detail}
+                        </p>
                         <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4] truncate">
                           {account.name} · <span className="font-mono">{account.email}</span>
                         </p>
@@ -137,15 +142,23 @@ export default function UserAccountsView({
             <tbody className="divide-y divide-gray-200 dark:divide-[#25332a]">
               {vendorAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]">
+                  <td
+                    colSpan={6}
+                    className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]"
+                  >
                     No vendor stores found. Click &apos;+ Onboard New Store&apos; to register one.
                   </td>
                 </tr>
               ) : (
                 vendorAccounts.map((account) => {
-                  const isXP = account.vendorType === 'XP Store' || account.detail?.toLowerCase().includes('xp')
+                  const isXP =
+                    account.vendorType === 'XP Store' ||
+                    account.detail?.toLowerCase().includes('xp')
                   return (
-                    <tr key={account.id} className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/70 transition-colors">
+                    <tr
+                      key={account.id}
+                      className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/70 transition-colors"
+                    >
                       <td className="px-4 py-3.5 font-bold">
                         <div className="flex items-center gap-2.5">
                           <div
@@ -168,12 +181,18 @@ export default function UserAccountsView({
                         </div>
                       </td>
                       <td className="px-4 py-3.5 text-gray-500 dark:text-[#9eb3a4]">
-                        <p className="font-semibold text-[#18201c] dark:text-white">{account.name}</p>
+                        <p className="font-semibold text-[#18201c] dark:text-white">
+                          {account.name}
+                        </p>
                         <p className="font-mono text-[11px]">{account.email}</p>
                       </td>
                       <td className="px-4 py-3.5">
-                        <p className="font-medium text-[#18201c] dark:text-white">{account.cuisine || 'Multi-Cuisine'}</p>
-                        <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">{account.phone || 'Phone N/A'}</p>
+                        <p className="font-medium text-[#18201c] dark:text-white">
+                          {account.cuisine || 'Multi-Cuisine'}
+                        </p>
+                        <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">
+                          {account.phone || 'Phone N/A'}
+                        </p>
                       </td>
                       <td className="px-4 py-3.5">
                         <span className="font-semibold text-emerald-600 dark:text-emerald-400">
@@ -183,7 +202,9 @@ export default function UserAccountsView({
                       <td className="px-4 py-3.5 whitespace-nowrap">
                         <span
                           className={`text-xs font-bold uppercase ${
-                            account.status === 'active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'
+                            account.status === 'active'
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-rose-600'
                           }`}
                         >
                           {account.status}
@@ -239,7 +260,9 @@ export default function UserAccountsView({
                   <Crown className="size-5" />
                 </span>
                 <div>
-                  <h4 className="text-base font-extrabold text-[#18201c] dark:text-white">VIP Spending Customers</h4>
+                  <h4 className="text-base font-extrabold text-[#18201c] dark:text-white">
+                    VIP Spending Customers
+                  </h4>
                   <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">
                     Top customer accounts ordered by lifetime spend
                   </p>
@@ -264,8 +287,12 @@ export default function UserAccountsView({
                       {cust.totalOrders} Orders
                     </span>
                   </div>
-                  <p className="mt-2 font-bold text-sm text-[#18201c] dark:text-white truncate">{cust.name}</p>
-                  <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4] truncate">{cust.email}</p>
+                  <p className="mt-2 font-bold text-sm text-[#18201c] dark:text-white truncate">
+                    {cust.name}
+                  </p>
+                  <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4] truncate">
+                    {cust.email}
+                  </p>
                   <p className="mt-1.5 text-lg font-extrabold text-[#18201c] dark:text-[#d9f447]">
                     ₹{cust.totalSpent?.toLocaleString('en-IN')}
                   </p>
@@ -291,26 +318,38 @@ export default function UserAccountsView({
             <tbody className="divide-y divide-gray-200 dark:divide-[#25332a]">
               {customerAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]">
+                  <td
+                    colSpan={6}
+                    className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]"
+                  >
                     No customer accounts currently stored in database users table.
                   </td>
                 </tr>
               ) : (
                 customerAccounts.map((account) => (
-                  <tr key={account.id} className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/70 transition-colors">
+                  <tr
+                    key={account.id}
+                    className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/70 transition-colors"
+                  >
                     <td className="px-4 py-3.5 font-bold">
                       <div className="flex items-center gap-2.5">
                         <div className="grid size-8 place-items-center rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold shrink-0">
                           <Users className="size-4" />
                         </div>
                         <div>
-                          <p className="font-bold text-sm text-[#18201c] dark:text-white">{account.name}</p>
-                          <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">Joined: {account.joinedDate}</p>
+                          <p className="font-bold text-sm text-[#18201c] dark:text-white">
+                            {account.name}
+                          </p>
+                          <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">
+                            Joined: {account.joinedDate}
+                          </p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3.5 text-gray-500 dark:text-[#9eb3a4]">
-                      <p className="font-semibold text-[#18201c] dark:text-white">{account.email}</p>
+                      <p className="font-semibold text-[#18201c] dark:text-white">
+                        {account.email}
+                      </p>
                       <p className="text-[11px]">{account.phone || 'Phone N/A'}</p>
                     </td>
                     <td className="px-4 py-3.5 text-gray-500 dark:text-[#9eb3a4] truncate max-w-[200px]">
@@ -322,7 +361,9 @@ export default function UserAccountsView({
                     <td className="px-4 py-3.5 whitespace-nowrap">
                       <span
                         className={`text-xs font-bold uppercase ${
-                          account.status === 'active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'
+                          account.status === 'active'
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-rose-600'
                         }`}
                       >
                         {account.status}
@@ -359,9 +400,12 @@ export default function UserAccountsView({
       <div className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-sm font-bold text-[#18201c] dark:text-white">Registered Delivery Partners</h3>
+            <h3 className="text-sm font-bold text-[#18201c] dark:text-white">
+              Registered Delivery Partners
+            </h3>
             <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">
-              Admin onboarding. View fleet accounts, vehicle details, license numbers, and active status.
+              Admin onboarding. View fleet accounts, vehicle details, license numbers, and active
+              status.
             </p>
           </div>
           <button
@@ -398,7 +442,9 @@ export default function UserAccountsView({
                   </div>
                   <span
                     className={`text-xs font-bold uppercase shrink-0 ${
-                      driver.status === 'active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'
+                      driver.status === 'active'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-rose-600'
                     }`}
                   >
                     {driver.status === 'active' ? 'Active' : driver.status}
@@ -419,7 +465,9 @@ export default function UserAccountsView({
                     {driver.status === 'active' ? 'Suspend' : 'Activate'}
                   </button>
                   <button
-                    onClick={() => onDeleteAccount({ id: driver.id, name: driver.name, email: driver.email })}
+                    onClick={() =>
+                      onDeleteAccount({ id: driver.id, name: driver.name, email: driver.email })
+                    }
                     className="rounded-xl px-2.5 py-1.5 text-[11px] font-bold border border-rose-300 dark:border-rose-500/40 bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 hover:bg-rose-100 transition flex items-center gap-1 cursor-pointer"
                   >
                     <Trash2 className="size-3" />
@@ -445,21 +493,31 @@ export default function UserAccountsView({
             <tbody className="divide-y divide-gray-200 dark:divide-[#25332a]">
               {driverAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]">
+                  <td
+                    colSpan={5}
+                    className="p-8 text-center text-xs text-gray-500 dark:text-[#9eb3a4]"
+                  >
                     No driver accounts found. Click &apos;+ Add Driver&apos; to onboard one.
                   </td>
                 </tr>
               ) : (
                 driverAccounts.map((driver) => (
-                  <tr key={driver.id} className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/70 transition-colors">
+                  <tr
+                    key={driver.id}
+                    className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/70 transition-colors"
+                  >
                     <td className="px-4 py-3.5 font-bold">
                       <div className="flex items-center gap-2.5">
                         <div className="grid size-8 place-items-center rounded-lg bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-bold shrink-0">
                           <Zap className="size-4" />
                         </div>
                         <div>
-                          <p className="font-bold text-sm text-[#18201c] dark:text-white">{driver.name}</p>
-                          <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">Joined: {driver.joinedDate}</p>
+                          <p className="font-bold text-sm text-[#18201c] dark:text-white">
+                            {driver.name}
+                          </p>
+                          <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">
+                            Joined: {driver.joinedDate}
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -475,7 +533,9 @@ export default function UserAccountsView({
                     <td className="px-4 py-3.5 whitespace-nowrap">
                       <span
                         className={`text-xs font-bold uppercase ${
-                          driver.status === 'active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'
+                          driver.status === 'active'
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-rose-600'
                         }`}
                       >
                         {driver.status === 'active' ? 'Active Partner' : driver.status}
@@ -496,7 +556,13 @@ export default function UserAccountsView({
                           {driver.status === 'active' ? 'Suspend' : 'Activate'}
                         </button>
                         <button
-                          onClick={() => onDeleteAccount({ id: driver.id, name: driver.name, email: driver.email })}
+                          onClick={() =>
+                            onDeleteAccount({
+                              id: driver.id,
+                              name: driver.name,
+                              email: driver.email,
+                            })
+                          }
                           className="rounded-xl px-3 py-1.5 text-[11px] font-bold border border-rose-300 dark:border-rose-500/40 bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 hover:bg-rose-100 transition flex items-center gap-1 cursor-pointer"
                         >
                           <Trash2 className="size-3.5" /> Delete
@@ -535,19 +601,28 @@ export default function UserAccountsView({
             </tr>
           ) : (
             adminAccounts.map((admin) => (
-              <tr key={admin.id} className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/70 transition-colors">
+              <tr
+                key={admin.id}
+                className="hover:bg-gray-50/80 dark:hover:bg-[#121815]/70 transition-colors"
+              >
                 <td className="px-4 py-3.5 font-bold">
                   <div className="flex items-center gap-2.5">
                     <div className="grid size-8 place-items-center rounded-lg bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 font-bold shrink-0">
                       <ShieldCheck className="size-4" />
                     </div>
                     <div>
-                      <p className="font-bold text-sm text-[#18201c] dark:text-white">{admin.name}</p>
-                      <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">Joined: {admin.joinedDate}</p>
+                      <p className="font-bold text-sm text-[#18201c] dark:text-white">
+                        {admin.name}
+                      </p>
+                      <p className="text-[11px] text-gray-500 dark:text-[#9eb3a4]">
+                        Joined: {admin.joinedDate}
+                      </p>
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3.5 font-mono text-gray-500 dark:text-[#9eb3a4]">{admin.email}</td>
+                <td className="px-4 py-3.5 font-mono text-gray-500 dark:text-[#9eb3a4]">
+                  {admin.email}
+                </td>
                 <td className="px-4 py-3.5 text-[#18201c] dark:text-white font-semibold">
                   <span className="inline-block rounded-md bg-purple-100 dark:bg-purple-500/20 px-2 py-0.5 text-xs text-purple-800 dark:text-purple-300 font-medium">
                     Super Administrator
