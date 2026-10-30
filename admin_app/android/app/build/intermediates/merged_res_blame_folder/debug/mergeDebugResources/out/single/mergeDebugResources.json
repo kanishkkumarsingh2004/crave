@@ -1,0 +1,254 @@
+[
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-mdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-xhdpi_ic_launcher_foreground.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-xhdpi/ic_launcher_foreground.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-port-xhdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-port-xhdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable_ic_launcher.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable/ic_launcher.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-ldpi_ic_launcher.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-ldpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-xhdpi_ic_launcher.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.crave.admin.app-main-38:/drawable/ic_launcher_background.xml"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-xhdpi_ic_launcher_background.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-xhdpi/ic_launcher_background.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-xxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-port-xxxhdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-port-xxxhdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-port-night-hdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-port-night-hdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-land-ldpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-land-ldpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-land-night-xxhdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-land-night-xxhdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-mdpi_ic_launcher_foreground.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-mdpi/ic_launcher_foreground.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-ldpi_ic_launcher_round.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-ldpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-port-hdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-port-hdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/xml_file_paths.xml.flat",
+        "source": "com.crave.admin.app-main-38:/xml/file_paths.xml"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-hdpi_ic_launcher_background.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-hdpi/ic_launcher_background.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-xxhdpi_ic_launcher_background.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-xxhdpi/ic_launcher_background.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-xxhdpi_ic_launcher.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-xxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-v24_ic_launcher_foreground.xml.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-v24/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-xhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-night_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-night/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-xxxhdpi_ic_launcher_foreground.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-xxxhdpi/ic_launcher_foreground.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-land-hdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-land-hdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-ldpi_ic_launcher_foreground.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-ldpi/ic_launcher_foreground.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-port-mdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-port-mdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/xml_config.xml.flat",
+        "source": "com.crave.admin.app-main-38:/xml/config.xml"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-port-night-ldpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-port-night-ldpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-land-xxxhdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-land-xxxhdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-port-ldpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-port-ldpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-port-xxhdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-port-xxhdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-mdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-hdpi_ic_launcher.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-port-night-xxxhdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-port-night-xxxhdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-xxxhdpi_ic_launcher_background.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-xxxhdpi/ic_launcher_background.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-ldpi_ic_launcher_background.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-ldpi/ic_launcher_background.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-land-xhdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-land-xhdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-land-xxhdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-land-xxhdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-land-night-mdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-land-night-mdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-land-night-xhdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-land-night-xhdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-land-night-hdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-land-night-hdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-port-night-mdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-port-night-mdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-port-night-xxhdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-port-night-xxhdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-mdpi_ic_launcher_background.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-mdpi/ic_launcher_background.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-land-night-xxxhdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-land-night-xxxhdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/layout_activity_main.xml.flat",
+        "source": "com.crave.admin.app-main-38:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-port-night-xhdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-port-night-xhdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-xxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-xxxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable_ic_stat_crave_notification.xml.flat",
+        "source": "com.crave.admin.app-main-38:/drawable/ic_stat_crave_notification.xml"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-xxxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-hdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-land-night-ldpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-land-night-ldpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/drawable-land-mdpi_splash.png.flat",
+        "source": "com.crave.admin.app-main-38:/drawable-land-mdpi/splash.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-xxhdpi_ic_launcher_foreground.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-xxhdpi/ic_launcher_foreground.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-hdpi_ic_launcher_foreground.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-hdpi/ic_launcher_foreground.png"
+    },
+    {
+        "merged": "com.crave.admin.app-debug-36:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "com.crave.admin.app-main-38:/mipmap-xxxhdpi/ic_launcher_round.png"
+    }
+]
