@@ -9,8 +9,8 @@
     letter-spacing="-0.04em"
   >
     <tspan fill="#ffffff">crave</tspan>
-    <tspan fill="#d9f447">XP</tspan>
+    <tspan fill="#86a018">XP</tspan>
   </text>
   <!-- Electric Chartreuse Square Period -->
-  <rect x="129" y="18.5" width="6" height="6" rx="1.2" fill="#d9f447"/>
+  <rect x="129" y="18.5" width="6" height="6" rx="1.2" fill="#86a018"/>
 </svg>

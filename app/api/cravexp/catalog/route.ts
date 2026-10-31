@@ -11,14 +11,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 /**
- * ensureStore is now WRITE-ONLY — called exclusively from the POST handler or
- * from a migration/seed script, never from the GET path.
- *
- * P0.3 FIX: Previously, every catalog GET executed an upsert, which is a write
- * operation.  Under concurrent reads this creates unnecessary database write
- * contention.  GET requests are now pure reads; store initialization is the
- * responsibility of POST /api/cravexp/catalog (called once on setup) or a DB
- * seed script.
+ * ensureStore is now WRITE-ONLY — called exclusively from setup or seed scripts.
  */
 async function ensureStore() {
   await prisma.restaurant.upsert({
@@ -38,7 +31,7 @@ async function ensureStore() {
   })
 }
 
-function mapItem(item: any): CraveXPGroceryItem {
+function mapMenuItem(item: any): CraveXPGroceryItem {
   const mrp = Number(item.mrp ?? item.price)
   const price = Number(item.price)
   const safeImage =
@@ -47,6 +40,35 @@ function mapItem(item: any): CraveXPGroceryItem {
       : item.name?.toLowerCase().includes('egg')
         ? 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=500'
         : item.image || 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500'
+
+  return {
+    id: item.id,
+    name: item.name,
+    unit: item.unit || '1 Pack',
+    price,
+    mrp,
+    image: safeImage,
+    category: item.category || 'Grocery Essentials',
+    inStock: item.in_stock !== false && Number(item.stock_count ?? 0) > 0,
+    restaurantId: item.restaurant_id || CRAVEXP_DARK_STORE_ID,
+    restaurantName: item.restaurant?.name || CRAVEXP_DARK_STORE_INFO.name,
+    stockCount: Number(item.stock_count ?? 0),
+    skuCode: item.sku_code || item.id,
+    discount: mrp > price ? `${Math.round(((mrp - price) / mrp) * 100)}% OFF` : undefined,
+    is_veg: item.is_veg !== false,
+  }
+}
+
+function mapProductItem(item: any): CraveXPGroceryItem {
+  const mrp = Number(item.mrp ?? item.price)
+  const price = Number(item.price)
+  const safeImage =
+    item.image && !item.image.includes('photo-1516467508483-a7212febe31a')
+      ? item.image
+      : item.name?.toLowerCase().includes('egg')
+        ? 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=500'
+        : item.image || 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500'
+
   return {
     id: item.id,
     name: item.name,
@@ -58,10 +80,11 @@ function mapItem(item: any): CraveXPGroceryItem {
     inStock: item.in_stock !== false && Number(item.stock_count ?? 0) > 0,
     restaurantId: CRAVEXP_DARK_STORE_ID,
     restaurantName: CRAVEXP_DARK_STORE_INFO.name,
-    stockCount: Number(item.stock_count ?? 50),
+    stockCount: Number(item.stock_count ?? 0),
     skuCode: item.sku_code || item.id,
     barcode: item.barcode || undefined,
     discount: mrp > price ? `${Math.round(((mrp - price) / mrp) * 100)}% OFF` : undefined,
+    is_veg: item.is_veg !== false,
   }
 }
 
@@ -85,32 +108,69 @@ function isTransientConnectionError(error: unknown) {
   return false
 }
 
-async function loadCatalogItems() {
-  try {
-    return await prisma.craveXPProduct.findMany({
+/**
+ * Load items directly from the CraveXP Store Vendor's database (menu_items table for dark store).
+ * Falls back to cravexp_products if menu_items hasn't been initialized yet.
+ */
+async function loadCatalogItems(): Promise<CraveXPGroceryItem[]> {
+  const queryDarkStoreMenuItems = async () => {
+    return prisma.menuItem.findMany({
+      where: {
+        OR: [
+          { restaurant_id: CRAVEXP_DARK_STORE_ID },
+          { restaurant: { is_dark_store: true } },
+          { restaurant: { name: { contains: 'cravexp', mode: 'insensitive' } } },
+        ],
+      },
+      include: {
+        restaurant: {
+          select: { id: true, name: true, address: true, is_open: true },
+        },
+      },
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
     })
+  }
+
+  try {
+    const darkStoreMenuItems = await queryDarkStoreMenuItems()
+    if (darkStoreMenuItems.length > 0) {
+      return darkStoreMenuItems.map(mapMenuItem)
+    }
+
+    // Fallback: check cravexp_products table
+    const products = await prisma.craveXPProduct.findMany({
+      orderBy: [{ category: 'asc' }, { name: 'asc' }],
+    })
+    return products.map(mapProductItem)
   } catch (error) {
     if (!isTransientConnectionError(error)) throw error
     await new Promise((resolve) => setTimeout(resolve, 300))
-    return prisma.craveXPProduct.findMany({
+
+    const darkStoreMenuItems = await queryDarkStoreMenuItems()
+    if (darkStoreMenuItems.length > 0) {
+      return darkStoreMenuItems.map(mapMenuItem)
+    }
+
+    const products = await prisma.craveXPProduct.findMany({
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
     })
+    return products.map(mapProductItem)
   }
 }
 
 /**
  * GET /api/cravexp/catalog
  *
- * Pure read from the dedicated cravexp_products table. Product management is
- * intentionally independent from restaurant menu_items and store operators.
+ * Reads live inventory directly from the CraveXP Store Vendor's database.
+ * Every product addition, stock count update, and price change in the vendor console
+ * (/vendor/crave-ep) is immediately reflected here.
  */
 export async function GET() {
   try {
     const items = await loadCatalogItems()
-    return NextResponse.json({ success: true, items: items.map(mapItem) })
+    return NextResponse.json({ success: true, items })
   } catch (error) {
-    console.error('[cravexp/catalog] Failed to load catalog:', error)
+    console.error('[cravexp/catalog] Failed to load catalog from vendor DB:', error)
     return NextResponse.json({ error: 'Failed to load CraveXP catalog' }, { status: 500 })
   }
 }
@@ -118,8 +178,7 @@ export async function GET() {
 /**
  * POST /api/cravexp/catalog
  *
- * Idempotent setup endpoint for the virtual checkout/dispatch hub. Products are
- * created through /api/admin/cravexp-products and never through menu_items.
+ * Idempotent setup endpoint for the dark store dispatch hub.
  */
 export async function POST(request: Request) {
   try {

@@ -2,38 +2,20 @@
 
 import CraveXPStore from '@/components/dashboards/CraveXPStore'
 import Navbar from '@/components/Navbar'
+import { CraveXPSkeleton } from '@/components/ui/CraveSkeleton'
 import { useAuth } from '@/lib/auth-context'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
 
 export default function UserCraveXPPage() {
-  const { user, isLoading } = useAuth()
-  const router = useRouter()
+  const { isLoading } = useAuth()
 
-  useEffect(() => {
-    if (isLoading) return
-    if (!user) {
-      router.replace('/login?logout=1')
-    }
-  }, [user, isLoading, router])
-
-  if (isLoading || !user) {
-    return (
-      <div className="min-h-screen bg-[#f8f9f7] flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
-          <p className="mt-4 text-xs font-bold text-[#18201c] uppercase tracking-wider">
-            Loading craveXP Instamart...
-          </p>
-        </div>
-      </div>
-    )
+  if (isLoading) {
+    return <CraveXPSkeleton />
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0a0f0c] text-[#18201c] dark:text-[#f2f4f2] antialiased selection:bg-[#86a018] selection:text-white transition-colors duration-300">
       <Navbar />
       <CraveXPStore />
-    </>
+    </div>
   )
 }

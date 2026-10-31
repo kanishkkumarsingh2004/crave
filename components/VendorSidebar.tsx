@@ -66,8 +66,8 @@ export default function VendorSidebar() {
             <span className="grid size-9 place-items-center rounded-xl bg-[#d9f447] text-[#121815] shadow-xs">
               <UtensilsCrossed className="size-5" />
             </span>
-            <span className="text-xl font-black tracking-tight text-[#121815] dark:text-white">
-              crave<span className="text-[#86a018] dark:text-[#d9f447]">.</span>
+            <span className="text-xl font-bold tracking-tight text-[#121815] dark:text-white">
+              crave<span className="text-[#86a018]">.</span>
             </span>
           </Link>
           <div className="mt-5 rounded-xl bg-stone-100 dark:bg-white/5 border border-stone-200/80 dark:border-transparent px-3 py-3">
@@ -123,9 +123,9 @@ export default function VendorSidebar() {
           <div className="flex items-center justify-between sm:justify-start gap-3 min-w-0">
             <Link
               href="/"
-              className="font-black text-2xl sm:text-3xl tracking-tighter text-[#121815] dark:text-white shrink-0 lg:hidden"
+              className="font-bold text-2xl sm:text-3xl tracking-tight text-[#121815] dark:text-white shrink-0 lg:hidden"
             >
-              crave<span className="text-[#86a018] dark:text-[#d9f447]">.</span>
+              crave<span className="text-[#86a018]">.</span>
             </Link>
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#86a018] dark:text-[#d9f447]">
               VENDOR

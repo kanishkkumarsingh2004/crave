@@ -1,47 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import 'tailwindcss';
 
-@font-face {
-  font-family: 'DM Mono';
-  src: url('/font/DM_Mono/DMMono-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'DM Mono';
-  src: url('/font/DM_Mono/DMMono-Medium.ttf') format('truetype');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'DM Mono';
-  src: url('/font/DM_Mono/DMMono-Light.ttf') format('truetype');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'DM Mono';
-  src: url('/font/DM_Mono/DMMono-Italic.ttf') format('truetype');
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'DM Mono';
-  src: url('/font/DM_Mono/DMMono-MediumItalic.ttf') format('truetype');
-  font-weight: 500;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'DM Mono';
-  src: url('/font/DM_Mono/DMMono-LightItalic.ttf') format('truetype');
-  font-weight: 300;
-  font-style: italic;
-  font-display: swap;
-}
 
 @theme {
   --color-lime: #eaff3f;
@@ -63,8 +22,8 @@
   --color-background: #ffffff;
   --color-foreground: #101712;
   --radius: 15px;
-  --font-manrope: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  --font-mono: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-manrope: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --nav-height: 78px;
   --safe-top: max(env(safe-area-inset-top), 18px);
   --safe-bottom: max(env(safe-area-inset-bottom), 10px);
@@ -74,7 +33,7 @@
 }
 
 :root {
-  font-family: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--ink);
   background: var(--app-bg);
   font-synthesis: none;
@@ -285,7 +244,7 @@ svg {
 .page-header h1,
 .checkout h1 {
   margin: 0;
-  font: 800 clamp(31px, 8vw, 44px)/1.03 'DM Mono';
+  font: 800 clamp(31px, 8vw, 44px)/1.03 'Inter', sans-serif;
   letter-spacing: -2px;
 }
 .auth-copy {
@@ -512,7 +471,7 @@ textarea {
   gap: 2px;
 }
 .permission-copy b {
-  font: 800 14px 'DM Mono';
+  font: 800 14px 'Inter', sans-serif;
   color: var(--ink);
 }
 .permission-copy small {
@@ -716,7 +675,7 @@ textarea {
 }
 .promo h2 {
   margin: 6px 0 3px;
-  font: 800 25px 'DM Mono';
+  font: 800 25px 'Inter', sans-serif;
   letter-spacing: -1px;
 }
 .promo p {
@@ -756,7 +715,7 @@ textarea {
 .title-row h2,
 .section-title {
   margin: 0;
-  font: 800 20px 'DM Mono';
+  font: 800 20px 'Inter', sans-serif;
   letter-spacing: -0.6px;
   color: var(--ink);
 }
@@ -819,7 +778,7 @@ textarea {
 }
 .restaurant-info h3 {
   margin: 0 0 3px;
-  font: 800 17px 'DM Mono';
+  font: 800 17px 'Inter', sans-serif;
 }
 .restaurant-info p {
   margin: 0;
@@ -866,7 +825,7 @@ textarea {
 }
 .page-header h1 {
   margin: 0;
-  font: 800 clamp(28px, 8vw, 40px)/1.05 'DM Mono';
+  font: 800 clamp(28px, 8vw, 40px)/1.05 'Inter', sans-serif;
   letter-spacing: -1.6px;
   color: var(--ink);
 }
@@ -889,7 +848,7 @@ textarea {
 }
 .bag-header h1 {
   margin: 0;
-  font: 800 30px/1.05 'DM Mono';
+  font: 800 30px/1.05 'Inter', sans-serif;
   letter-spacing: -1.4px;
   color: var(--ink);
 }
@@ -976,7 +935,7 @@ textarea {
 }
 .section-title span {
   color: var(--muted);
-  font: 600 12px 'DM Mono';
+  font: 600 12px 'Inter', sans-serif;
 }
 .section-title.spaced {
   margin-top: 34px;
@@ -1081,7 +1040,7 @@ textarea {
 }
 .empty h3 {
   margin: 15px 0 5px;
-  font: 800 19px 'DM Mono';
+  font: 800 19px 'Inter', sans-serif;
 }
 .empty p {
   max-width: 260px;
@@ -1143,7 +1102,7 @@ textarea {
 }
 .detail-hero h1 {
   margin: 10px 0 4px;
-  font: 800 30px/1.1 'DM Mono';
+  font: 800 30px/1.1 'Inter', sans-serif;
   letter-spacing: -1.4px;
   text-wrap: balance;
 }
@@ -1220,7 +1179,7 @@ textarea {
   gap: 1px;
 }
 .fact b {
-  font: 800 14px/1.2 'DM Mono';
+  font: 800 14px/1.2 'Inter', sans-serif;
   letter-spacing: -0.02em;
   color: var(--ink);
   white-space: nowrap;
@@ -1318,7 +1277,7 @@ textarea {
   margin: 22px 0 2px;
 }
 .detail-body .section-title span {
-  font: 600 12px 'DM Mono';
+  font: 600 12px 'Inter', sans-serif;
   color: var(--muted);
 }
 .menu-list {
@@ -1399,13 +1358,13 @@ textarea {
 .menu-copy h3 {
   width: 100%;
   margin: 7px 0 3px;
-  font: 800 15.5px/1.28 'DM Mono';
+  font: 800 15.5px/1.28 'Inter', sans-serif;
   letter-spacing: -0.25px;
   color: var(--ink);
   overflow-wrap: anywhere;
 }
 .menu-price {
-  font: 800 13px 'DM Mono';
+  font: 800 13px 'Inter', sans-serif;
   letter-spacing: -0.1px;
   color: var(--accent-strong);
 }
@@ -1462,7 +1421,7 @@ textarea {
   border-radius: 999px;
   background: var(--surface);
   color: var(--accent-strong);
-  font: 800 10.5px 'DM Mono';
+  font: 800 10.5px 'Inter', sans-serif;
   letter-spacing: 0.7px;
   white-space: nowrap;
   cursor: pointer;
@@ -1575,7 +1534,7 @@ textarea {
 }
 .sheet-title h2 {
   margin: 0;
-  font: 800 24px 'DM Mono';
+  font: 800 24px 'Inter', sans-serif;
 }
 .variant-list {
   display: grid;
@@ -1729,7 +1688,7 @@ textarea {
 }
 .checkout main > h2 {
   margin: 25px 0 10px;
-  font: 800 16px 'DM Mono';
+  font: 800 16px 'Inter', sans-serif;
 }
 /* A section heading with an action on the right. */
 .checkout-section-head {
@@ -1742,7 +1701,7 @@ textarea {
 .checkout-section-head > h2 {
   margin: 0;
   min-width: 0;
-  font: 800 16px 'DM Mono';
+  font: 800 16px 'Inter', sans-serif;
 }
 .upi-header {
   display: flex;
@@ -1754,7 +1713,7 @@ textarea {
 .upi-header > h2 {
   margin: 0;
   min-width: 0;
-  font: 800 16px 'DM Mono';
+  font: 800 16px 'Inter', sans-serif;
 }
 .text-link {
   flex: 0 0 auto;
@@ -1949,7 +1908,7 @@ textarea {
   cursor: pointer;
 }
 .tip-bill > button b {
-  font: 800 14px 'DM Mono';
+  font: 800 14px 'Inter', sans-serif;
   color: var(--ink);
 }
 .tip-bill > button.active {
@@ -2004,7 +1963,7 @@ html[data-theme='dark'] .bill-tip-action,
   text-transform: uppercase;
 }
 .tip-bill-total b {
-  font: 800 15px 'DM Mono';
+  font: 800 15px 'Inter', sans-serif;
   letter-spacing: -0.2px;
   color: var(--ink);
   text-transform: none;
@@ -2305,7 +2264,7 @@ html[data-theme='dark'] .meter-track {
   background: var(--accent-soft);
 }
 .confirm-grid b {
-  font: 800 15px 'DM Mono';
+  font: 800 15px 'Inter', sans-serif;
   color: var(--ink);
 }
 .confirm-grid small {
@@ -2322,7 +2281,7 @@ html[data-theme='dark'] .meter-track {
   border-radius: 13px;
   background: var(--surface-3);
   color: var(--ink);
-  font: 900 16px 'DM Mono';
+  font: 900 16px 'Inter', sans-serif;
 }
 .confirm-icon.cancel {
   color: var(--accent-strong);
@@ -2354,14 +2313,14 @@ html[data-theme='dark'] .meter-track {
 }
 .qr-amount {
   margin: 14px 0 0;
-  font: 800 15px 'DM Mono';
+  font: 800 15px 'Inter', sans-serif;
   letter-spacing: -0.2px;
   color: var(--ink);
   text-align: center;
 }
 .qr-vpa {
   margin: 3px 0 0;
-  font: 600 11px 'DM Mono';
+  font: 600 11px 'Inter', sans-serif;
   color: var(--muted);
   letter-spacing: 0.4px;
 }
@@ -2441,7 +2400,7 @@ html[data-theme='dark'] .meter-track {
   text-transform: uppercase;
 }
 .pay-bar-info b {
-  font: 800 15px 'DM Mono';
+  font: 800 15px 'Inter', sans-serif;
   letter-spacing: -0.2px;
   color: var(--ink);
   white-space: nowrap;
@@ -2470,7 +2429,7 @@ html[data-theme='dark'] .meter-track {
   border-radius: 14px;
   background: var(--accent);
   color: var(--on-accent);
-  font: 800 16px 'DM Mono';
+  font: 800 16px 'Inter', sans-serif;
   letter-spacing: -0.2px;
   display: inline-flex;
   align-items: center;
@@ -2521,7 +2480,7 @@ html[data-theme='dark'] .meter-track {
   min-height: 118px;
 }
 .method-btn .method-mark {
-  font: 700 11px 'DM Mono';
+  font: 700 11px 'Inter', sans-serif;
   letter-spacing: 0.4px;
   text-transform: uppercase;
   color: var(--accent-strong);
@@ -2564,7 +2523,7 @@ html[data-theme='dark'] .meter-track {
 }
 .order-top h3 {
   margin: 0 0 3px;
-  font: 800 14px 'DM Mono';
+  font: 800 14px 'Inter', sans-serif;
 }
 .order-top p {
   margin: 0;
@@ -2899,11 +2858,11 @@ html[data-theme='dark'] .meter-track {
   justify-content: center;
   gap: 1px;
   margin: 2px 0 3px;
-  font-family: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 .receipt-brand b {
   font:
-    800 17px 'DM Mono',
+    800 17px 'Inter', sans-serif,
     ui-sans-serif,
     system-ui,
     sans-serif;
@@ -2913,7 +2872,7 @@ html[data-theme='dark'] .meter-track {
 .receipt-brand i {
   font-style: normal;
   font:
-    800 17px 'DM Mono',
+    800 17px 'Inter', sans-serif,
     ui-sans-serif,
     system-ui,
     sans-serif;
@@ -3028,7 +2987,7 @@ html[data-theme='dark'] .meter-track {
 }
 .profile-card h2 {
   margin: 0 0 4px;
-  font: 800 22px 'DM Mono';
+  font: 800 22px 'Inter', sans-serif;
 }
 .profile-card p {
   margin: 0;
@@ -3312,7 +3271,7 @@ html[data-theme='dark'] .bottom-nav .active {
   margin: 20px;
 }
 .subpage > header h1 {
-  font: 800 19px 'DM Mono';
+  font: 800 19px 'Inter', sans-serif;
 }
 .saved-address {
   display: flex;

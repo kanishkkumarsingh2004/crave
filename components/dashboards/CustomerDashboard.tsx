@@ -361,6 +361,7 @@ export default function CustomerDashboard({
   const pathname = usePathname()
 
   const currentTabFromPath = useMemo(() => {
+    if (pathname.includes('/user/cravexp')) return 'cravexp'
     if (pathname.includes('/user/help')) return 'help'
     if (pathname.includes('/user/track')) return 'live-order'
     if (initialOrderId || pathname.match(/\/user\/orders\/[^\/]+/)) return 'live-order'
@@ -375,6 +376,16 @@ export default function CustomerDashboard({
   useEffect(() => {
     setActiveTab(currentTabFromPath)
   }, [currentTabFromPath])
+
+  const isTabActive = (tab: 'explore' | 'cravexp' | 'live-order' | 'orders' | 'profile' | 'help') => {
+    if (tab === 'explore') return (pathname === '/user/explore' || activeTab === 'explore') && !pathname.includes('/user/cravexp')
+    if (tab === 'cravexp') return pathname.includes('/user/cravexp') || activeTab === 'cravexp'
+    if (tab === 'live-order') return pathname.includes('/user/track') || activeTab === 'live-order'
+    if (tab === 'orders') return pathname.includes('/user/orders') || activeTab === 'orders'
+    if (tab === 'profile') return pathname.includes('/user/profile') || activeTab === 'profile'
+    if (tab === 'help') return pathname.includes('/user/help') || activeTab === 'help'
+    return false
+  }
 
   const navigateToTab = (tab: 'explore' | 'live-order' | 'orders' | 'profile' | 'help') => {
     setActiveTab(tab)
@@ -440,6 +451,7 @@ export default function CustomerDashboard({
   const [variantPickerItem, setVariantPickerItem] = useState<MenuItem | null>(null)
   const [variantPickerSelection, setVariantPickerSelection] = useState('')
   const [restaurantsList, setRestaurantsList] = useState<Array<Restaurant>>([])
+  const [isLoadingRestaurants, setIsLoadingRestaurants] = useState(true)
   const [showMobileSideMenu, setShowMobileSideMenu] = useState(false)
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
   const [pastOrders, setPastOrders] = useState<Array<PastOrder>>([])
@@ -522,6 +534,7 @@ export default function CustomerDashboard({
   useEffect(() => {
     async function fetchRestaurants() {
       try {
+        setIsLoadingRestaurants(true)
         let parsed: Array<Restaurant> = []
         const res = await fetch('/api/restaurants', { cache: 'no-store' })
         const json = await res.json()
@@ -555,6 +568,8 @@ export default function CustomerDashboard({
         setRestaurantsList(parsed)
       } catch (err) {
         setRestaurantsList([])
+      } finally {
+        setIsLoadingRestaurants(false)
       }
     }
     fetchRestaurants()
@@ -2034,78 +2049,124 @@ export default function CustomerDashboard({
           {/* Left Block: Logo */}
           <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 min-w-0">
             <Link
-              href="/"
-              className="font-black text-xl sm:text-2xl lg:text-3xl tracking-tighter text-[#18201c] dark:text-white shrink-0 hover:opacity-90 transition"
+              href="/user/explore"
+              className="font-bold text-xl sm:text-2xl lg:text-3xl tracking-tight text-[#18201c] dark:text-white shrink-0 hover:opacity-90 transition"
+              title="crave. home"
             >
               crave<span className="text-[#86a018]">.</span>
             </Link>
           </div>
 
-          {/* Center Block: Desktop Page Navigation Tabs (Apple Segmented Glass Control) */}
+          {/* Center Block: Desktop Page Navigation Tabs (Apple Segmented Glass Control - Direct Links) */}
           <div className="hidden lg:flex items-center gap-1 text-sm font-bold justify-center bg-gray-100/80 dark:bg-white/[0.06] p-1 rounded-full border border-gray-200/60 dark:border-white/10 backdrop-blur-xl">
-            <button
-              onClick={() => navigateToTab('explore')}
+            <Link
+              href="/user/explore"
               className={`flex items-center gap-2 rounded-full px-4 py-2 transition shrink-0 cursor-pointer ${
-                activeTab === 'explore'
+                isTabActive('explore')
                   ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
               }`}
             >
               <Compass
                 className={`size-4 ${
-                  activeTab === 'explore' ? 'text-[#86a018] dark:text-[#d9f447]' : 'text-gray-400'
+                  isTabActive('explore') ? 'text-[#86a018] dark:text-[#d9f447]' : 'text-gray-400'
                 }`}
               />
               <span>Explore</span>
-            </button>
+            </Link>
 
-            <button
-              onClick={() => navigateToTab('live-order')}
+            {/* CRAVEXP DIRECT ACCESS TAB */}
+            <Link
+              href="/user/cravexp"
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 transition shrink-0 cursor-pointer ${
+                isTabActive('cravexp')
+                  ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
+              }`}
+              title="craveXP 10-Minute Dark Store"
+            >
+              <Zap
+                className={`size-4 ${
+                  isTabActive('cravexp')
+                    ? 'text-[#86a018] dark:text-[#d9f447] fill-current animate-pulse'
+                    : 'text-[#86a018] dark:text-[#d9f447] fill-current'
+                }`}
+              />
+              <span>craveXP</span>
+              <span
+                className={`text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded-full ${
+                  isTabActive('cravexp')
+                    ? 'bg-emerald-500/20 text-emerald-800 dark:text-[#d9f447]'
+                    : 'bg-emerald-500/15 text-emerald-700 dark:text-[#d9f447]'
+                }`}
+              >
+                10m
+              </span>
+            </Link>
+
+            <Link
+              href="/user/track"
               className={`flex items-center gap-2 rounded-full px-4 py-2 transition shrink-0 cursor-pointer ${
-                activeTab === 'live-order'
+                isTabActive('live-order')
                   ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
               }`}
             >
-              <Bike className="size-4" />
+              <Bike
+                className={`size-4 ${
+                  isTabActive('live-order') ? 'text-[#86a018] dark:text-[#d9f447]' : 'text-gray-400'
+                }`}
+              />
               <span>Track Drop</span>
-            </button>
+            </Link>
 
-            <button
-              onClick={() => navigateToTab('orders')}
+            <Link
+              href="/user/orders"
               className={`flex items-center gap-2 rounded-full px-4 py-2 transition shrink-0 cursor-pointer ${
-                activeTab === 'orders'
+                isTabActive('orders')
                   ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
               }`}
             >
-              <History className="size-4" />
+              <History
+                className={`size-4 ${
+                  isTabActive('orders') ? 'text-[#86a018] dark:text-[#d9f447]' : 'text-gray-400'
+                }`}
+              />
               <span>Orders</span>
-            </button>
+            </Link>
 
-            <button
-              onClick={() => navigateToTab('profile')}
+            <Link
+              href="/user/profile"
               className={`flex items-center gap-2 rounded-full px-4 py-2 transition shrink-0 cursor-pointer ${
-                activeTab === 'profile'
+                isTabActive('profile')
                   ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
               }`}
             >
-              <User className="size-4" />
+              <User
+                className={`size-4 ${
+                  isTabActive('profile') ? 'text-[#86a018] dark:text-[#d9f447]' : 'text-gray-400'
+                }`}
+              />
               <span>Profile</span>
-            </button>
+            </Link>
 
-            <button
-              onClick={() => navigateToTab('help')}
+            <Link
+              href="/user/help"
               className={`flex items-center gap-2 rounded-full px-4 py-2 transition shrink-0 cursor-pointer ${
-                activeTab === 'help'
+                isTabActive('help')
                   ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
               }`}
             >
-              <HelpCircle className="size-4" />
+              <HelpCircle
+                className={`size-4 ${
+                  isTabActive('help') ? 'text-[#86a018] dark:text-[#d9f447]' : 'text-gray-400'
+                }`}
+              />
               <span>Help</span>
-            </button>
+            </Link>
           </div>
 
           {/* Right Block: Address + Cart + ThemeToggle + Mobile Hamburger */}
@@ -2141,8 +2202,8 @@ export default function CustomerDashboard({
               <ThemeToggle />
             </div>
 
-            <button
-              onClick={() => router.push('/user/cart')}
+            <Link
+              href="/user/cart"
               className="hidden lg:flex relative items-center gap-2.5 rounded-full bg-[#18201c] dark:bg-[#d9f447] px-5 py-2.5 text-xs font-bold text-white dark:text-[#18201c] shadow-md hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer"
             >
               <ShoppingCart className="size-4 text-[#d9f447] dark:text-[#18201c]" />
@@ -2152,11 +2213,11 @@ export default function CustomerDashboard({
                   &bull; ₹{cartSubtotal}
                 </span>
               )}
-            </button>
+            </Link>
 
             {/* Quick Mobile Cart Button */}
-            <button
-              onClick={() => router.push('/user/cart')}
+            <Link
+              href="/user/cart"
               className="lg:hidden relative grid size-8 xs:size-9 sm:size-10 place-items-center rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#18201c] text-[#18201c] dark:text-white shadow-xs hover:bg-gray-100 dark:hover:bg-[#27342d] transition active:scale-95 shrink-0 cursor-pointer"
               aria-label="View Cart"
             >
@@ -2166,7 +2227,7 @@ export default function CustomerDashboard({
                   {totalCartItemCount}
                 </span>
               )}
-            </button>
+            </Link>
 
             {/* 3-Line Hamburger Side Menu Trigger Button on Mobile */}
             <button
@@ -2237,11 +2298,9 @@ export default function CustomerDashboard({
             Navigation
           </p>
 
-          <button
-            onClick={() => {
-              navigateToTab('explore')
-              setShowMobileSideMenu(false)
-            }}
+          <Link
+            href="/user/explore"
+            onClick={() => setShowMobileSideMenu(false)}
             className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
               activeTab === 'explore'
                 ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
@@ -2258,13 +2317,29 @@ export default function CustomerDashboard({
               />
               Explore Kitchens
             </span>
-          </button>
+          </Link>
 
-          <button
-            onClick={() => {
-              navigateToTab('live-order')
-              setShowMobileSideMenu(false)
-            }}
+          <Link
+            href="/user/cravexp"
+            onClick={() => setShowMobileSideMenu(false)}
+            className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
+              pathname.includes('/user/cravexp')
+                ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
+                : 'text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]'
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <Zap className="size-5 text-[#86a018] dark:text-[#d9f447] fill-current animate-pulse" />
+              <span>craveXP Instamart</span>
+            </span>
+            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-[#d9f447]">
+              10 MIN
+            </span>
+          </Link>
+
+          <Link
+            href="/user/track"
+            onClick={() => setShowMobileSideMenu(false)}
             className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
               activeTab === 'live-order'
                 ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
@@ -2286,13 +2361,11 @@ export default function CustomerDashboard({
                 Live
               </span>
             )}
-          </button>
+          </Link>
 
-          <button
-            onClick={() => {
-              navigateToTab('orders')
-              setShowMobileSideMenu(false)
-            }}
+          <Link
+            href="/user/orders"
+            onClick={() => setShowMobileSideMenu(false)}
             className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
               activeTab === 'orders'
                 ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
@@ -2314,13 +2387,11 @@ export default function CustomerDashboard({
                 {pastOrders.length}
               </span>
             )}
-          </button>
+          </Link>
 
-          <button
-            onClick={() => {
-              navigateToTab('profile')
-              setShowMobileSideMenu(false)
-            }}
+          <Link
+            href="/user/profile"
+            onClick={() => setShowMobileSideMenu(false)}
             className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
               activeTab === 'profile'
                 ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
@@ -2337,13 +2408,11 @@ export default function CustomerDashboard({
               />
               Profile &amp; Account
             </span>
-          </button>
+          </Link>
 
-          <button
-            onClick={() => {
-              navigateToTab('help')
-              setShowMobileSideMenu(false)
-            }}
+          <Link
+            href="/user/help"
+            onClick={() => setShowMobileSideMenu(false)}
             className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition ${
               activeTab === 'help'
                 ? 'bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] shadow-xs'
@@ -2360,13 +2429,11 @@ export default function CustomerDashboard({
               />
               Help &amp; Support (-9625694673)
             </span>
-          </button>
+          </Link>
 
-          <button
-            onClick={() => {
-              setShowMobileSideMenu(false)
-              router.push('/user/cart')
-            }}
+          <Link
+            href="/user/cart"
+            onClick={() => setShowMobileSideMenu(false)}
             className="w-full flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold text-[#18201c] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] transition"
           >
             <span className="flex items-center gap-3">
@@ -2378,7 +2445,7 @@ export default function CustomerDashboard({
                 {totalCartItemCount} items
               </span>
             )}
-          </button>
+          </Link>
 
           <div className="my-3 border-t border-gray-100 dark:border-[#27342d]" />
           <p className="px-3 text-[10px] font-black uppercase tracking-wider text-gray-400">
@@ -2772,7 +2839,28 @@ export default function CustomerDashboard({
               </div>
 
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredRestaurants.length === 0 ? (
+                {isLoadingRestaurants ? (
+                  Array.from({ length: 6 }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-[28px] border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] p-3.5 space-y-3.5 shadow-xs animate-pulse"
+                    >
+                      <div className="aspect-[16/10] w-full rounded-[22px] bg-black/5 dark:bg-white/10" />
+                      <div className="space-y-2 px-1">
+                        <div className="flex items-center justify-between">
+                          <div className="h-5 w-40 rounded-md bg-black/5 dark:bg-white/10" />
+                          <div className="h-5 w-12 rounded-full bg-black/5 dark:bg-white/10" />
+                        </div>
+                        <div className="h-3.5 w-52 rounded-md bg-black/5 dark:bg-white/10" />
+                        <div className="flex items-center gap-3 pt-1">
+                          <div className="h-3 w-16 rounded-md bg-black/5 dark:bg-white/10" />
+                          <div className="h-3 w-20 rounded-md bg-black/5 dark:bg-white/10" />
+                          <div className="h-3 w-24 rounded-md bg-black/5 dark:bg-white/10" />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : filteredRestaurants.length === 0 ? (
                   <div className="col-span-full rounded-3xl border border-dashed border-gray-200 dark:border-[#27342d] bg-white/60 dark:bg-[#18201c]/60 p-12 text-center flex flex-col items-center justify-center">
                     <div className="size-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 mb-3">
                       <UtensilsCrossed className="size-6 text-gray-400" />
@@ -5252,8 +5340,8 @@ export default function CustomerDashboard({
         className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#121815]/95 border-t border-gray-200 dark:border-[#27342d] backdrop-blur-md lg:hidden px-2 py-1.5 shadow-lg pb-safe-nav"
       >
         <div className="flex items-center justify-around max-w-md mx-auto">
-          <button
-            onClick={() => navigateToTab('explore')}
+          <Link
+            href="/user/explore"
             className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
               activeTab === 'explore'
                 ? 'text-[#18201c] dark:text-white font-black'
@@ -5268,10 +5356,23 @@ export default function CustomerDashboard({
               }`}
             />
             <span className="text-[10px]">Explore</span>
-          </button>
+          </Link>
 
-          <button
-            onClick={() => navigateToTab('live-order')}
+          <Link
+            href="/user/cravexp"
+            className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition text-gray-500 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white font-bold"
+          >
+            <div className="relative">
+              <Zap className="size-5 text-[#86a018] dark:text-[#d9f447] fill-current" />
+              <span className="absolute -top-1 -right-2 text-[8px] font-black uppercase text-emerald-600 dark:text-emerald-400">
+                10m
+              </span>
+            </div>
+            <span className="text-[10px]">craveXP</span>
+          </Link>
+
+          <Link
+            href="/user/track"
             className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition relative ${
               activeTab === 'live-order'
                 ? 'text-[#18201c] dark:text-white font-black'
@@ -5291,10 +5392,10 @@ export default function CustomerDashboard({
               )}
             </div>
             <span className="text-[10px]">Track</span>
-          </button>
+          </Link>
 
-          <button
-            onClick={() => navigateToTab('orders')}
+          <Link
+            href="/user/orders"
             className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
               activeTab === 'orders'
                 ? 'text-[#18201c] dark:text-white font-black'
@@ -5309,10 +5410,10 @@ export default function CustomerDashboard({
               }`}
             />
             <span className="text-[10px]">Orders</span>
-          </button>
+          </Link>
 
-          <button
-            onClick={() => router.push('/user/cart')}
+          <Link
+            href="/user/cart"
             className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition relative text-gray-400 dark:text-gray-500 font-bold"
           >
             <div className="relative">
@@ -5324,10 +5425,10 @@ export default function CustomerDashboard({
               )}
             </div>
             <span className="text-[10px]">Cart</span>
-          </button>
+          </Link>
 
-          <button
-            onClick={() => navigateToTab('profile')}
+          <Link
+            href="/user/profile"
             className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
               activeTab === 'profile'
                 ? 'text-[#18201c] dark:text-white font-black'
@@ -5342,7 +5443,7 @@ export default function CustomerDashboard({
               }`}
             />
             <span className="text-[10px]">Profile</span>
-          </button>
+          </Link>
         </div>
       </nav>
     </div>

@@ -9,6 +9,7 @@ import {
   Bike,
   ChevronDown,
   Compass,
+  HelpCircle,
   Download,
   LayoutDashboard,
   LogOut,
@@ -195,7 +196,7 @@ export default function Navbar() {
   }, [showMobileMenu])
 
   const currentDashboardLink = isCustomer
-    ? '/user/dashboard'
+    ? '/user/explore'
     : normalizedRole === 'rider' || normalizedRole === 'driver'
       ? '/driver/dashboard'
       : normalizedRole === 'restaurant_vendor' || normalizedRole === 'vendor'
@@ -204,8 +205,8 @@ export default function Navbar() {
           ? '/vendor/crave-ep'
           : normalizedRole === 'admin'
             ? '/admin/dashboard'
-            : '/'
-  const logoTargetLink = user ? currentDashboardLink : '/'
+            : '/user/explore'
+  const logoTargetLink = user ? currentDashboardLink : '/user/explore'
 
   if (!mounted) {
     return (
@@ -214,12 +215,20 @@ export default function Navbar() {
           <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
             <div className="flex items-center gap-6">
               <Link href="/" className="flex items-center gap-2 group" suppressHydrationWarning>
-                <span className="font-black text-xl sm:text-2xl tracking-tighter text-[#18201c] dark:text-white">
+                <span className="font-bold text-xl sm:text-2xl tracking-tight text-[#18201c] dark:text-white">
                   crave<span className="text-[#86a018]">.</span>
                 </span>
               </Link>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
+              <Link
+                href="/user/cravexp"
+                className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 dark:bg-emerald-400/10 border border-emerald-500/25 px-2.5 py-1.5 sm:px-3 text-xs font-bold text-[#18201c] dark:text-[#d9f447]"
+              >
+                <Zap className="size-3.5 text-[#86a018] dark:text-[#d9f447] fill-current" />
+                <span className="font-extrabold tracking-tight">craveXP</span>
+                <span className="rounded-full bg-emerald-600/15 dark:bg-[#d9f447]/20 px-1.5 py-0.2 text-[9px] font-black uppercase text-emerald-700 dark:text-[#d9f447]">10m</span>
+              </Link>
               <div className="hidden items-center gap-2 sm:flex">
                 <Link
                   href="/login"
@@ -253,7 +262,7 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Link href={logoTargetLink} className="flex items-center gap-1.5 group shrink-0">
-              <span className="font-black text-xl sm:text-2xl tracking-tighter text-[#18201c] dark:text-white hover:opacity-90 transition">
+              <span className="font-bold text-xl sm:text-2xl tracking-tight text-[#18201c] dark:text-white hover:opacity-90 transition">
                 crave<span className="text-[#86a018]">.</span>
               </span>
             </Link>
@@ -268,14 +277,20 @@ export default function Navbar() {
                     <Link
                       href="/user/explore"
                       className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 ${
-                        pathname.includes('/user/explore') ||
+                        pathname === '/user/explore' ||
                         (pathname.includes('/user/dashboard') &&
                           !pathname.includes('/user/cravexp'))
                           ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-xs'
                           : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
                       }`}
                     >
-                      <Compass className="size-3.5 text-[#86a018] dark:text-[#d9f447]" />
+                      <Compass className={`size-3.5 ${
+                        pathname === '/user/explore' ||
+                        (pathname.includes('/user/dashboard') &&
+                          !pathname.includes('/user/cravexp'))
+                          ? 'text-[#86a018] dark:text-[#d9f447]'
+                          : 'text-gray-400'
+                      }`} />
                       <span>Explore</span>
                     </Link>
                     <Link
@@ -286,7 +301,11 @@ export default function Navbar() {
                           : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
                       }`}
                     >
-                      <Zap className="size-3.5 text-[#86a018] dark:text-[#d9f447]" />
+                      <Zap className={`size-3.5 ${
+                        pathname.includes('/user/cravexp')
+                          ? 'text-[#86a018] dark:text-[#d9f447] fill-current animate-pulse'
+                          : 'text-gray-400'
+                      }`} />
                       <span>craveXP</span>
                       <span className="text-[10px] font-extrabold uppercase text-emerald-600 dark:text-emerald-400">
                         10m
@@ -300,7 +319,11 @@ export default function Navbar() {
                           : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
                       }`}
                     >
-                      <Bike className="size-3.5 text-[#86a018] dark:text-[#d9f447]" />
+                      <Bike className={`size-3.5 ${
+                        pathname.includes('/user/track')
+                          ? 'text-[#86a018] dark:text-[#d9f447]'
+                          : 'text-gray-400'
+                      }`} />
                       <span>Track Drop</span>
                     </Link>
                     <Link
@@ -311,8 +334,42 @@ export default function Navbar() {
                           : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
                       }`}
                     >
-                      <ShoppingBag className="size-3.5 text-[#86a018] dark:text-[#d9f447]" />
+                      <ShoppingBag className={`size-3.5 ${
+                        pathname.includes('/user/orders')
+                          ? 'text-[#86a018] dark:text-[#d9f447]'
+                          : 'text-gray-400'
+                      }`} />
                       <span>Orders</span>
+                    </Link>
+                    <Link
+                      href="/user/profile"
+                      className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 ${
+                        pathname.includes('/user/profile')
+                          ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-xs'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
+                      }`}
+                    >
+                      <User className={`size-3.5 ${
+                        pathname.includes('/user/profile')
+                          ? 'text-[#86a018] dark:text-[#d9f447]'
+                          : 'text-gray-400'
+                      }`} />
+                      <span>Profile</span>
+                    </Link>
+                    <Link
+                      href="/user/help"
+                      className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 ${
+                        pathname.includes('/user/help')
+                          ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-xs'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
+                      }`}
+                    >
+                      <HelpCircle className={`size-3.5 ${
+                        pathname.includes('/user/help')
+                          ? 'text-[#86a018] dark:text-[#d9f447]'
+                          : 'text-gray-400'
+                      }`} />
+                      <span>Help</span>
                     </Link>
                   </>
                 ) : (
@@ -332,7 +389,35 @@ export default function Navbar() {
                   </Link>
                 )}
               </>
-            ) : null}
+            ) : (
+              <>
+                <Link
+                  href="/user/explore"
+                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 ${
+                    pathname.includes('/user/explore')
+                      ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-xs'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
+                  }`}
+                >
+                  <Compass className="size-3.5 text-[#86a018] dark:text-[#d9f447]" />
+                  <span>Explore Kitchens</span>
+                </Link>
+                <Link
+                  href="/user/cravexp"
+                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition shrink-0 ${
+                    pathname.includes('/cravexp')
+                      ? 'bg-white dark:bg-[#18201c] text-[#18201c] dark:text-[#d9f447] shadow-xs'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-[#18201c] dark:hover:text-white'
+                  }`}
+                >
+                  <Zap className="size-3.5 text-[#86a018] dark:text-[#d9f447] fill-current" />
+                  <span>craveXP Store</span>
+                  <span className="text-[10px] font-extrabold uppercase text-emerald-600 dark:text-emerald-400">
+                    10m
+                  </span>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Right side — auth & profile */}
@@ -384,6 +469,8 @@ export default function Navbar() {
                 </button>
               </>
             )}
+
+
 
             <div className="hidden sm:flex items-center">
               <ThemeToggle />
@@ -513,6 +600,14 @@ export default function Navbar() {
                           <User className="size-4 text-[#b5de28]" />
                           My Profile Settings
                         </Link>
+                        <Link
+                          href="/user/help"
+                          onClick={() => setShowUserDropdown(false)}
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d]"
+                        >
+                          <HelpCircle className="size-4 text-[#b5de28]" />
+                          Help &amp; Support
+                        </Link>
                       </>
                     ) : (
                       <>
@@ -626,7 +721,7 @@ export default function Navbar() {
               <UtensilsCrossed className="size-5 fill-current" />
             </span>
             <span className="text-xl font-bold text-[#18201c] dark:text-white">
-              crave<span className="text-[#869c18]">.</span>
+              crave<span className="text-[#86a018]">.</span>
             </span>
           </Link>
           <button
@@ -759,7 +854,7 @@ export default function Navbar() {
               </Link>
 
               <Link
-                href="/user/dashboard"
+                href="/user/cart"
                 onClick={() => setShowMobileMenu(false)}
                 className="flex items-center justify-between rounded-xl px-4 py-4 text-[#2d3732] dark:text-gray-200 hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
               >
@@ -805,11 +900,26 @@ export default function Navbar() {
           ) : (
             <>
               <Link
-                href="/"
+                href="/user/cravexp"
                 onClick={() => setShowMobileMenu(false)}
-                className="rounded-xl px-4 py-4 text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
+                className="flex items-center justify-between rounded-xl px-4 py-3.5 text-[#18201c] dark:text-white bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/25 hover:bg-emerald-500/20 min-h-[44px] font-bold"
               >
-                Explore
+                <span className="flex items-center gap-2.5">
+                  <Zap className="size-4.5 text-[#86a018] dark:text-[#d9f447] fill-current" />
+                  <span>craveXP Store</span>
+                </span>
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#86a018] text-white">
+                  10 MIN
+                </span>
+              </Link>
+
+              <Link
+                href="/user/explore"
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center gap-2.5 rounded-xl px-4 py-3.5 text-[#18201c] dark:text-white hover:bg-[#f3f6ee] dark:hover:bg-[#27342d] min-h-[44px]"
+              >
+                <Compass className="size-4.5 text-[#86a018] dark:text-[#d9f447]" />
+                <span>Explore Kitchens</span>
               </Link>
               {/* Language switcher for guests too */}
               <div className="px-1 py-1 flex flex-col gap-2">

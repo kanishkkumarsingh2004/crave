@@ -17,8 +17,8 @@ export default function CraveLogo({
   // 'auto'  => inherits currentColor with automatic light/dark mode support
   const craveColor = theme === 'light' ? '#ffffff' : theme === 'dark' ? '#18201c' : 'currentColor'
 
-  const xpColor = '#d9f447'
-  const dotColor = '#d9f447'
+  const xpColor = theme === 'light' ? '#d9f447' : '#86a018'
+  const dotColor = '#86a018'
 
   const sizeClasses = {
     sm: 'h-5 w-auto',
@@ -41,16 +41,15 @@ export default function CraveLogo({
       >
         <text
           x="0"
-          y="25"
-          fontFamily="var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-          fontWeight="900"
-          fontSize="30"
-          letterSpacing="-0.04em"
+          y="24"
+          fontFamily="var(--font-sans), 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          fontWeight="700"
+          fontSize="28"
+          letterSpacing="-0.035em"
           fill={craveColor}
         >
-          c
+          c<tspan fill={dotColor} dx="1">.</tspan>
         </text>
-        <rect x="17" y="18.5" width="5.5" height="5.5" rx="1.2" fill={dotColor} />
       </svg>
     )
   }
@@ -67,16 +66,16 @@ export default function CraveLogo({
       >
         <text
           x="0"
-          y="25"
-          fontFamily="var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-          fontWeight="900"
-          fontSize="30"
-          letterSpacing="-0.04em"
+          y="24"
+          fontFamily="var(--font-sans), 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          fontWeight="700"
+          fontSize="28"
+          letterSpacing="-0.035em"
         >
           <tspan fill={craveColor}>crave</tspan>
           <tspan fill={xpColor}>XP</tspan>
+          <tspan fill={dotColor} dx="1">.</tspan>
         </text>
-        <rect x="124" y="18.5" width="5.5" height="5.5" rx="1.2" fill={dotColor} />
       </svg>
     )
   }
@@ -93,16 +92,15 @@ export default function CraveLogo({
     >
       <text
         x="0"
-        y="25"
-        fontFamily="var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-        fontWeight="900"
-        fontSize="30"
-        letterSpacing="-0.04em"
+        y="24"
+        fontFamily="var(--font-sans), 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        fontWeight="700"
+        fontSize="28"
+        letterSpacing="-0.035em"
         fill={craveColor}
       >
-        crave
+        crave<tspan fill={dotColor} dx="1">.</tspan>
       </text>
-      <rect x="81" y="18.5" width="5.5" height="5.5" rx="1.2" fill={dotColor} />
     </svg>
   )
 }

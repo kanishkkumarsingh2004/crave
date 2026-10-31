@@ -4,6 +4,7 @@ import type { AddressItem } from '@/components/AddressModal'
 import Footer from '@/components/Footer'
 import Navbar from '@/components/Navbar'
 import { CraveButtonLoader } from '@/components/ui/ModernPreloader'
+import { CartSkeleton } from '@/components/ui/CraveSkeleton'
 import { useAuth } from '@/lib/auth-context'
 import { useCart } from '@/lib/cart-context'
 import { apiFetch } from '@/lib/client/api-fetch'
@@ -1006,23 +1007,14 @@ export default function CartPage() {
   useEffect(() => {
     if (!authLoading && !user) {
       toast('Please log in to access your cart', 'error')
-      router.replace('/login?logout=1')
+      router.replace('/login?redirect=/user/cart')
     }
   }, [user, authLoading, router, toast])
 
   const restaurantName = cart[0]?.restaurantName || 'Spice Garden'
 
   if (authLoading || !user) {
-    return (
-      <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="mx-auto size-10 border-3 border-[#d9f447]/30 border-t-[#121815] dark:border-t-[#d9f447] rounded-full animate-spin" />
-          <p className="mt-4 text-xs font-bold text-[#121815] dark:text-white">
-            Loading your cart...
-          </p>
-        </div>
-      </div>
-    )
+    return <CartSkeleton />
   }
 
   return (

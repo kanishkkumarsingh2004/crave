@@ -215,7 +215,7 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                   }`}
                 >
                   <span className="text-lg font-bold tracking-tight text-[#18201c] dark:text-white leading-none">
-                    crave<span className="text-[#86a018] dark:text-[#d9f447]">.</span>
+                    crave<span className="text-[#86a018]">.</span>
                   </span>
                   <span className="text-xs font-extrabold uppercase text-emerald-600 dark:text-emerald-400">
                     Driver

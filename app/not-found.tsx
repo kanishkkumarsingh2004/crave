@@ -17,8 +17,8 @@ export default function NotFound() {
       <div className="relative mx-auto flex min-h-screen max-w-[1200px] flex-col items-center justify-center px-5 py-16 text-center">
         <div className="mb-8 flex items-center justify-center gap-2">
           <UtensilsCrossed className="size-12 text-[#d9f447]" />
-          <span className="text-6xl font-black tracking-tight">
-            crave<span className="text-[#d9f447]">.</span>
+          <span className="text-6xl font-bold tracking-tight">
+            crave<span className="text-[#86a018]">.</span>
           </span>
         </div>
 

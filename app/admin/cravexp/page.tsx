@@ -92,6 +92,18 @@ export default function AdminCraveXPPage() {
   const [productForm, setProductForm] = useState(emptyProductForm)
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false)
+  const [isEditStoreModalOpen, setIsEditStoreModalOpen] = useState(false)
+  const [editingStore, setEditingStore] = useState<XPStore | null>(null)
+  const [editStoreForm, setEditStoreForm] = useState({
+    id: '',
+    name: '',
+    address: '',
+    phone: '',
+    latitude: 12.971599,
+    longitude: 77.594566,
+    delivery_minutes: 10,
+    is_open: true,
+  })
 
   const generatedSku = useMemo(
     () =>
@@ -151,7 +163,7 @@ export default function AdminCraveXPPage() {
   }, [loadData])
 
   useEffect(() => {
-    if (!isStoreModalOpen && !isProductModalOpen && !isBarcodeScannerOpen) return
+    if (!isStoreModalOpen && !isProductModalOpen && !isBarcodeScannerOpen && !isEditStoreModalOpen) return
     const previousOverflow = document.body.style.overflow
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || submitting) return
@@ -161,6 +173,9 @@ export default function AdminCraveXPPage() {
         setIsProductModalOpen(false)
         setEditingProductId(null)
         setProductForm(emptyProductForm)
+      } else if (isEditStoreModalOpen) {
+        setIsEditStoreModalOpen(false)
+        setEditingStore(null)
       } else {
         setIsStoreModalOpen(false)
       }
@@ -227,6 +242,53 @@ export default function AdminCraveXPPage() {
       await loadData()
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Unable to create XP store', 'error')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  function openEditStoreModal(store: XPStore) {
+    setEditingStore(store)
+    setEditStoreForm({
+      id: store.id,
+      name: store.name,
+      address: store.address || '',
+      phone: store.phone || '',
+      latitude: store.latitude ? Number(store.latitude) : 12.971599,
+      longitude: store.longitude ? Number(store.longitude) : 77.594566,
+      delivery_minutes: store.delivery_minutes || 10,
+      is_open: store.is_open,
+    })
+    setIsEditStoreModalOpen(true)
+  }
+
+  async function updateStore(event: FormEvent) {
+    event.preventDefault()
+    setSubmitting(true)
+    try {
+      const response = await fetch('/api/restaurants', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editStoreForm.id,
+          name: editStoreForm.name,
+          address: editStoreForm.address,
+          phone: editStoreForm.phone,
+          latitude: editStoreForm.latitude,
+          longitude: editStoreForm.longitude,
+          delivery_minutes: editStoreForm.delivery_minutes,
+          is_open: editStoreForm.is_open,
+        }),
+      })
+      const payload = await response.json()
+      if (!response.ok) throw new Error(payload.error || 'Unable to update store')
+
+      toast(`${editStoreForm.name} address and configuration updated successfully!`)
+      setIsEditStoreModalOpen(false)
+      setEditingStore(null)
+      await loadData()
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to update store', 'error')
     } finally {
       setSubmitting(false)
     }
@@ -498,6 +560,15 @@ export default function AdminCraveXPPage() {
                     className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-[11px] font-bold transition hover:bg-gray-50 dark:border-[#27342d] dark:hover:bg-white/5"
                   >
                     {store.is_open ? 'Take Offline' : 'Open Store'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openEditStoreModal(store)}
+                    className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-[11px] font-bold transition hover:bg-gray-50 dark:border-[#27342d] dark:hover:bg-white/5 text-gray-700 dark:text-gray-200"
+                    title="Change store address & location"
+                  >
+                    <Edit3 className="size-3.5 text-[#86a018] dark:text-[#d9f447]" />
+                    <span>Edit</span>
                   </button>
                   <button
                     type="button"
@@ -812,6 +883,153 @@ export default function AdminCraveXPPage() {
         onClose={() => setIsBarcodeScannerOpen(false)}
         onScan={handleBarcodeScanned}
       />
+
+      {isEditStoreModalOpen && editingStore && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-xp-store-title"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !submitting) setIsEditStoreModalOpen(false)
+          }}
+        >
+          <div className="w-full max-w-4xl overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl dark:border-[#27342d] dark:bg-[#18201c]">
+            <div className="flex items-start justify-between gap-4 border-b border-gray-100 bg-gray-50/80 px-5 py-4 dark:border-white/5 dark:bg-[#121815] sm:px-6">
+              <div className="flex items-start gap-3">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#d9f447] text-[#121815] shadow-sm">
+                  <Warehouse className="size-5" />
+                </span>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#6f8817] dark:text-[#d9f447]">
+                    Manage Fulfillment Location
+                  </span>
+                  <h3 id="edit-xp-store-title" className="mt-0.5 text-lg font-black">
+                    Edit XP Store Details &amp; Address
+                  </h3>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    Update physical warehouse address, GPS dispatch pin, and operating status.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditStoreModalOpen(false)}
+                disabled={submitting}
+                className="grid size-9 shrink-0 place-items-center rounded-xl border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-100 disabled:opacity-40 dark:border-[#27342d] dark:bg-[#18201c] dark:hover:bg-white/5"
+                aria-label="Close edit store dialog"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <form onSubmit={updateStore} className="max-h-[78vh] overflow-y-auto p-5 sm:p-6 space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-200">
+                  Store name
+                  <input
+                    type="text"
+                    required
+                    value={editStoreForm.name}
+                    onChange={(e) => setEditStoreForm((prev) => ({ ...prev, name: e.target.value }))}
+                    className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs font-semibold outline-none transition focus:border-[#86a018] dark:border-[#27342d] dark:bg-[#121815]"
+                  />
+                </label>
+
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-200">
+                  Dispatch phone
+                  <input
+                    type="tel"
+                    value={editStoreForm.phone}
+                    onChange={(e) => setEditStoreForm((prev) => ({ ...prev, phone: e.target.value }))}
+                    placeholder="+91 98765 43210"
+                    className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs font-semibold outline-none transition focus:border-[#86a018] dark:border-[#27342d] dark:bg-[#121815]"
+                  />
+                </label>
+
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 sm:col-span-2">
+                  Warehouse address
+                  <textarea
+                    rows={2}
+                    required
+                    value={editStoreForm.address}
+                    onChange={(e) => setEditStoreForm((prev) => ({ ...prev, address: e.target.value }))}
+                    placeholder="Enter full physical address, area, and pincode..."
+                    className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs font-medium outline-none transition focus:border-[#86a018] dark:border-[#27342d] dark:bg-[#121815]"
+                  />
+                </label>
+
+                <div className="sm:col-span-2 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-gray-700 dark:text-gray-200">
+                      Geographic Pin &amp; Map Coordinates
+                    </span>
+                    <span className="text-[11px] font-mono text-gray-400">
+                      {editStoreForm.latitude.toFixed(6)}, {editStoreForm.longitude.toFixed(6)}
+                    </span>
+                  </div>
+                  <div className="h-56 w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-[#27342d]">
+                    <LocationPickerMap
+                      initialLat={editStoreForm.latitude}
+                      initialLng={editStoreForm.longitude}
+                      onLocationSelect={(lat, lng, address) => {
+                        setEditStoreForm((prev) => ({
+                          ...prev,
+                          latitude: lat,
+                          longitude: lng,
+                          address: address || prev.address,
+                        }))
+                      }}
+                      className="size-full"
+                    />
+                  </div>
+                </div>
+
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-200">
+                  Target dispatch minutes
+                  <input
+                    type="number"
+                    min={5}
+                    max={60}
+                    value={editStoreForm.delivery_minutes}
+                    onChange={(e) => setEditStoreForm((prev) => ({ ...prev, delivery_minutes: Number(e.target.value) || 10 }))}
+                    className="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs font-semibold outline-none transition focus:border-[#86a018] dark:border-[#27342d] dark:bg-[#121815]"
+                  />
+                </label>
+
+                <label className="flex items-center gap-2 self-end rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 text-xs font-bold dark:border-[#27342d] dark:bg-[#121815]">
+                  <input
+                    type="checkbox"
+                    checked={editStoreForm.is_open}
+                    onChange={(e) => setEditStoreForm((prev) => ({ ...prev, is_open: e.target.checked }))}
+                    className="size-4 accent-[#86a018]"
+                  />
+                  <span>Store is currently open &amp; accepting drops</span>
+                </label>
+              </div>
+
+              <div className="mt-6 flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 dark:border-white/5 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsEditStoreModalOpen(false)}
+                  disabled={submitting}
+                  className="rounded-xl border border-gray-200 px-4 py-2.5 text-xs font-bold transition hover:bg-gray-50 disabled:opacity-40 dark:border-[#27342d] dark:hover:bg-white/5"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#18201c] px-5 py-2.5 text-xs font-black text-white transition hover:bg-black disabled:opacity-50 dark:bg-[#d9f447] dark:text-[#121815]"
+                >
+                  <CheckCircle2 className="size-4" />
+                  {submitting ? 'Updating...' : 'Save Store Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {isStoreModalOpen && (
         <div

@@ -5,8 +5,16 @@ import { useAuth } from '@/lib/auth-context'
 import { apiFetch } from '@/lib/client/api-fetch'
 import { useToast } from '@/lib/toast-context'
 import { useVendorOrderUpdates } from '@/lib/websocket'
+import dynamic from 'next/dynamic'
 import {
   AlertTriangle,
+  Building2,
+  MapPin,
+  Navigation,
+  Phone,
+  Save,
+  Sliders,
+  Store,
   ArrowLeft,
   ArrowRight,
   Award,
@@ -31,6 +39,8 @@ import Link from 'next/link'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { GroceryItem } from './CraveXPStore'
 
+const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap'), { ssr: false })
+
 interface IncomingGroceryOrder {
   id: string
   customerName: string
@@ -49,9 +59,14 @@ interface IncomingGroceryOrder {
 
 export default function CraveXPStoreConsole() {
   const { user, logout } = useAuth()
-  const [activeTab, setActiveTab] = useState<'orders' | 'inventory' | 'coldchain' | 'leaderboard'>(
-    'orders'
-  )
+  const [activeTab, setActiveTab] = useState<
+    'orders' | 'inventory' | 'coldchain' | 'leaderboard' | 'settings'
+  >('orders')
+  const [storePhone, setStorePhone] = useState('')
+  const [storeLat, setStoreLat] = useState(12.971599)
+  const [storeLng, setStoreLng] = useState(77.594566)
+  const [storeDeliveryMinutes, setStoreDeliveryMinutes] = useState(10)
+  const [isSavingSettings, setIsSavingSettings] = useState(false)
   const [orderFilter, setOrderFilter] = useState<'all' | 'new' | 'packing' | 'ready'>('all')
   const [storeOnline, setStoreOnline] = useState(false)
   const [restaurantId, setRestaurantId] = useState<string | null>(null)
@@ -140,6 +155,11 @@ export default function CraveXPStoreConsole() {
               vendorId = matched.id
               name = matched.name
               if (matched.address) addr = matched.address
+              if (matched.phone) setStorePhone(matched.phone)
+              if (matched.latitude) setStoreLat(Number(matched.latitude))
+              if (matched.longitude) setStoreLng(Number(matched.longitude))
+              if (matched.delivery_minutes) setStoreDeliveryMinutes(Number(matched.delivery_minutes))
+              if (typeof matched.is_open === 'boolean') setStoreOnline(matched.is_open)
             }
           }
         } catch (e) {}
@@ -147,7 +167,7 @@ export default function CraveXPStoreConsole() {
         setRestaurantId(vendorId)
         setRestaurantName(name)
         setRestaurantAddress(addr)
-        setStoreOnline(true)
+        if (storeOnline === undefined) setStoreOnline(true)
 
         const [ordersResponse, inventoryResponse] = await Promise.all([
           fetch(`/api/orders?vendorId=${encodeURIComponent(vendorId)}`, { cache: 'no-store' }),
@@ -241,7 +261,9 @@ export default function CraveXPStoreConsole() {
     }
 
     loadConsoleData()
-    return () => {
+
+
+  return () => {
       cancelled = true
     }
   }, [user?.id, user?.restaurantId, user?.restaurantName])
@@ -602,6 +624,35 @@ export default function CraveXPStoreConsole() {
     return `${m}:${s < 10 ? '0' : ''}${s}`
   }
 
+  const handleSaveStoreSettings = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!restaurantId) return
+    setIsSavingSettings(true)
+    try {
+      const res = await fetch('/api/restaurants', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: restaurantId,
+          name: restaurantName,
+          address: restaurantAddress,
+          phone: storePhone,
+          latitude: storeLat,
+          longitude: storeLng,
+          delivery_minutes: Number(storeDeliveryMinutes) || 10,
+          is_open: storeOnline,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to update store settings')
+      toast('Store address and configuration updated successfully!')
+    } catch (err: any) {
+      toast(err.message || 'Error updating settings', 'error')
+    } finally {
+      setIsSavingSettings(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#f8f9f7] text-[#18201c] pb-24 selection:bg-[#d9f447] selection:text-[#18201c]">
       {/* Top Console Command Header Bar (Clean Light Theme) */}
@@ -778,7 +829,18 @@ export default function CraveXPStoreConsole() {
               }`}
             >
               <Award className="size-4 text-amber-600" />
-              <span>Picker Staff Leaderboard</span>
+              <span>Staff Leaderboard</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`flex min-h-11 shrink-0 snap-start items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2.5 transition touch-manipulation sm:px-4 ${
+                activeTab === 'settings'
+                  ? 'bg-white text-[#18201c] shadow-sm'
+                  : 'text-[#627068] hover:text-[#18201c]'
+              }`}
+            >
+              <Sliders className="size-4 text-emerald-600" />
+              <span>Store Settings &amp; Address</span>
             </button>
           </div>
         </div>
@@ -1248,6 +1310,160 @@ export default function CraveXPStoreConsole() {
                 ))
               )}
             </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            TAB 5: STORE SETTINGS & ADDRESS CONFIGURATION
+           ========================================================================= */}
+        {activeTab === 'settings' && (
+          <div className="flex flex-col gap-6 max-w-4xl animate-in fade-in duration-200">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-[#d9f447] mb-1">
+                <Store className="size-3.5" />
+                <span>craveXP Dark Store Configuration</span>
+              </div>
+              <h2 className="text-xl font-black text-[#18201c] dark:text-white">
+                Store Settings &amp; Dispatch Address
+              </h2>
+              <p className="text-xs text-[#5c6861] dark:text-gray-400">
+                Update physical hub warehouse address, dispatch geocoordinates, contact numbers, and operating parameters.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveStoreSettings} className="space-y-6">
+              {/* Card 1: Warehouse Physical Address */}
+              <div className="rounded-3xl border border-[#e2e7dc] dark:border-white/10 bg-white dark:bg-[#18201c] p-6 sm:p-8 shadow-xs space-y-5">
+                <div className="flex items-center gap-3 border-b border-gray-100 dark:border-white/5 pb-4">
+                  <span className="grid size-10 place-items-center rounded-2xl bg-[#d9f447] text-[#121815] shadow-sm">
+                    <MapPin className="size-5" />
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#18201c] dark:text-white">
+                      Physical Warehouse &amp; Dispatch Address
+                    </h3>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                      Used by delivery riders and supply logistics to locate this fulfillment micro-hub.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <label className="block text-xs font-bold text-[#18201c] dark:text-white">
+                    Full Street Address
+                    <textarea
+                      rows={3}
+                      required
+                      value={restaurantAddress}
+                      onChange={(e) => setRestaurantAddress(e.target.value)}
+                      placeholder="e.g. Building 4, Sy. No. 124/1, Kanakapura Main Road, Harohalli, Bengaluru, Karnataka 562112"
+                      className="mt-1.5 w-full rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-3.5 text-xs font-medium outline-none transition focus:border-[#86a018] dark:text-white"
+                    />
+                  </label>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#18201c] dark:text-white">
+                        Interactive Map Geolocation Pin
+                      </span>
+                      <span className="text-[11px] font-mono text-gray-400">
+                        {storeLat.toFixed(6)}, {storeLng.toFixed(6)}
+                      </span>
+                    </div>
+                    <div className="h-64 w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10">
+                      <LocationPickerMap
+                        initialLat={storeLat}
+                        initialLng={storeLng}
+                        onLocationSelect={(lat, lng, address) => {
+                          setStoreLat(lat)
+                          setStoreLng(lng)
+                          if (address) setRestaurantAddress(address)
+                        }}
+                        className="size-full"
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-400">
+                      Click anywhere on the map to automatically pin the dark store coordinates and resolve the address.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Operating Details & Speed */}
+              <div className="rounded-3xl border border-[#e2e7dc] dark:border-white/10 bg-white dark:bg-[#18201c] p-6 sm:p-8 shadow-xs space-y-5">
+                <div className="flex items-center gap-3 border-b border-gray-100 dark:border-white/5 pb-4">
+                  <span className="grid size-10 place-items-center rounded-2xl bg-emerald-100 text-emerald-800 shadow-sm">
+                    <Building2 className="size-5" />
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#18201c] dark:text-white">
+                      Hub Operations &amp; Dispatch Timing
+                    </h3>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                      Store name, manager dispatch hotline, and customer delivery window.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block text-xs font-bold text-[#18201c] dark:text-white">
+                    Store Display Name
+                    <input
+                      type="text"
+                      required
+                      value={restaurantName}
+                      onChange={(e) => setRestaurantName(e.target.value)}
+                      className="mt-1.5 w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 px-3.5 py-2.5 text-xs font-semibold outline-none transition focus:border-[#86a018] dark:text-white"
+                    />
+                  </label>
+
+                  <label className="block text-xs font-bold text-[#18201c] dark:text-white">
+                    Dispatch Phone / Manager Hotline
+                    <input
+                      type="tel"
+                      value={storePhone}
+                      onChange={(e) => setStorePhone(e.target.value)}
+                      placeholder="+91 98765 43210"
+                      className="mt-1.5 w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 px-3.5 py-2.5 text-xs font-semibold outline-none transition focus:border-[#86a018] dark:text-white"
+                    />
+                  </label>
+
+                  <label className="block text-xs font-bold text-[#18201c] dark:text-white">
+                    Target Dispatch Speed (Minutes)
+                    <input
+                      type="number"
+                      min={5}
+                      max={45}
+                      value={storeDeliveryMinutes}
+                      onChange={(e) => setStoreDeliveryMinutes(Number(e.target.value) || 10)}
+                      className="mt-1.5 w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 px-3.5 py-2.5 text-xs font-semibold outline-none transition focus:border-[#86a018] dark:text-white"
+                    />
+                  </label>
+
+                  <label className="flex items-center gap-3 self-end rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 px-4 py-3 text-xs font-bold dark:text-white">
+                    <input
+                      type="checkbox"
+                      checked={storeOnline}
+                      onChange={(e) => setStoreOnline(e.target.checked)}
+                      className="size-4 accent-[#86a018]"
+                    />
+                    <span>Store is Open &amp; Accepting Orders</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Action Bar */}
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={isSavingSettings}
+                  className="flex items-center gap-2 rounded-2xl bg-[#18201c] dark:bg-[#d9f447] text-white dark:text-[#18201c] px-6 py-3.5 text-xs font-black shadow-lg hover:opacity-90 active:scale-98 transition cursor-pointer disabled:opacity-50"
+                >
+                  <Save className="size-4" />
+                  <span>{isSavingSettings ? 'Saving Settings...' : 'Save Store Address & Settings'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         )}
 

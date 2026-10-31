@@ -31,7 +31,7 @@ export default function UserSingleOrderPage() {
     if (isLoading) return
 
     if (!user) {
-      router.replace('/login?logout=1')
+      router.replace('/login?redirect=/user/orders/[orderId]')
     } else if (role !== 'user' && role !== 'customer') {
       router.replace(`/${getDashboardPath(role)}`)
     }

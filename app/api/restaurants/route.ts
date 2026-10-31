@@ -212,6 +212,13 @@ export async function PATCH(request: Request) {
     if (body.payout_vpa !== undefined) updateData.payout_vpa = body.payout_vpa
     if (body.fssai_license !== undefined) updateData.fssai_license = body.fssai_license
     if (body.address !== undefined) updateData.address = body.address
+    if (body.latitude !== undefined)
+      updateData.latitude = body.latitude !== null ? Number(body.latitude) : null
+    if (body.longitude !== undefined)
+      updateData.longitude = body.longitude !== null ? Number(body.longitude) : null
+    if (body.delivery_minutes !== undefined)
+      updateData.delivery_minutes =
+        body.delivery_minutes !== null ? Number(body.delivery_minutes) : null
     if (body.gstin !== undefined) updateData.gstin = body.gstin
     if (body.gst_status !== undefined) updateData.gst_status = body.gst_status
     if (body.supplier_state !== undefined) updateData.supplier_state = body.supplier_state
