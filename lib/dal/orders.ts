@@ -16,13 +16,39 @@ export async function findOrderById(id: string) {
   })
 }
 
-// In-memory short-lived cache to deduplicate simultaneous requests and cache owner mappings
+// In-memory short-lived cache to deduplicate simultaneous requests and cache owner mappings.
+// P1 FIX: Added size limits (max 100 entries each) and proper TTL-based eviction
+// to prevent memory leaks in long-running processes. Note: these caches are
+// per-process; in multi-server deployments use Redis for cluster-safe caching.
+const MAX_CACHE_SIZE = 100
 const restOwnerCache = new Map<string, { ids: string[]; expiresAt: number }>()
 const listOrdersCache = new Map<string, { data: any[]; expiresAt: number }>()
 
 export function invalidateOrdersCache() {
   listOrdersCache.clear()
   restOwnerCache.clear()
+}
+
+function setRestOwnerCacheEntry(
+  key: string,
+  value: { ids: string[]; expiresAt: number }
+): void {
+  restOwnerCache.set(key, value)
+  if (restOwnerCache.size > MAX_CACHE_SIZE) {
+    const oldest = restOwnerCache.keys().next().value
+    if (oldest) restOwnerCache.delete(oldest)
+  }
+}
+
+function setListOrdersCacheEntry(
+  key: string,
+  value: { data: any[]; expiresAt: number }
+): void {
+  listOrdersCache.set(key, value)
+  if (listOrdersCache.size > MAX_CACHE_SIZE) {
+    const oldest = listOrdersCache.keys().next().value
+    if (oldest) listOrdersCache.delete(oldest)
+  }
 }
 
 export async function listOrders(filters?: {
@@ -91,7 +117,7 @@ export async function listOrders(filters?: {
         })
         const found = owned.map((r) => r.id)
         restIds = Array.from(new Set([...restIds, ...found]))
-        restOwnerCache.set(ownerCacheKey, { ids: restIds, expiresAt: Date.now() + 60000 })
+        setRestOwnerCacheEntry(ownerCacheKey, { ids: restIds, expiresAt: Date.now() + 60000 })
       } catch (e) {
         // P1.3 FIX: Log the DB error rather than silently swallowing it.
         // We fall through with the original restaurantId so the orders
@@ -162,7 +188,7 @@ export async function listOrders(filters?: {
     take: Math.min(filters?.limit ?? 50, 100), // Max 100, default 50
   })
 
-  listOrdersCache.set(cacheKey, { data: orders, expiresAt: Date.now() + 3000 })
+  setListOrdersCacheEntry(cacheKey, { data: orders, expiresAt: Date.now() + 3000 })
   return orders
 }
 

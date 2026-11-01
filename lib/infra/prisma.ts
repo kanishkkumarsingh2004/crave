@@ -18,10 +18,9 @@ function createPrismaClient(): PrismaClientType {
     return null as any
   }
   if (!process.env.DATABASE_URL) {
-    console.error(
-      'DATABASE_URL is missing. Configure local PostgreSQL before using database features.'
+    throw new Error(
+      'FATAL: DATABASE_URL is missing. Configure local PostgreSQL before using database features.'
     )
-    return null as any
   }
   try {
     const dbUrl =
@@ -41,8 +40,11 @@ function createPrismaClient(): PrismaClientType {
     })
     return new PrismaClient({ adapter, log: [] })
   } catch (e) {
-    console.warn('Prisma client unavailable:', e)
-    return null as any
+    // P2 FIX: Throw instead of returning null so callers get a meaningful error
+    // rather than cryptic "Cannot read property X of null" messages.
+    throw new Error(
+      `Failed to initialize Prisma client: ${e instanceof Error ? e.message : String(e)}`
+    )
   }
 }
 

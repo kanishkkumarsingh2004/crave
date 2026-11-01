@@ -10,6 +10,12 @@ function getInternalSecret(): string | null {
   if (!secret && process.env.NODE_ENV === 'production') {
     throw new Error('FATAL: WS_INTERNAL_SECRET must be set in production environment.')
   }
+  if (!secret) {
+    // P2 FIX: Warn loudly in development so silent broadcast failures are visible
+    console.warn(
+      '[ws-server] WS_INTERNAL_SECRET not set. Broadcasts will silently fail in dev mode. Set this env var to enable WebSocket event propagation.'
+    )
+  }
   return secret || null
 }
 

@@ -190,7 +190,9 @@ export async function GET(request: Request) {
                 orderBy: { created_at: 'asc' },
                 take: 50,
               })
-            } catch (e) {}
+            } catch (e) {
+              console.error('[GET /api/orders] Failed to fetch missed outbox events:', e)
+            }
           }
         }
 
@@ -395,7 +397,9 @@ export async function POST(request: Request) {
               })
             }
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error('[POST /api/orders] Failed to check existing order by ID:', e)
+        }
       }
 
       // Check for existing order by idempotency key (only active in-progress orders):
@@ -416,7 +420,9 @@ export async function POST(request: Request) {
               message: 'Order already processed (idempotent)',
             })
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error('[POST /api/orders] Failed to check existing order by idempotency key:', e)
+        }
       }
 
       // Anti-replay deduplication by UTR reference:
@@ -445,7 +451,7 @@ export async function POST(request: Request) {
             })
           }
         } catch (e) {
-          // Silently continue if query fails
+          console.error('[POST /api/orders] Failed to check UTR deduplication:', e)
         }
       }
 
@@ -458,28 +464,10 @@ export async function POST(request: Request) {
           restaurant = null
         }
         if (!restaurant) {
-          if (process.env.NODE_ENV !== 'production') {
-            restaurant = {
-              id: restaurant_id || 'rest_spice_garden',
-              name: restaurant_name || 'Spice Garden',
-              cuisine: 'North Indian & Mughlai',
-              commercial_model: 'commission',
-              commission_rate: 15,
-              markup_rate: 0,
-              fixed_commission: 0,
-              fixed_markup: 0,
-              price_tax_mode: 'TAX_INCLUSIVE',
-              gst_status: 'REGISTERED',
-              supplier_state: 'Karnataka',
-              latitude: 12.686,
-              longitude: 77.475,
-            }
-          } else {
-            return NextResponse.json(
-              { error: `Restaurant not found: ${restaurant_id}` },
-              { status: 404 }
-            )
-          }
+          return NextResponse.json(
+            { error: `Restaurant not found: ${restaurant_id}` },
+            { status: 404 }
+          )
         }
       }
 
@@ -563,7 +551,9 @@ export async function POST(request: Request) {
             try {
               const item = await findMenuItemById(id)
               if (item) menuItemMap.set(id, item)
-            } catch (e) {}
+            } catch (e) {
+              console.error(`[POST /api/orders] Failed to fetch menu item ${id}:`, e)
+            }
           }
         }
       }
@@ -575,24 +565,11 @@ export async function POST(request: Request) {
       for (const { itemId, variantId, quantity } of validatedRaw) {
         let menuItem = menuItemMap.get(itemId)
         if (!menuItem) {
-          if (process.env.NODE_ENV !== 'production') {
-            const rawItemData = validatedRaw.find((r) => r.itemId === itemId)?.raw
-            menuItem = {
-              id: itemId,
-              name: rawItemData?.name || 'Artisan Dish',
-              price: Number(rawItemData?.price || 250),
-              restaurant_id: restaurant?.id || restaurant_id || 'rest_spice_garden',
-              in_stock: true,
-              stock_count: 99,
-              category: 'food',
-            }
-          } else {
             return NextResponse.json(
               { error: `${isCraveXPOrder ? 'XP product' : 'Menu item'} not found: ${itemId}` },
               { status: 404 }
             )
           }
-        }
 
         // Verify item belongs to the requested restaurant (or one of its menu)
         if (restaurant && menuItem.restaurant_id !== restaurant.id) {
@@ -846,20 +823,15 @@ export async function POST(request: Request) {
           !Number.isFinite(addrLat) ||
           !Number.isFinite(addrLng)
         ) {
-          const clientLat = body.delivery_latitude ?? body.latitude ?? null
-          const clientLng = body.delivery_longitude ?? body.longitude ?? null
-          if (
-            clientLat != null &&
-            clientLng != null &&
-            Number.isFinite(Number(clientLat)) &&
-            Number.isFinite(Number(clientLng))
-          ) {
-            addrLat = Number(clientLat)
-            addrLng = Number(clientLng)
-          } else {
-            addrLat = 12.9716
-            addrLng = 77.5946
-          }
+          // CR-012 FIX: Reject client-supplied coordinates. The delivery address must
+          // come from the DB with verified coordinates. If the saved address lacks
+          // coordinates, geocode it server-side rather than trusting client input.
+          return NextResponse.json(
+            {
+              error: 'Selected delivery address is missing coordinates. Please choose a different address or update your saved address.',
+            },
+            { status: 400 }
+          )
         }
 
         customerLat = addrLat
@@ -933,58 +905,26 @@ export async function POST(request: Request) {
           typeof body.customer_address === 'string' &&
           body.customer_address.trim()
         ) {
-          // If customer has no saved address record yet, but supplied address & coordinates in order payload
-          const clientLat = body.delivery_latitude ?? body.latitude ?? null
-          const clientLng = body.delivery_longitude ?? body.longitude ?? null
-          const parsedLat = clientLat != null ? Number(clientLat) : null
-          const parsedLng = clientLng != null ? Number(clientLng) : null
-
-          if (
-            parsedLat != null &&
-            parsedLng != null &&
-            Number.isFinite(parsedLat) &&
-            Number.isFinite(parsedLng)
-          ) {
-            customerLat = parsedLat
-            customerLng = parsedLng
-            canonicalAddressText = body.customer_address.trim()
-            customerAddressState = 'Karnataka'
-
-            // Auto-register in DB so subsequent orders have a saved address
-            try {
-              await prisma.customerAddress.create({
-                data: {
-                  id: crypto.randomUUID(),
-                  customer_id: finalCustomerId,
-                  label: 'Home',
-                  address: canonicalAddressText,
-                  latitude: new Prisma.Decimal(customerLat),
-                  longitude: new Prisma.Decimal(customerLng),
-                  is_default: true,
-                },
-              })
-            } catch {}
-          }
+          // CR-012 FIX: Customer has no saved address record yet. We must NOT trust
+          // client-supplied coordinates for pricing or delivery. Reject the order
+          // and require the customer to add a verified address first.
+          return NextResponse.json(
+            {
+              error: 'No saved delivery address found. Please add a delivery address from your account before ordering.',
+            },
+            { status: 400 }
+          )
         }
 
         if (customerLat === null || customerLng === null) {
-          const clientLat = body.delivery_latitude ?? body.latitude ?? null
-          const clientLng = body.delivery_longitude ?? body.longitude ?? null
-          if (
-            clientLat != null &&
-            clientLng != null &&
-            Number.isFinite(Number(clientLat)) &&
-            Number.isFinite(Number(clientLng))
-          ) {
-            customerLat = Number(clientLat)
-            customerLng = Number(clientLng)
-          } else {
-            customerLat = 12.9716
-            customerLng = 77.5946
-          }
-          if (!canonicalAddressText) {
-            canonicalAddressText = body.customer_address || 'Bengaluru, Karnataka'
-          }
+          // CR-012 FIX: No fallback to client coordinates or hardcoded city.
+          // The customer must have a saved address with verified coordinates.
+          return NextResponse.json(
+            {
+              error: 'Delivery address is missing coordinates. Please update your saved address or add a new one.',
+            },
+            { status: 400 }
+          )
         }
       }
 

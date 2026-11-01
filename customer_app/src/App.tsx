@@ -2753,6 +2753,9 @@ export default function App() {
   const touchEndX = useRef(0)
   const prevTabRef = useRef<Tab>(tab)
   const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // P1 FIX: Track active order IDs to avoid reconnecting the WebSocket on
+  // every status update (only reconnect when the set of active orders changes).
+  const activeIdsRef = useRef<string[]>([])
   const selectTab = (next: Tab, dir: 'next' | 'prev' | null = null) => {
     if (transitionTimer.current) clearTimeout(transitionTimer.current)
     prevTabRef.current = tab
@@ -2838,14 +2841,19 @@ export default function App() {
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     )
   }, [])
-  // Compute live road distance from the device to every listed restaurant.
+  // Compute live road distance from the device to visible restaurants.
+  // P1 FIX: Only compute distances for the first 6 restaurants shown on the home
+  // page to avoid N parallel OSRM requests. Results are cached in pricing.ts
+  // with a 5-minute TTL by rounded coordinates.
   useEffect(() => {
     let cancelled = false
     const compute = async () => {
       const next = new Map<string, number>()
       if (deviceLoc) {
+        // Only compute distances for restaurants visible on the home page (first 6)
+        const visibleRestaurants = restaurants.slice(0, 6)
         await Promise.all(
-          restaurants.map(async (r) => {
+          visibleRestaurants.map(async (r) => {
             const lat = Number(r.latitude)
             const lng = Number(r.longitude)
             if (Number.isFinite(lat) && Number.isFinite(lng)) {
@@ -2861,6 +2869,7 @@ export default function App() {
     return () => {
       cancelled = true
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deviceLoc, restaurants])
   // The cache is scoped by the account; a ref keeps it current without making
   // the loaders depend on the user object.
@@ -3004,16 +3013,28 @@ export default function App() {
   useEffect(() => {
     if (!user) return
     void Promise.all([loadRestaurants(), loadAddresses(), loadOrders()])
-    const timer = window.setInterval(() => void loadOrders(true), 15000)
+    // P1 FIX: Increase polling interval to 30s. The WebSocket handles real-time
+    // updates; polling is only a fallback for when the socket disconnects.
+    const timer = window.setInterval(() => void loadOrders(true), 30000)
     return () => clearInterval(timer)
   }, [user, loadRestaurants, loadAddresses, loadOrders])
   useEffect(() => {
     if (!user || getAuthToken() === COOKIE_SESSION_TOKEN) return
+    // P1 FIX: Only reconnect the WebSocket when the set of active order IDs
+    // actually changes (add/remove), not on every status update. Status
+    // updates are delivered via the WebSocket itself, so reconnecting on
+    // every status change creates a feedback loop.
     const activeIds = orders
       .filter((o) => !['delivered', 'completed', 'cancelled'].includes(o.status))
       .map((o) => o.id)
+    const sorted = [...activeIds].sort()
+    const prev = activeIdsRef.current
+    const changed = prev.length !== sorted.length || !prev.every((id, i) => id === sorted[i])
+    if (!changed) return
+    activeIdsRef.current = sorted
     return connectCustomerOrders(activeIds, () => void loadOrders(true))
-  }, [user, orders.map((o) => `${o.id}:${o.status}`).join('|'), loadOrders])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, orders, loadOrders])
   useEffect(() => {
     localStorage.setItem('crave_cart', JSON.stringify(cart))
   }, [cart])
@@ -3352,9 +3373,11 @@ export default function App() {
     )
   }
 
-  const visible = restaurants.filter((r) =>
-    `${r.name} ${r.cuisine || ''}`.toLowerCase().includes(search.toLowerCase())
-  )
+  const visible = useMemo(() => {
+    return restaurants.filter((r) =>
+      `${r.name} ${r.cuisine || ''}`.toLowerCase().includes(search.toLowerCase())
+    )
+  }, [restaurants, search])
   return (
     <div
       className="app-shell"
