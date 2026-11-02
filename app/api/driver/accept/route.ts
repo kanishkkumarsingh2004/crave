@@ -46,15 +46,51 @@ export async function POST(request: Request) {
       )
     }
 
-    // Distributed advisory lock for offer acceptance
-    await acquireDriverOfferLock(driverId, requestId).catch(() => true)
+    // CR-13: Require successful lock ownership before accepting.
+    //
+    // The previous code did:
+    //   await acquireDriverOfferLock(driverId, requestId).catch(() => true)
+    //
+    // This swallows every failure mode — lock acquired, lock already held by
+    // another order, and Redis operation failed — and treats all three as
+    // permission to continue. The PostgreSQL order claim below only prevents
+    // two drivers claiming the *same* order; it does NOT prevent one driver
+    // from accepting two *different* orders simultaneously.
+    //
+    // Fix: inspect the returned boolean. A false result means either the
+    // driver is already locked by another request or Redis is unavailable —
+    // in both cases the driver must NOT proceed.
+    const lockAcquired = await acquireDriverOfferLock(driverId, requestId)
+    if (!lockAcquired) {
+      return NextResponse.json(
+        {
+          error:
+            'Driver is already engaged with another dispatch offer or lock is unavailable. Please try again.',
+        },
+        { status: 409 }
+      )
+    }
 
     try {
       const currentLocation = getDriverLocation(driverId)
+
+      // CR-13: Verify the driver is currently available before claiming.
+      // A driver who is already ON_TRIP must not accept a second order,
+      // even if the lock was somehow acquired.
+      if (currentLocation && currentLocation.available === false) {
+        return NextResponse.json(
+          { error: 'Driver is currently on an active trip and cannot accept another order' },
+          { status: 409 }
+        )
+      }
+
       const lat = typeof body.lat === 'number' ? body.lat : currentLocation?.lat
       const lng = typeof body.lng === 'number' ? body.lng : currentLocation?.lng
 
-      // Authoritative PostgreSQL conditional atomic claim
+      // Authoritative PostgreSQL conditional atomic claim.
+      // CR-13: The claim enforces one active assignment per driver via a
+      // conditional update that checks no other order is currently assigned
+      // to this driver (see claimOrderForDriverAtomic in lib/dal/orders.ts).
       const claimResult = await claimOrderForDriverAtomic({
         orderId: requestId,
         driverId,

@@ -52,20 +52,31 @@ export interface SplitOrderParams {
 
 /**
  * Read the active transfer-release condition from the canonical PaymentConfig
- * (the Order model has no such field). Falls back to DELIVERY_COMPLETE.
+ * (the Order model has no such field). Falls back to DELIVERY_COMPLETE only
+ * when the database has been successfully queried and no active configuration
+ * exists.
+ *
+ * CR-16: A database error must NOT silently fall back to DELIVERY_COMPLETE.
+ * If the platform is configured for ADMIN_APPROVAL and the config query
+ * temporarily fails, falling back to automatic settlement is the opposite
+ * of what a financial release-control system should do. Fail closed: throw
+ * so the caller surfaces an error and the settlement is held until the
+ * configuration can be read.
  */
 async function getTransferReleaseCondition(): Promise<'DELIVERY_COMPLETE' | 'ADMIN_APPROVAL'> {
-  try {
-    const cfg = await prisma.paymentConfig.findFirst({
-      where: { is_active: true },
-      select: { razorpay_transfer_release: true },
-    })
-    return cfg?.razorpay_transfer_release === 'ADMIN_APPROVAL'
-      ? 'ADMIN_APPROVAL'
-      : 'DELIVERY_COMPLETE'
-  } catch {
-    return 'DELIVERY_COMPLETE'
-  }
+  const cfg = await prisma.paymentConfig.findFirst({
+    where: { is_active: true },
+    select: { razorpay_transfer_release: true },
+  })
+
+  // CR-16: Only use the default when the DB query succeeded and no active
+  // configuration exists. A missing config means "no release condition has
+  // been explicitly set" — defaulting to the more restrictive manual review
+  // would be safer, but DELIVERY_COMPLETE is the documented default for a
+  // fresh install. The key invariant: this branch is unreachable on DB error.
+  return cfg?.razorpay_transfer_release === 'ADMIN_APPROVAL'
+    ? 'ADMIN_APPROVAL'
+    : 'DELIVERY_COMPLETE'
 }
 
 /**
@@ -327,17 +338,14 @@ export async function createRouteSplits(params: SplitOrderParams) {
     let batchResp: any
 
     try {
-      batchResp = await client.payments.transfer(
-        razorpayPaymentId,
-        {
-          transfers: pending.map(({ alloc, linked }) => ({
-            account: linked.razorpay_account_id,
-            amount: alloc.amountPaise,
-            currency: 'INR',
-            notes: { crave_order_id: orderId, recipient_type: alloc.type },
-          })),
-        }
-      )
+      batchResp = await client.payments.transfer(razorpayPaymentId, {
+        transfers: pending.map(({ alloc, linked }) => ({
+          account: linked.razorpay_account_id,
+          amount: alloc.amountPaise,
+          currency: 'INR',
+          notes: { crave_order_id: orderId, recipient_type: alloc.type },
+        })),
+      })
     } catch (err: any) {
       // CR-03-A: A caught error does NOT prove Razorpay rejected the transfers.
       // Timeouts and network failures frequently occur *after* the provider has
@@ -375,7 +383,9 @@ export async function createRouteSplits(params: SplitOrderParams) {
       const match = batchItems.find(
         (b: any) =>
           b.recipient === alloc.recipientId ||
-          (b.notes?.crave_order_id === orderId && b.notes?.recipient_type === alloc.type && b.amount === alloc.amountPaise)
+          (b.notes?.crave_order_id === orderId &&
+            b.notes?.recipient_type === alloc.type &&
+            b.amount === alloc.amountPaise)
       )
 
       if (!match) {
@@ -491,6 +501,18 @@ export async function handleRouteTransferWebhook(event: any) {
  * attached to a specific captured payment. Each stale row carries its
  * razorpay_payment_id, so we look up transfers attached to that specific
  * payment rather than scanning the merchant's transfer history.
+ *
+ * CR-15: A match requires ALL of:
+ *   - amount matches
+ *   - recipient (linked account ID) matches the expected linked account
+ *   - notes.crave_order_id matches the order reference
+ *   - notes.recipient_type matches the recipient type (RESTAURANT | DRIVER)
+ *
+ * A missing result is NOT definitive evidence that a transfer was never
+ * processed — the listing may be paginated or the provider may not have
+ * returned the record in this batch. Ambiguous outcomes are kept in
+ * reconciliation until conclusively resolved; they are never marked
+ * 'failed' solely because a limited listing returned no match.
  */
 export async function reconcileStaleTransfers() {
   const staleCutoff = new Date(Date.now() - 30 * 60 * 1000) // 30 min
@@ -512,26 +534,45 @@ export async function reconcileStaleTransfers() {
   for (const t of stale) {
     if (!t.razorpay_payment_id) {
       // CR-11: Cannot reconcile a payment-linked transfer without its payment ID.
+      // CR-15: Do NOT mark as failed — an ambiguous outcome must stay in
+      // reconciliation. Marking failed here would authorize a retry that
+      // could double-pay. Keep the row in 'unknown' so the next run can try
+      // again once the payment ID is available.
       await prisma.razorpayTransfer.update({
         where: { id: t.id },
         data: {
-          status: 'failed',
-          failure_reason: 'Missing razorpay_payment_id — cannot query payment-linked transfers',
+          status: 'unknown',
+          failure_reason:
+            'Missing razorpay_payment_id — cannot query payment-linked transfers; remaining in reconciliation',
           updated_at: new Date(),
         },
       })
-      results.push({ transferId: t.id, reconciled: 'missing_payment_id' })
+      results.push({ transferId: t.id, reconciled: 'missing_payment_id_kept_unknown' })
       continue
     }
+
+    // CR-15: Resolve the expected linked account for this recipient so the
+    // match can verify the provider transfer belongs to the correct account.
+    const linked = await prisma.razorpayLinkedAccount.findFirst({
+      where: { entity_type: t.recipient_type, entity_id: t.recipient_id },
+      select: { razorpay_account_id: true },
+    })
 
     try {
       // CR-11: Query payment-linked transfers for this specific payment.
       const transfers: any = await client.payments.fetchTransfer(t.razorpay_payment_id)
+      const items: any[] = transfers.items ?? []
 
-      const match = transfers.items?.find(
+      // CR-15: A match requires amount, recipient account, order reference,
+      // AND recipient type. Matching on order ID + amount alone is insufficient:
+      // two different orders could share an amount, and the recipient account
+      // is the authoritative destination.
+      const match = items.find(
         (item: any) =>
+          Number(item.amount) === t.amount_paise &&
+          item.recipient === linked?.razorpay_account_id &&
           item.notes?.crave_order_id === t.order_id &&
-          item.amount === t.amount_paise
+          item.notes?.recipient_type === t.recipient_type
       )
 
       if (match) {
@@ -552,19 +593,43 @@ export async function reconcileStaleTransfers() {
         })
         results.push({ transferId: t.id, reconciled: match.status, providerTransferId: match.id })
       } else {
-        // Provider has no record — the transfer was never created on its side.
-        // Safe to mark failed and allow a retry on the next settlement attempt.
+        // CR-15: A missing result is NOT definitive evidence that a transfer
+        // was never processed. The listing may be paginated (the provider
+        // returns `count` alongside `items`) or the record may not yet be
+        // present. Do NOT mark as failed — that would authorize a retry that
+        // could double-pay. Keep the row in 'unknown' so the next run can try
+        // again with a fresh listing.
+        const totalCount = Number(transfers.count ?? items.length)
         await prisma.razorpayTransfer.update({
           where: { id: t.id },
           data: {
-            status: 'failed',
-            failure_reason: 'Not found at provider during reconciliation — safe to retry',
+            status: 'unknown',
+            failure_reason:
+              `No matching transfer in provider listing (count=${totalCount}) for ` +
+              `payment=${t.razorpay_payment_id} order=${t.order_id} ` +
+              `recipient=${linked?.razorpay_account_id ?? 'unknown'} amount=${t.amount_paise}; ` +
+              `remaining in reconciliation`,
             updated_at: new Date(),
           },
         })
-        results.push({ transferId: t.id, reconciled: 'not_found_marked_failed' })
+        results.push({
+          transferId: t.id,
+          reconciled: 'not_found_kept_unknown',
+          providerCount: totalCount,
+        })
       }
     } catch (err: any) {
+      // CR-15: A provider error during reconciliation is ambiguous. Keep the
+      // row in 'unknown' rather than marking it failed — a failed mark would
+      // authorize a retry that could double-pay.
+      await prisma.razorpayTransfer.update({
+        where: { id: t.id },
+        data: {
+          status: 'unknown',
+          failure_reason: `Provider reconciliation error: ${err?.message ?? 'unknown error'}; remaining in reconciliation`,
+          updated_at: new Date(),
+        },
+      })
       results.push({ transferId: t.id, error: err?.message })
     }
   }

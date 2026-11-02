@@ -303,9 +303,44 @@ export async function claimOrderForDriverAtomic(params: {
         }
       }
 
-      // If already claimed by this exact driver (idempotent re-acceptance)
+      // If already claimed by this exact driver (idempotent re-acceptance) —
+      // must be checked BEFORE the one-active-assignment guard below, otherwise
+      // a driver re-accepting their own order would be incorrectly rejected.
       if (existing.rider_id === driverId) {
         return { success: true, order: existing, conflict: false }
+      }
+
+      // CR-13: Enforce one active assignment per driver at the database level.
+      // The PostgreSQL order claim only prevents two drivers claiming the same
+      // order. It does NOT, by itself, prevent one driver from accepting two
+      // different orders simultaneously. Check whether this driver already has
+      // an active assignment (excluding the current order) before allowing the
+      // claim. The idempotent case above is already handled, so any active
+      // order found here is a *different* order.
+      const driverActiveOrder = await tx.order.findFirst({
+        where: {
+          rider_id: driverId,
+          status: {
+            in: [
+              'sent_to_vendor',
+              'preparing',
+              'packing',
+              'ready_for_pickup',
+              'rider_assigned',
+              'out_for_delivery',
+            ],
+          },
+          id: { not: orderId },
+        },
+        select: { id: true, status: true },
+      })
+
+      if (driverActiveOrder) {
+        return {
+          success: false,
+          conflict: true,
+          error: `Driver already has an active order "${driverActiveOrder.id}" (status: ${driverActiveOrder.status}). One active assignment per driver is enforced.`,
+        }
       }
 
       // Verify eligible status for assignment

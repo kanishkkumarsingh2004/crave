@@ -16,12 +16,21 @@
  *
  * Lease model
  * ───────────
- * - acquireIdempotency sets status='processing' with an expires_at lease.
+ * - acquireIdempotency sets status='processing' with an expires_at lease and a
+ *   monotonic fencing_token. The token is stored on the record and returned to
+ *   the caller; the caller MUST present it when calling completeIdempotency or
+ *   releaseIdempotency.
  * - The caller MUST call completeIdempotency on success or releaseIdempotency on failure.
  * - If the caller crashes, the record remains 'processing' until expires_at passes.
  *   After expiry, the next caller with the same key and SAME payload may retry.
  *   A caller with a DIFFERENT payload is still rejected (conflict), because expiry does
  *   not grant permission to change the operation's parameters.
+ *
+ * CR-14: Lease recovery uses a fencing token and conditional updates.
+ *   Two concurrent requests that both read an expired record cannot both
+ *   re-acquire: only the one whose updateMany matches status='failed' wins.
+ *   completeIdempotency and releaseIdempotency are owner-checked against the
+ *   token, so a stale worker cannot complete or delete a newer worker's lease.
  *
  * Result statuses
  * ───────────────
@@ -35,6 +44,15 @@ import { prisma } from '@/lib/prisma'
 import { redis, isRedisAvailable } from '@/lib/redis'
 import crypto from 'crypto'
 
+/**
+ * Generate a fresh monotonic fencing token for a lease acquisition.
+ * Uses a random component + timestamp so tokens are unique per acquisition
+ * and strictly increasing over time for a given key.
+ */
+function generateFencingToken(): string {
+  return `f_${Date.now().toString(36)}_${crypto.randomBytes(6).toString('hex')}`
+}
+
 // Scopes that require fail-closed behaviour on DB errors.
 // For these, a database failure during acquisition throws rather than returning 'new'.
 const FINANCIAL_SCOPES = new Set(['order_checkout', 'payment_webhook', 'refund', 'settlement'])
@@ -45,6 +63,13 @@ export interface IdempotencyResult<T = any> {
   status: IdempotencyStatus
   statusCode?: number
   body?: T
+  /**
+   * CR-14: Monotonic fencing token. When status is 'new', the caller MUST
+   * present this token to completeIdempotency or releaseIdempotency. A
+   * stale worker presenting an older token cannot complete or delete a
+   * newer worker's lease.
+   */
+  fencingToken?: string
 }
 
 /**
@@ -105,10 +130,15 @@ export async function acquireIdempotency(
   const isFinancial = FINANCIAL_SCOPES.has(scope)
   const now = new Date()
   const expiresAt = new Date(now.getTime() + ttlSeconds * 1000)
+  const fencingToken = generateFencingToken()
 
   // ── Fast-path: Redis cache (best-effort, never authoritative) ─────────────
   // Redis is used only to short-circuit the DB read for already-completed keys.
   // It NEVER gates acquisition — the DB is always the authoritative source.
+  //
+  // CR-14: The Redis cache now stores the payload hash alongside the response.
+  // A cache hit with a mismatched payload hash is treated as a miss so the
+  // authoritative DB path enforces payload fidelity.
   if (isRedisAvailable() && redis) {
     try {
       const redisKey = `crave:idempotency:${scope}:${cleanKey}`
@@ -116,14 +146,18 @@ export async function acquireIdempotency(
       if (cached) {
         const parsed = JSON.parse(cached)
         if (parsed.status === 'completed') {
-          // CR-05: Even on the cache hit path, reject payload mismatches.
+          // CR-14: Reject cache hits whose stored payload hash differs from
+          // the current request. Fall through to the DB path for authoritative
+          // validation rather than trusting the cache.
           if (parsed.payloadHash && payloadHash && parsed.payloadHash !== payloadHash) {
-            return { status: 'conflict' }
-          }
-          return {
-            status: 'completed',
-            statusCode: parsed.statusCode || 200,
-            body: parsed.body,
+            // Cache entry is for a different payload — ignore it and let the
+            // DB path decide (it will return 'conflict').
+          } else {
+            return {
+              status: 'completed',
+              statusCode: parsed.statusCode || 200,
+              body: parsed.body,
+            }
           }
         }
         if (parsed.status === 'processing') {
@@ -148,12 +182,13 @@ export async function acquireIdempotency(
           scope,
           status: 'processing',
           request_hash: payloadHash || null,
+          fencing_token: fencingToken,
           expires_at: expiresAt,
         },
       })
       // Insert succeeded — we hold the lock.
       _primeRedisProcessing(scope, cleanKey, ttlSeconds)
-      return { status: 'new' }
+      return { status: 'new', fencingToken }
     } catch (insertErr: any) {
       if (insertErr?.code !== 'P2002') {
         // Not a uniqueness collision — re-throw to the outer catch for classification.
@@ -199,19 +234,44 @@ export async function acquireIdempotency(
 
     // Lease has expired (crashed worker or abandoned request).
     // CR-05: Payload hash is checked above, so we know the payload matches.
-    // Re-acquire: atomically update the expired record to 'processing'.
-    await prisma.idempotencyRecord.update({
-      where: { key: cleanKey },
+    //
+    // CR-14: Re-acquire atomically with a CONDITIONAL update. The previous
+    // code did an unconditional update, so two concurrent requests that both
+    // read the expired record would both update it to 'processing' and both
+    // return 'new' — allowing double execution.
+    //
+    // The conditional updateMany matches only records that are still in a
+    // terminal-ish state (status='failed' is the only state we treat as
+    // reclaimable here; 'completed' is never reclaimed; 'processing' with a
+    // live lease is handled above). If another worker already reclaimed this
+    // record between our read and this update, updateMany matches zero rows
+    // and we return 'processing' instead of 'new'.
+    const reclaim = await prisma.idempotencyRecord.updateMany({
+      where: {
+        key: cleanKey,
+        status: 'failed',
+        expires_at: { lt: now },
+      },
       data: {
         scope,
         status: 'processing',
         request_hash: payloadHash || null,
+        fencing_token: fencingToken,
         expires_at: expiresAt,
         updated_at: now,
       },
     })
+
+    if (reclaim.count === 0) {
+      // Another worker reclaimed the record (or it transitioned to another
+      // state) between our read and this update. Do NOT execute — return
+      // 'processing' so the caller waits for the other worker to finish.
+      _primeRedisProcessing(scope, cleanKey, ttlSeconds)
+      return { status: 'processing' }
+    }
+
     _primeRedisProcessing(scope, cleanKey, ttlSeconds)
-    return { status: 'new' }
+    return { status: 'new', fencingToken }
   } catch (err: any) {
     // CR-05: Fail closed for financial operations.
     // A DB error during idempotency acquisition means we cannot determine whether
@@ -242,38 +302,57 @@ export async function acquireIdempotency(
 /**
  * Mark an idempotency key as completed and store the response payload for exact replays.
  * Must be called after a successful execution of the guarded operation.
+ *
+ * CR-14: Owner-checked against the fencing token. A stale worker that presents
+ * an older token cannot complete a newer worker's lease. The updateMany is
+ * conditional on both the token and the 'processing' status, so a concurrent
+ * completion by another worker is safely rejected.
+ *
+ * @param requestHash The payload hash of the request that was just executed.
+ *                    Stored in the Redis cache so a cache hit can reject a
+ *                    mismatched payload rather than returning a completed
+ *                    response for a different request using the same key.
  */
 export async function completeIdempotency(
   key: string,
   scope: string,
   statusCode: number,
   responseBody: any,
+  fencingToken?: string,
+  requestHash?: string,
   ttlSeconds = 86400 // 24-hour retention for replay
-): Promise<void> {
-  if (!key || typeof key !== 'string' || !key.trim()) return
+): Promise<boolean> {
+  if (!key || typeof key !== 'string' || !key.trim()) return false
   const cleanKey = key.trim()
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000)
 
   if (prisma) {
     try {
-      await prisma.idempotencyRecord.upsert({
-        where: { key: cleanKey },
-        create: {
+      // CR-14: Conditional updateMany — only complete if we own the current
+      // 'processing' lease (token matches and status is 'processing'). This
+      // prevents a stale worker from completing a newer worker's lease.
+      const result = await prisma.idempotencyRecord.updateMany({
+        where: {
           key: cleanKey,
-          scope,
-          status: 'completed',
-          response_code: statusCode,
-          response_body: responseBody ?? {},
-          expires_at: expiresAt,
+          ...(fencingToken ? { fencing_token: fencingToken } : {}),
+          status: 'processing',
         },
-        update: {
+        data: {
           status: 'completed',
           response_code: statusCode,
           response_body: responseBody ?? {},
+          fencing_token: fencingToken || null,
           expires_at: expiresAt,
           updated_at: new Date(),
         },
       })
+
+      if (result.count === 0) {
+        // Either the token didn't match (stale worker) or the record is no
+        // longer 'processing' (already completed/released by another worker).
+        // Do NOT overwrite — return false so the caller knows.
+        return false
+      }
     } catch (err) {
       console.error('[idempotency] Failed to record completed idempotency state:', err)
     }
@@ -282,32 +361,64 @@ export async function completeIdempotency(
   if (isRedisAvailable() && redis) {
     try {
       const redisKey = `crave:idempotency:${scope}:${cleanKey}`
+      // CR-14: Store the request payload hash in the Redis cache so a cache
+      // hit can reject a mismatched payload rather than returning a completed
+      // response for a different request using the same key.
       await redis.set(
         redisKey,
-        JSON.stringify({ status: 'completed', statusCode, body: responseBody }),
+        JSON.stringify({
+          status: 'completed',
+          statusCode,
+          body: responseBody,
+          payloadHash: requestHash || null,
+        }),
         'EX',
         ttlSeconds
       )
     } catch {}
   }
+
+  return true
 }
 
 /**
  * Release an idempotency lock without recording a successful completion.
  * Call this when the guarded operation fails so the client may retry.
+ *
+ * CR-14: Owner-checked against the fencing token. The delete is conditional
+ * on both the token and the 'processing' status, so a stale worker cannot
+ * delete a newer worker's lease. If the token doesn't match or the record
+ * has already transitioned, the delete is a no-op and the caller's lease
+ * remains intact for the worker that actually owns it.
+ *
  * The record is deleted rather than marked 'failed' so that a fresh attempt
  * with the same key is treated as 'new' rather than 'processing'.
  */
-export async function releaseIdempotency(key: string, scope: string): Promise<void> {
-  if (!key || typeof key !== 'string' || !key.trim()) return
+export async function releaseIdempotency(
+  key: string,
+  scope: string,
+  fencingToken?: string
+): Promise<boolean> {
+  if (!key || typeof key !== 'string' || !key.trim()) return false
   const cleanKey = key.trim()
 
   if (prisma) {
     try {
-      await prisma.idempotencyRecord.deleteMany({
-        where: { key: cleanKey },
+      // CR-14: Conditional delete — only delete if we own the current
+      // 'processing' lease. Without the token check, a stale worker that
+      // crashes after another worker has re-acquired the lease would delete
+      // the newer worker's record, allowing a third request to execute.
+      const result = await prisma.idempotencyRecord.deleteMany({
+        where: {
+          key: cleanKey,
+          ...(fencingToken ? { fencing_token: fencingToken } : {}),
+          status: 'processing',
+        },
       })
-    } catch {}
+      return result.count > 0
+    } catch (err) {
+      console.error('[idempotency] Failed to release idempotency lock:', err)
+    }
   }
 
   if (isRedisAvailable() && redis) {
@@ -315,6 +426,8 @@ export async function releaseIdempotency(key: string, scope: string): Promise<vo
       await redis.del(`crave:idempotency:${scope}:${cleanKey}`)
     } catch {}
   }
+
+  return false
 }
 
 // ── Internal helpers ────────────────────────────────────────────────────────

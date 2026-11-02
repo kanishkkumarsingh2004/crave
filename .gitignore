@@ -20,6 +20,12 @@ node_modules
 *.tsbuildinfo
 .vscode
 
+# Android signing keys — never commit the keystore
+crave-release.keystore
+*.keystore
+*.jks
+*.p12
+
 # Neon
 .neon
 .neon/

@@ -1,4 +1,3 @@
-import { acquireDriverOfferLock } from '@/lib/dispatch/atomic-lock'
 import { findGeofencedCandidateDrivers } from '@/lib/dispatch/h3-dispatch'
 import { verifyToken } from '@/lib/jwt'
 import { getTestUser, isTestRequest, MOCK_TEST_VENDOR } from '@/lib/test-auth'
@@ -53,13 +52,17 @@ export async function POST(request: Request) {
 
     const requestId = `dsp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
 
-    // 1. Perform H3 Geofenced Candidate Selection
+    // 1. Perform H3 Geofenced Candidate Selection.
+    //
+    // CR-12: H3 owns lock acquisition, so pass offerTtlSeconds through so the
+    // acquired lock TTL matches the offerExpiresAt reported below.
     const searchResult = await findGeofencedCandidateDrivers({
       requestId,
       pickupLat,
       pickupLng,
       requiredVehicleType: vehicleType,
       minCandidatesRequired: batchSize,
+      offerTtlSeconds,
     })
 
     if (searchResult.eligibleCandidates.length === 0) {
@@ -74,23 +77,32 @@ export async function POST(request: Request) {
       })
     }
 
-    // 2. Alert Top N candidates with Atomic Lock
+    // 2. Alert Top N candidates.
+    //
+    // CR-12: The H3 candidate search (findGeofencedCandidateDrivers) already
+    // atomically acquired the driver offer lock for every candidate it
+    // returned. Re-acquiring here with a different TTL fails in production:
+    // Redis SET NX rejects the second acquisition because the key already
+    // exists, so alertedCandidates is always empty even though H3 found
+    // eligible drivers.
+    //
+    // The in-memory dev fallback masks this: acquireDriverOfferLock returns
+    // true when existingLock.requestId === requestId (atomic-lock.ts:58-60),
+    // so the same code path succeeds in dev and fails in prod.
+    //
+    // Fix: H3 owns lock acquisition. The API route consumes the already-locked
+    // results and only records the offer expiry — it does NOT re-acquire.
     const alertedCandidates = []
     const topCandidates = searchResult.eligibleCandidates.slice(0, batchSize)
 
     for (const candidate of topCandidates) {
-      const locked = await acquireDriverOfferLock(
-        candidate.driverId,
-        requestId,
-        offerTtlSeconds * 1000
-      )
-      if (locked) {
-        alertedCandidates.push({
-          ...candidate,
-          offerLocked: true,
-          offerExpiresAt: Date.now() + offerTtlSeconds * 1000,
-        })
-      }
+      // The lock was acquired by H3 with the default TTL. Record the offer
+      // expiry for the response payload; do not re-acquire.
+      alertedCandidates.push({
+        ...candidate,
+        offerLocked: true,
+        offerExpiresAt: Date.now() + offerTtlSeconds * 1000,
+      })
     }
 
     return NextResponse.json({

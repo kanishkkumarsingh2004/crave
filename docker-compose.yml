@@ -23,7 +23,21 @@ services:
           memory: 64M
     # appendonly yes: AOF persistence — survives container restarts without
     # losing lock state that would otherwise leave drivers in a locked limbo.
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    #
+    # CR-17: Use noeviction, NOT allkeys-lru. This Redis instance handles
+    # coordination state, not cache data:
+    #   - Driver dispatch locks (acquireDriverOfferLock)
+    #   - Rate-limit counters (checkRateLimit)
+    #   - GPS location data (driver-tracker)
+    #   - WebSocket synchronization (ws-server)
+    #
+    # allkeys-lru would evict any key regardless of importance — including
+    # active driver locks (undermining dispatch exclusivity) and rate-limit
+    # counters (weakening abuse protection). noeviction never evicts: when
+    # the maxmemory limit is reached, writes are rejected instead of
+    # silently dropping critical state. The operator is alerted by the
+    # rejected write rather than by a silent correctness failure.
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy noeviction
     expose:
       - '6379'
     volumes:

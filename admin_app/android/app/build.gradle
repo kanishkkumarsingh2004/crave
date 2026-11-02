@@ -16,8 +16,17 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            storeFile file("../../../crave-release.keystore")
+            storePassword System.getenv("CRAVE_KEYSTORE_PASS") ?: "crave123456"
+            keyAlias System.getenv("CRAVE_KEY_ALIAS") ?: "crave-release"
+            keyPassword System.getenv("CRAVE_KEY_PASS") ?: "crave123456"
+        }
+    }
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

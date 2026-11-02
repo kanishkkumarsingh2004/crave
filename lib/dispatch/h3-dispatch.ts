@@ -17,6 +17,13 @@ export interface DispatchRequest {
   maxSearchRadiusKm?: number
   minCandidatesRequired?: number
   resolution?: number
+  /**
+   * CR-12: Offer TTL in seconds. H3 owns lock acquisition, so it must use
+   * this TTL when calling acquireDriverOfferLock. The API route consumes
+   * the already-locked results and reports offerExpiresAt based on the
+   * same value — the two layers must agree on the TTL.
+   */
+  offerTtlSeconds?: number
 }
 
 export interface CandidateDriverResult {
@@ -102,6 +109,9 @@ export async function findGeofencedCandidateDrivers(
     maxSearchRadiusKm = 15.0,
     minCandidatesRequired = 3,
     resolution = DEFAULT_H3_RESOLUTION,
+    // CR-12: H3 owns lock acquisition — use the caller-supplied TTL so the
+    // lock expiry matches what the API route reports as offerExpiresAt.
+    offerTtlSeconds = 15,
   } = request
 
   // 1. Convert pickup coordinates to H3 Cell
@@ -170,12 +180,20 @@ export async function findGeofencedCandidateDrivers(
           continue
         }
 
-        // CR-04 FIX: Atomically acquire a dispatch offer lock for this driver before
-        // adding them to the candidate set. Two pods scanning the same cell concurrently
-        // will race on Redis SET NX — only one wins. The loser skips this driver.
-        // The caller is responsible for releasing the lock via releaseDriverLock() when
-        // the offer is accepted, rejected, or times out.
-        const lockAcquired = await acquireDriverOfferLock(driver.driverId, requestId)
+        // CR-04 FIX + CR-12: Atomically acquire a dispatch offer lock for this
+        // driver before adding them to the candidate set. Two pods scanning the
+        // same cell concurrently will race on Redis SET NX — only one wins. The
+        // loser skips this driver.
+        //
+        // CR-12: H3 OWNS lock acquisition. The API route must NOT re-acquire —
+        // Redis SET NX would reject the second call and the API would return
+        // zero alerted candidates. The TTL is taken from the request so the
+        // lock expiry matches what the API route reports as offerExpiresAt.
+        const lockAcquired = await acquireDriverOfferLock(
+          driver.driverId,
+          requestId,
+          offerTtlSeconds * 1000
+        )
         if (!lockAcquired) {
           // Another pod just claimed this driver between the isDriverLockedAsync check
           // and now — skip to avoid duplicate offers.

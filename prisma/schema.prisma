@@ -655,6 +655,12 @@ model IdempotencyRecord {
   request_hash  String?
   response_code Int?
   response_body Json?
+  /**
+   * CR-14: Monotonic fencing token. Every acquisition generates a new token.
+   * completeIdempotency and releaseIdempotency are owner-checked against it,
+   * so a stale worker cannot complete or delete a newer worker's lease.
+   */
+  fencing_token String?
   created_at    DateTime @default(now()) @db.Timestamptz(6)
   updated_at    DateTime @updatedAt @db.Timestamptz(6)
   expires_at    DateTime @db.Timestamptz(6)
