@@ -40,3 +40,14 @@ load-tests/.env
 summary.json
 *.local.json
 junit.xml
+
+# Android / Capacitor native build artifacts
+android-builds/
+*.aab
+**/android/.gradle/
+**/android/build/
+**/android/app/build/
+**/android/app/src/main/assets/public
+**/android/.cxx/
+**/android/.externalNativeBuild
+**/android/local.properties

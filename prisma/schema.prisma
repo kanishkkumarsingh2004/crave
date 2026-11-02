@@ -257,6 +257,16 @@ model Order {
   @@index([customer_id, status, created_at])
   @@index([restaurant_id, status, created_at])
   @@index([rider_id, status])
+
+  // NOTE: A database-level partial unique index enforcing one active
+  // order per driver is defined in raw migration
+  // 20261027000000_enforce_one_active_order_per_driver. Prisma cannot
+  // express partial indexes via @@index, so it is maintained as raw SQL.
+  // It indexes rider_id where status is in the active fulfillment states
+  // (sent_to_vendor, preparing, packing, ready_for_pickup, rider_assigned,
+  // out_for_delivery). The app-level check in
+  // claimOrderForDriverAtomic remains for clear error messages, but this
+  // index is the authoritative serialization mechanism.
   @@map("orders")
 }
 

@@ -1,8 +1,14 @@
 import { findGeofencedCandidateDrivers } from '@/lib/dispatch/h3-dispatch'
 import { verifyToken } from '@/lib/jwt'
 import { getTestUser, isTestRequest, MOCK_TEST_VENDOR } from '@/lib/test-auth'
+import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/infra/rate-limit'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+
+// Hard ceilings so a vendor cannot hold driver locks excessively long
+// or request an unreasonably large candidate batch.
+const MAX_OFFER_TTL_SECONDS = 300 // 5 minutes
+const MAX_BATCH_SIZE = 20
 
 export async function POST(request: Request) {
   try {
@@ -27,6 +33,13 @@ export async function POST(request: Request) {
       )
     }
 
+    // Rate-limit dispatch requests per authenticated vendor/actor.
+    const rateLimitKey = getRateLimitKey(request, actor.id, 'dispatch_request')
+    const rateLimitResult = await checkRateLimit(rateLimitKey, 'DISPATCH_REQUEST')
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse(rateLimitResult.resetTime, rateLimitResult.retryAfter)
+    }
+
     const roleStr = actor.role as string
     const isAllowed =
       actor.role === 'admin' ||
@@ -41,14 +54,41 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { pickupLat, pickupLng, vehicleType, batchSize = 3, offerTtlSeconds = 15 } = body
+    const {
+      pickupLat,
+      pickupLng,
+      vehicleType,
+      batchSize = 3,
+      offerTtlSeconds = 15,
+    } = body
 
+    // Validate required coordinates and their ranges.
     if (typeof pickupLat !== 'number' || typeof pickupLng !== 'number') {
       return NextResponse.json(
         { error: 'Missing required coordinates: pickupLat, pickupLng' },
         { status: 400 }
       )
     }
+    if (
+      !Number.isFinite(pickupLat) ||
+      pickupLat < -90 ||
+      pickupLat > 90 ||
+      !Number.isFinite(pickupLng) ||
+      pickupLng < -180 ||
+      pickupLng > 180
+    ) {
+      return NextResponse.json(
+        { error: 'Invalid coordinates: pickupLat must be -90..90 and pickupLng -180..180' },
+        { status: 400 }
+      )
+    }
+
+    // Coerce and clamp batchSize / offerTtlSeconds to hard ceilings.
+    const parsedBatchSize = Number.isInteger(batchSize) && batchSize > 0 ? batchSize : 3
+    const clampedBatchSize = Math.min(parsedBatchSize, MAX_BATCH_SIZE)
+
+    const parsedTtl = Number.isInteger(offerTtlSeconds) && offerTtlSeconds > 0 ? offerTtlSeconds : 15
+    const clampedTtl = Math.min(parsedTtl, MAX_OFFER_TTL_SECONDS)
 
     const requestId = `dsp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
 
@@ -61,8 +101,8 @@ export async function POST(request: Request) {
       pickupLat,
       pickupLng,
       requiredVehicleType: vehicleType,
-      minCandidatesRequired: batchSize,
-      offerTtlSeconds,
+      minCandidatesRequired: clampedBatchSize,
+      offerTtlSeconds: clampedTtl,
     })
 
     if (searchResult.eligibleCandidates.length === 0) {
@@ -93,7 +133,7 @@ export async function POST(request: Request) {
     // Fix: H3 owns lock acquisition. The API route consumes the already-locked
     // results and only records the offer expiry — it does NOT re-acquire.
     const alertedCandidates = []
-    const topCandidates = searchResult.eligibleCandidates.slice(0, batchSize)
+    const topCandidates = searchResult.eligibleCandidates.slice(0, clampedBatchSize)
 
     for (const candidate of topCandidates) {
       // The lock was acquired by H3 with the default TTL. Record the offer
@@ -101,7 +141,7 @@ export async function POST(request: Request) {
       alertedCandidates.push({
         ...candidate,
         offerLocked: true,
-        offerExpiresAt: Date.now() + offerTtlSeconds * 1000,
+        offerExpiresAt: Date.now() + clampedTtl * 1000,
       })
     }
 

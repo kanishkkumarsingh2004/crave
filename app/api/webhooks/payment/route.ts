@@ -23,6 +23,7 @@ import crypto from 'crypto'
  */
 export async function POST(request: Request) {
   let idempotencyKey = ''
+  let webhookFencingToken: string | undefined
 
   try {
     const rawBody = await request.text()
@@ -77,10 +78,22 @@ export async function POST(request: Request) {
 
     // 3. Idempotency Lock Check
     const lock = await acquireIdempotency(idempotencyKey, 'payment_webhook', payload, 300)
+    webhookFencingToken = lock.fencingToken
     if (lock.status === 'completed') {
       return NextResponse.json(
         lock.body || { success: true, message: 'Webhook event already processed (idempotent)' },
         { status: lock.statusCode || 200 }
+      )
+    }
+    // Reject key reuse with a different payload — do not allow the webhook to
+    // bypass payload-integrity protection.
+    if (lock.status === 'conflict') {
+      return NextResponse.json(
+        {
+          error:
+            'Idempotency key reused with a different payload. Do not reuse idempotency keys for different requests.',
+        },
+        { status: 422 }
       )
     }
     if (lock.status === 'processing') {
@@ -93,7 +106,7 @@ export async function POST(request: Request) {
       data.order_id || data.orderId || data.notes?.order_id || payload.order_id || payload.orderId
 
     if (!orderId) {
-      await releaseIdempotency(idempotencyKey, 'payment_webhook')
+      await releaseIdempotency(idempotencyKey, 'payment_webhook', webhookFencingToken)
       return NextResponse.json({ error: 'order_id missing from webhook payload' }, { status: 400 })
     }
 
@@ -179,12 +192,12 @@ export async function POST(request: Request) {
     }
 
     // 5. Complete Idempotency Record
-    await completeIdempotency(idempotencyKey, 'payment_webhook', 200, resultResponse)
+    await completeIdempotency(idempotencyKey, 'payment_webhook', 200, resultResponse, webhookFencingToken)
 
     return NextResponse.json(resultResponse)
   } catch (err: any) {
     if (idempotencyKey) {
-      await releaseIdempotency(idempotencyKey, 'payment_webhook')
+      await releaseIdempotency(idempotencyKey, 'payment_webhook', webhookFencingToken)
     }
     console.error('[webhook/payment] Webhook processing failure:', err)
     return NextResponse.json(

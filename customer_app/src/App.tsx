@@ -3373,11 +3373,12 @@ export default function App() {
     )
   }
 
-  const visible = useMemo(() => {
-    return restaurants.filter((r) =>
-      `${r.name} ${r.cuisine || ''}`.toLowerCase().includes(search.toLowerCase())
-    )
-  }, [restaurants, search])
+  // Keep this as a plain derived value. This code is intentionally below the
+  // authenticated early returns, where a React hook would change the hook
+  // count between the signed-out and signed-in renders and crash the app.
+  const visible = restaurants.filter((restaurant) =>
+    `${restaurant.name} ${restaurant.cuisine || ''}`.toLowerCase().includes(search.toLowerCase())
+  )
   return (
     <div
       className="app-shell"

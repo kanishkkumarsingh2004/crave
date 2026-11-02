@@ -372,10 +372,23 @@ export async function POST(request: Request) {
       }
 
       // P0-A: Distributed, transaction-safe idempotency acquisition
+      let idempotencyFencingToken: string | undefined
       if (idempotencyKey) {
         const idemCheck = await acquireIdempotency(idempotencyKey, 'order_checkout', body)
+        idempotencyFencingToken = idemCheck.fencingToken
         if (idemCheck.status === 'completed') {
           return NextResponse.json(idemCheck.body, { status: idemCheck.statusCode || 200 })
+        }
+        // Reject key reuse with a different payload — do not allow the
+        // operation to bypass payload-integrity protection.
+        if (idemCheck.status === 'conflict') {
+          return NextResponse.json(
+            {
+              error:
+                'Idempotency key reused with a different payload. Do not reuse idempotency keys for different requests.',
+            },
+            { status: 422 }
+          )
         }
         if (idemCheck.status === 'processing') {
           return NextResponse.json(
@@ -597,7 +610,7 @@ export async function POST(request: Request) {
           ? typeof menuItem.stock_count !== 'number' || menuItem.stock_count < quantity
           : hasStockTracking && menuItem.stock_count < quantity
         if (menuItem.in_stock === false || hasInsufficientStock) {
-          if (idempotencyKey) await releaseIdempotency(idempotencyKey, 'order_checkout')
+          if (idempotencyKey) await releaseIdempotency(idempotencyKey, 'order_checkout', idempotencyFencingToken)
           return NextResponse.json(
             { error: `Item ${menuItem.name} is out of stock` },
             { status: 400 }
@@ -1275,7 +1288,7 @@ export async function POST(request: Request) {
       } catch (txErr: any) {
         // Release idempotency lock on failure so the user or client can retry
         if (idempotencyKey) {
-          await releaseIdempotency(idempotencyKey, 'order_checkout')
+          await releaseIdempotency(idempotencyKey, 'order_checkout', idempotencyFencingToken)
         }
 
         // Explicit insufficient stock error
@@ -1411,7 +1424,7 @@ export async function POST(request: Request) {
 
       // Mark idempotency key as completed and cache response for exact replays
       if (idempotencyKey) {
-        await completeIdempotency(idempotencyKey, 'order_checkout', 201, responseData)
+        await completeIdempotency(idempotencyKey, 'order_checkout', 201, responseData, idempotencyFencingToken)
       }
 
       return NextResponse.json(responseData, { status: 201 })

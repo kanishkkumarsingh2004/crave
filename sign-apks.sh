@@ -9,9 +9,9 @@
 #
 # Environment overrides:
 #   CRAVE_KEYSTORE       Path to keystore (default: ./crave-release.keystore)
-#   CRAVE_KEYSTORE_PASS  Keystore password (default: crave123456)
-#   CRAVE_KEY_ALIAS      Key alias (default: crave-release)
-#   CRAVE_KEY_PASS       Key password (default: crave123456)
+#   CRAVE_KEYSTORE_PASS  Keystore password (required)
+#   CRAVE_KEY_ALIAS      Key alias (required)
+#   CRAVE_KEY_PASS       Key password (required)
 #
 # The keystore and its password are read from environment variables at build
 # time — they are never hardcoded in build.gradle or committed to the repo.
@@ -23,9 +23,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 export CRAVE_KEYSTORE="${CRAVE_KEYSTORE:-$SCRIPT_DIR/crave-release.keystore}"
-export CRAVE_KEYSTORE_PASS="${CRAVE_KEYSTORE_PASS:-crave123456}"
-export CRAVE_KEY_ALIAS="${CRAVE_KEY_ALIAS:-crave-release}"
-export CRAVE_KEY_PASS="${CRAVE_KEY_PASS:-crave123456}"
+
+if [[ -z "${CRAVE_KEYSTORE_PASS:-}" ]]; then
+  echo -e "${RED}[ERROR] CRAVE_KEYSTORE_PASS must be set${NC}" >&2
+  exit 1
+fi
+if [[ -z "${CRAVE_KEY_ALIAS:-}" ]]; then
+  echo -e "${RED}[ERROR] CRAVE_KEY_ALIAS must be set${NC}" >&2
+  exit 1
+fi
+if [[ -z "${CRAVE_KEY_PASS:-}" ]]; then
+  echo -e "${RED}[ERROR] CRAVE_KEY_PASS must be set${NC}" >&2
+  exit 1
+fi
 
 # Text formatters
 GREEN='\033[0;32m'
@@ -47,7 +57,7 @@ if [ ! -f "$CRAVE_KEYSTORE" ]; then
   echo "  keytool -genkey -v -keystore crave-release.keystore -alias crave-release \\"
   echo "    -keyalg RSA -keysize 2048 -validity 10000 \\"
   echo "    -dname 'CN=Crave Food Delivery, OU=Crave Engineering, O=Crave, L=Bengaluru, ST=Karnataka, C=IN' \\"
-  echo "    -storepass crave123456 -keypass crave123456 -deststoretype pkcs12"
+  echo "    -storepass \"$CRAVE_KEYSTORE_PASS\" -keypass \"$CRAVE_KEY_PASS\" -deststoretype pkcs12"
   exit 1
 fi
 

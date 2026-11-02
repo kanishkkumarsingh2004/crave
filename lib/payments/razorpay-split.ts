@@ -31,9 +31,11 @@
  * the merchant account balance, not from the captured payment.
  *
  * The batch endpoint creates all transfers for a payment in one call and
- * returns { entity, count, items: RazorpayTransfer[] }. Razorpay deduplicates
- * on the payment ID, so re-submitting the same payment never creates
- * duplicate transfers. No per-transfer idempotency header is needed.
+ * returns { entity, count, items: RazorpayTransfer[] }. Razorpay describes
+ * payment-linked transfers as deduplicated on the payment ID, but this
+ * service does NOT rely on that as its sole duplicate guard — it enforces an
+ * atomic pending → processing single-flight lock in PostgreSQL before any
+ * provider call. No per-transfer idempotency header is needed.
  */
 
 import { prisma } from '@/lib/prisma'
@@ -233,20 +235,35 @@ export async function createRouteSplits(params: SplitOrderParams) {
         return { transfer: existing, linked, alloc, idempotencyKey }
       }
 
-      // No provider transfer id yet: safe to (re)issue the intent. Reuse the row
-      // when one exists (e.g. a prior attempt threw before the API responded) so we
-      // never collide on the unique idempotency_key constraint on retry.
-      const transfer = existing
-        ? await prisma.razorpayTransfer.update({
+      // Atomic single-flight settlement lock: only transition pending → processing.
+      // If another worker already set this row to processing, updateMany matches
+      // zero rows and we skip — the row is in-flight and must not be re-submitted
+      // just because its provider ID hasn't been persisted yet.
+      let transfer: any
+      if (existing) {
+        const updated = await prisma.razorpayTransfer.updateMany({
+          where: { id: existing.id, status: 'pending' },
+          data: {
+            status: 'processing',
+            failure_reason: null,
+            linked_account_id: linked.razorpay_account_id,
+            updated_at: new Date(),
+          },
+        })
+        if (updated.count === 0) {
+          // In-flight by another worker (processing/failed/unknown). Do not
+          // re-submit — leave for reconcileStaleTransfers() to resolve.
+          const current = await prisma.razorpayTransfer.findUnique({
             where: { id: existing.id },
-            data: {
-              status: 'processing',
-              failure_reason: null,
-              linked_account_id: linked.razorpay_account_id,
-              updated_at: new Date(),
-            },
           })
-        : await prisma.razorpayTransfer.create({
+          return { transfer: current, linked, alloc, idempotencyKey }
+        }
+        transfer = await prisma.razorpayTransfer.findUnique({
+          where: { id: existing.id },
+        })
+      } else {
+        try {
+          transfer = await prisma.razorpayTransfer.create({
             data: {
               order_id: orderId,
               recipient_type: alloc.type,
@@ -259,6 +276,21 @@ export async function createRouteSplits(params: SplitOrderParams) {
               status: 'processing',
             },
           })
+        } catch (err: any) {
+          // P2002: another concurrent call created the row first (unique
+          // idempotency_key). Re-read and treat as existing — if it's
+          // processing, the guard below will skip it.
+          if (err?.code === 'P2002') {
+            const current = await prisma.razorpayTransfer.findFirst({
+              where: { idempotency_key: idempotencyKey },
+            })
+            if (current) {
+              return { transfer: current, linked, alloc, idempotencyKey }
+            }
+          }
+          throw err
+        }
+      }
 
       return { transfer, linked, alloc, idempotencyKey }
     })
@@ -291,8 +323,9 @@ export async function createRouteSplits(params: SplitOrderParams) {
   // Separate allocations into "already settled" (skip) and "needs creation".
   // The batch transfer endpoint creates all transfers for a payment in one
   // call and returns { entity, count, items: RazorpayTransfer[] }. Razorpay
-  // deduplicates on the payment ID, so re-submitting the same payment never
-  // creates duplicate transfers.
+  // describes payment-linked transfers as deduplicated on the payment ID, but
+  // this service does NOT rely on that as its sole duplicate guard — the
+  // atomic pending → processing lock above already prevents re-submission.
   //
   // CR-11: Use PAYMENT-LINKED batch transfers (client.payments.transfer),
   // not direct transfers (client.transfers.create). Direct transfers pull
@@ -311,7 +344,13 @@ export async function createRouteSplits(params: SplitOrderParams) {
     // Skip recipients whose transfer already reached the provider (settled,
     // in-flight, or unknown-outcome — see guard above). Never re-call the API
     // for these or we risk creating a duplicate transfer (double-pay).
-    if (transfer.razorpay_transfer_id || transfer.status === 'unknown') {
+    // A processing row means another worker owns this settlement — it must
+    // not be submitted again just because its provider ID isn't persisted yet.
+    if (
+      transfer.razorpay_transfer_id ||
+      transfer.status === 'unknown' ||
+      transfer.status === 'processing'
+    ) {
       results.push({
         transferId: transfer.id,
         recipientType: alloc.type,
@@ -466,9 +505,12 @@ export async function handleRouteTransferWebhook(event: any) {
   }
 
   const statusMap: Record<string, string> = {
+    created: 'pending',
+    pending: 'pending',
     processed: 'processed',
     failed: 'failed',
     reversed: 'reversed',
+    partially_reversed: 'reversed',
   }
   const newStatus = statusMap[status] ?? transfer.status
 
@@ -577,7 +619,20 @@ export async function reconcileStaleTransfers() {
 
       if (match) {
         // Provider confirms a matching transfer — record the outcome.
-        const resolvedStatus = match.status === 'processed' ? 'processed' : 'failed'
+        // Map every Razorpay transfer status explicitly instead of treating
+        // anything other than 'processed' as failed (a transfer may legitimately
+        // be 'created' or 'pending', and 'reversed'/'partially_reversed' are not
+        // simple failures).
+        const providerStatus = String(match.status ?? '').toLowerCase()
+        const statusMap: Record<string, string> = {
+          created: 'pending',
+          pending: 'pending',
+          processed: 'processed',
+          failed: 'failed',
+          reversed: 'reversed',
+          partially_reversed: 'reversed',
+        }
+        const resolvedStatus = statusMap[providerStatus] ?? 'unknown'
         await prisma.razorpayTransfer.update({
           where: { id: t.id },
           data: {
@@ -585,8 +640,8 @@ export async function reconcileStaleTransfers() {
             status: resolvedStatus,
             ...(resolvedStatus === 'processed' ? { processed_at: new Date() } : {}),
             failure_reason:
-              resolvedStatus === 'failed'
-                ? String(match.failure_reason ?? 'Provider reported failure during reconciliation')
+              resolvedStatus === 'failed' || resolvedStatus === 'reversed'
+                ? String(match.failure_reason ?? `Provider reported ${providerStatus} during reconciliation`)
                 : null,
             updated_at: new Date(),
           },

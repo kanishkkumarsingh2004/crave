@@ -10,7 +10,7 @@ ENV NODE_ENV=production
 FROM base AS builder
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-RUN corepack enable pnpm && corepack prepare pnpm@12.3.4 --activate
+RUN corepack enable pnpm && corepack prepare pnpm@12.8.1 --activate
 RUN pnpm install --frozen-lockfile
 COPY . .
 # Prisma generate needs a database URL - use build arg for build time only

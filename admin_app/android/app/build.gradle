@@ -18,10 +18,10 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file("../../../crave-release.keystore")
-            storePassword System.getenv("CRAVE_KEYSTORE_PASS") ?: "crave123456"
-            keyAlias System.getenv("CRAVE_KEY_ALIAS") ?: "crave-release"
-            keyPassword System.getenv("CRAVE_KEY_PASS") ?: "crave123456"
+            storeFile file(System.getenv("CRAVE_KEYSTORE") ?: "../../../crave-release.keystore")
+            storePassword System.getenv("CRAVE_KEYSTORE_PASS")
+            keyAlias System.getenv("CRAVE_KEY_ALIAS")
+            keyPassword System.getenv("CRAVE_KEY_PASS")
         }
     }
     buildTypes {

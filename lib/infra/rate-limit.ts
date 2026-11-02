@@ -16,6 +16,7 @@ export const RateLimitTier = {
   ORDER_CREATE: { limit: 10, windowMs: 60000 }, // 10 req/min
   PAYMENT_VERIFY: { limit: 20, windowMs: 60000 }, // 20 req/min
   DISPATCH_ACCEPT: { limit: 30, windowMs: 60000 }, // 30 req/min
+  DISPATCH_REQUEST: { limit: 20, windowMs: 60000 }, // 20 dispatch requests/min per vendor
   GPS_UPDATE: { limit: 60, windowMs: 60000 }, // 1 update/second max
 
   // Admin endpoints - moderate limits

@@ -235,21 +235,17 @@ export async function acquireIdempotency(
     // Lease has expired (crashed worker or abandoned request).
     // CR-05: Payload hash is checked above, so we know the payload matches.
     //
-    // CR-14: Re-acquire atomically with a CONDITIONAL update. The previous
-    // code did an unconditional update, so two concurrent requests that both
-    // read the expired record would both update it to 'processing' and both
-    // return 'new' — allowing double execution.
-    //
-    // The conditional updateMany matches only records that are still in a
-    // terminal-ish state (status='failed' is the only state we treat as
-    // reclaimable here; 'completed' is never reclaimed; 'processing' with a
-    // live lease is handled above). If another worker already reclaimed this
-    // record between our read and this update, updateMany matches zero rows
-    // and we return 'processing' instead of 'new'.
+    // CR-14: Re-acquire atomically with a CONDITIONAL update. Reclaim records
+    // that are reclaimable: 'failed' records (prior caller released them) or
+    // expired 'processing' records (crashed worker whose lease lapsed). The
+    // conditional updateMany matches only those rows; if another worker
+    // reclaimed this record between our read and this update, updateMany
+    // matches zero rows and we return 'processing' instead of 'new' — which
+    // prevents two concurrent crash-recovery attempts from both executing.
     const reclaim = await prisma.idempotencyRecord.updateMany({
       where: {
         key: cleanKey,
-        status: 'failed',
+        status: { in: ['failed', 'processing'] },
         expires_at: { lt: now },
       },
       data: {
