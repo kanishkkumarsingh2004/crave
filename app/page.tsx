@@ -2,7 +2,11 @@
 
 import Footer from '@/components/Footer'
 import Navbar from '@/components/Navbar'
+<<<<<<< HEAD
 import { ExploreSkeleton } from '@/components/ui/CraveSkeleton'
+=======
+import { CustomerDashboardSkeleton } from '@/components/ui/SkeletonLoaders'
+>>>>>>> caed678 (feat: add customer and vendor dashboard pages, layouts, and loading skeletons)
 import { useAuth } from '@/lib/auth-context'
 import {
   ArrowRight,
@@ -263,7 +267,11 @@ export default function HomePage() {
 
   const targetDashboard = getTargetDashboard()
   if (!isLoading && user && targetDashboard) {
+<<<<<<< HEAD
     return <ExploreSkeleton />
+=======
+    return <CustomerDashboardSkeleton />
+>>>>>>> caed678 (feat: add customer and vendor dashboard pages, layouts, and loading skeletons)
   }
 
   const handleNavigate = (path: string) => {

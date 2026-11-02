@@ -23,7 +23,8 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useMemo, useRef, useState } from 'react'
-import type { CartItem, MenuItem, MenuItemVariant, Restaurant } from './types'
+import type { CartItem, LatLngCoords, MenuItem, MenuItemVariant, Restaurant } from './types'
+import RestaurantProfileView from './RestaurantProfileView'
 
 const CATEGORY_LIST = [
   { id: 'All', label: 'All Cravings', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=300&q=80' },
@@ -80,6 +81,8 @@ interface ExploreViewProps {
   selectedRestaurant: Restaurant | null
   onSelectRestaurant: (rest: Restaurant | null) => void
   triggerToast: (msg: string) => void
+  customerLocation?: LatLngCoords | null
+  customerAddress?: string
 }
 
 export default function ExploreView({
@@ -91,7 +94,26 @@ export default function ExploreView({
   selectedRestaurant,
   onSelectRestaurant,
   triggerToast,
+  customerLocation,
+  customerAddress,
 }: ExploreViewProps) {
+  // When a restaurant is clicked, seamlessly open the full Swiggy-style Restaurant Profile
+  if (selectedRestaurant) {
+    return (
+      <RestaurantProfileView
+        restaurant={selectedRestaurant}
+        menuItemsList={menuItemsList}
+        cart={cart}
+        onAddToCart={onAddToCart}
+        onUpdateQty={onUpdateQty}
+        onBack={() => onSelectRestaurant(null)}
+        customerLocation={customerLocation}
+        customerAddress={customerAddress}
+        triggerToast={triggerToast}
+      />
+    )
+  }
+
   const router = useRouter()
   const categoryScrollRef = useRef<HTMLDivElement>(null)
 
@@ -503,23 +525,19 @@ export default function ExploreView({
                 <span>Signature Dishes</span>
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                {selectedRestaurant?.name ? `Chef recommendations from ${selectedRestaurant.name}.` : 'Specials from kitchens.'}
+                Specials and top-rated dishes from kitchens.
               </p>
             </div>
-            {selectedRestaurant && (
-              <button
-                onClick={() => onSelectRestaurant(null)}
-                className="text-xs font-bold text-[#86a018] hover:underline cursor-pointer"
-              >
-                View all kitchens
-              </button>
-            )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {menuItemsList.map((item) => {
               const hasVariants = Boolean(item.variants?.length)
               const inCart = hasVariants ? undefined : cart.find((i) => i.id === item.id)
+              const isOutOfStock =
+                item.in_stock === false ||
+                item.inStock === false ||
+                (item.stock_count != null && item.stock_count <= 0)
 
               return (
                 <div
@@ -529,12 +547,28 @@ export default function ExploreView({
                   <div>
                     <div className="relative h-44 w-full overflow-hidden rounded-2xl">
                       {item.image ? (
-                        <img src={item.image} alt={item.name} className="h-full w-full object-cover group-hover:scale-105 transition duration-500" />
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className={`h-full w-full object-cover transition duration-500 ${
+                            isOutOfStock ? 'grayscale opacity-60' : 'group-hover:scale-105'
+                          }`}
+                        />
                       ) : (
                         <div className="grid h-full w-full place-items-center bg-gray-100 text-gray-400">
                           <ShoppingBag className="size-8" />
                         </div>
                       )}
+
+                      {/* Out of Stock Overlay */}
+                      {isOutOfStock && (
+                        <div className="absolute inset-0 bg-black/70 backdrop-blur-xs flex flex-col items-center justify-center p-2 text-center">
+                          <span className="rounded-full bg-rose-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+                            Out of Stock
+                          </span>
+                        </div>
+                      )}
+
                       <div className="absolute top-2.5 left-2.5 rounded-lg bg-white/95 dark:bg-[#121815]/95 p-1 flex items-center gap-1 shadow-xs">
                         <div className={`size-3 rounded-sm border flex items-center justify-center ${item.veg ? 'border-emerald-600' : 'border-rose-600'}`}>
                           <div className={`size-1.5 rounded-full ${item.veg ? 'bg-emerald-600' : 'bg-rose-600'}`} />
@@ -557,7 +591,15 @@ export default function ExploreView({
                       </span>
                     </div>
 
-                    {hasVariants ? (
+                    {isOutOfStock ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="rounded-full bg-stone-200 dark:bg-[#202a23] px-4 py-2 text-xs font-bold text-stone-400 dark:text-stone-500 cursor-not-allowed shadow-xs"
+                      >
+                        Out of Stock
+                      </button>
+                    ) : hasVariants ? (
                       <button
                         type="button"
                         onClick={() => openVariantPicker(item)}
@@ -768,92 +810,6 @@ export default function ExploreView({
         </div>
       )}
 
-      {/* Restaurant Menu Modal */}
-      {selectedRestaurant && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 p-0 backdrop-blur-md sm:items-center sm:p-4"
-          onClick={() => onSelectRestaurant(null)}
-        >
-          <div
-            className="max-h-[90vh] w-full max-w-[600px] overflow-y-auto rounded-t-3xl border border-[#2d3b32] bg-[#1c2620] p-6 shadow-2xl text-white sm:rounded-3xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between border-b border-[#25332a] pb-4">
-              <div>
-                <span className="rounded-md bg-white/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/90">
-                  {selectedRestaurant.tag}
-                </span>
-                <h2 className="mt-1 text-2xl font-bold text-white">{selectedRestaurant.name}</h2>
-                <p className="text-xs text-[#9eb3a4]">
-                  {selectedRestaurant.cuisine} · {selectedRestaurant.address}
-                </p>
-              </div>
-              <button
-                onClick={() => onSelectRestaurant(null)}
-                className="grid size-8 place-items-center rounded-full bg-[#121815] border border-[#25332a] text-[#9eb3a4] hover:text-white transition cursor-pointer"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="mt-4 divide-y divide-[#25332a]">
-              {menuItemsList.length === 0 ? (
-                <p className="py-8 text-center text-xs text-[#9eb3a4]">No menu items listed yet.</p>
-              ) : (
-                menuItemsList.map((item) => {
-                  const hasVariants = Boolean(item.variants?.length)
-                  const inCart = hasVariants ? undefined : cart.find((i) => i.id === item.id)
-
-                  return (
-                    <div key={item.id} className="flex items-center justify-between py-4 gap-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`size-2 rounded-full ${item.veg ? 'bg-emerald-400' : 'bg-rose-400'}`} />
-                          <h4 className="font-bold text-sm text-white truncate">{item.name}</h4>
-                        </div>
-                        <p className="text-xs text-[#9eb3a4] line-clamp-1 mt-0.5">{item.detail}</p>
-                        <p className="font-extrabold text-xs text-[#d9f447] mt-1">
-                          {hasVariants ? 'From ' : ''}₹{menuItemDisplayPrice(item)}
-                        </p>
-                      </div>
-
-                      {hasVariants ? (
-                        <button
-                          type="button"
-                          onClick={() => openVariantPicker(item)}
-                          className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#d9f447] px-4 py-2 text-xs font-extrabold text-[#121815] transition hover:scale-105 cursor-pointer"
-                        >
-                          <Plus className="size-3.5" />
-                          <span>Choose size</span>
-                        </button>
-                      ) : inCart ? (
-                        <div className="flex items-center gap-2 rounded-full bg-[#121815] border border-[#25332a] px-3 py-1.5 text-xs font-bold text-white shadow-xs">
-                          <button onClick={() => onUpdateQty(item.id, -1)} className="hover:text-[#d9f447] cursor-pointer">
-                            <Minus className="size-3.5" />
-                          </button>
-                          <span>{inCart.qty}</span>
-                          <button onClick={() => onUpdateQty(item.id, 1)} className="hover:text-[#d9f447] cursor-pointer">
-                            <Plus className="size-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => onAddToCart(item)}
-                          className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#d9f447] px-4 py-2 text-xs font-extrabold text-[#121815] transition hover:scale-105 cursor-pointer"
-                        >
-                          <Plus className="size-3.5" />
-                          <span>Add to cart</span>
-                        </button>
-                      )}
-                    </div>
-                  )
-                })
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

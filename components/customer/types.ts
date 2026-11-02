@@ -40,6 +40,12 @@ export type MenuItem = {
   vendorId?: string
   restaurantLat?: number
   restaurantLng?: number
+  category?: string
+  in_stock?: boolean
+  inStock?: boolean
+  stock_count?: number
+  rating?: string | number
+  bestseller?: boolean
   variantId?: string
   variantName?: string
   variants?: MenuItemVariant[]

@@ -1,6 +1,7 @@
 'use client'
 
 import CraveXPStoreConsole from '@/components/dashboards/CraveEPStoreConsole'
+import { VendorDashboardSkeleton } from '@/components/ui/SkeletonLoaders'
 import { useAuth } from '@/lib/auth-context'
 import { ShieldAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -27,26 +28,7 @@ export default function CraveXPStorePage() {
   }, [user, isLoading, router])
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="mx-auto size-8 border-4 border-[#d9f447] border-t-[#18201c] rounded-full animate-spin" />
-          <p className="mt-4 text-xs font-bold text-[#18201c] dark:text-white uppercase tracking-wider">
-            Loading CraveXP Console...
-          </p>
-          {loadTimeoutExceeded && (
-            <div className="mt-4">
-              <a
-                href="/login"
-                className="inline-block rounded-full bg-[#18201c] text-white dark:bg-[#d9f447] dark:text-[#121815] px-4 py-1.5 text-xs font-bold"
-              >
-                Go to Sign In
-              </a>
-            </div>
-          )}
-        </div>
-      </div>
-    )
+    return <VendorDashboardSkeleton />
   }
 
   if (!user || (user.role !== 'cravexp_store_vendor' && user.role !== 'admin')) {

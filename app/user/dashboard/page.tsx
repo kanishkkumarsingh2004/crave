@@ -6,7 +6,12 @@ import { useAuth } from '@/lib/auth-context'
 import Link from 'next/link'
 import { LogIn, RefreshCw, ShieldAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+<<<<<<< HEAD
 import { useEffect, useRef, useState } from 'react'
+=======
+import { useEffect, useState } from 'react'
+import { CustomerDashboardSkeleton } from '@/components/ui/SkeletonLoaders'
+>>>>>>> caed678 (feat: add customer and vendor dashboard pages, layouts, and loading skeletons)
 
 const getDashboardPath = (role: string) => {
   switch (role) {
@@ -41,8 +46,32 @@ export default function UserDashboardPage() {
     }
   }, [user, role, isLoading, router])
 
+<<<<<<< HEAD
   if (isLoading || !user) {
     return <ExploreSkeleton />
+=======
+  if (isLoading) {
+    return <CustomerDashboardSkeleton />
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#f8f9f7] dark:bg-[#121815] flex flex-col items-center justify-center p-4">
+        <div className="text-center space-y-4 max-w-sm">
+          <p className="text-sm font-semibold text-stone-700 dark:text-stone-300">
+            Redirecting to Sign In...
+          </p>
+          <button
+            type="button"
+            onClick={() => router.replace('/login')}
+            className="px-5 py-2.5 rounded-xl bg-[#121815] text-[#d9f447] text-xs font-bold hover:opacity-90 transition shadow-sm"
+          >
+            Click here if not redirected automatically
+          </button>
+        </div>
+      </div>
+    )
+>>>>>>> caed678 (feat: add customer and vendor dashboard pages, layouts, and loading skeletons)
   }
 
   if (role !== 'user' && role !== 'customer') {

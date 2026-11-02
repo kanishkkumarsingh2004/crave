@@ -1,7 +1,11 @@
 'use client'
 
 import CustomerDashboard from '@/components/dashboards/CustomerDashboard'
+<<<<<<< HEAD
 import { ExploreSkeleton } from '@/components/ui/CraveSkeleton'
+=======
+import { CustomerDashboardSkeleton } from '@/components/ui/SkeletonLoaders'
+>>>>>>> caed678 (feat: add customer and vendor dashboard pages, layouts, and loading skeletons)
 import { useAuth } from '@/lib/auth-context'
 import { ShieldAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -37,7 +41,11 @@ export default function UserExplorePage() {
   }, [user, role, isLoading, router])
 
   if (isLoading || !user) {
+<<<<<<< HEAD
     return <ExploreSkeleton />
+=======
+    return <CustomerDashboardSkeleton />
+>>>>>>> caed678 (feat: add customer and vendor dashboard pages, layouts, and loading skeletons)
   }
 
   if (role !== 'user' && role !== 'customer') {

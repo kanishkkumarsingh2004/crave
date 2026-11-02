@@ -4,7 +4,11 @@ import type { AddressItem } from '@/components/AddressModal'
 import Footer from '@/components/Footer'
 import Navbar from '@/components/Navbar'
 import { CraveButtonLoader } from '@/components/ui/ModernPreloader'
+<<<<<<< HEAD
 import { CartSkeleton } from '@/components/ui/CraveSkeleton'
+=======
+import { CartSkeleton } from '@/components/ui/SkeletonLoaders'
+>>>>>>> caed678 (feat: add customer and vendor dashboard pages, layouts, and loading skeletons)
 import { useAuth } from '@/lib/auth-context'
 import { useCart } from '@/lib/cart-context'
 import { autoDetectAndGeocodeLocation, getCachedLocation } from '@/lib/client-location'
@@ -701,6 +705,7 @@ export default function CartPage() {
 
   if (authLoading || !user) {
 <<<<<<< HEAD
+<<<<<<< HEAD
     return <CartSkeleton />
 =======
     return (
@@ -712,6 +717,9 @@ export default function CartPage() {
       </div>
     )
 >>>>>>> ce610f1 (refactor: eliminate AI code bloat and modularize monolithic components)
+=======
+    return <CartSkeleton />
+>>>>>>> caed678 (feat: add customer and vendor dashboard pages, layouts, and loading skeletons)
   }
 
   return (

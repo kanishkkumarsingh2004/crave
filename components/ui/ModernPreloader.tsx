@@ -115,74 +115,37 @@ interface PagePreloaderProps {
 }
 
 export function CravePagePreloader({
-  title = 'Loading crave...',
-  subtitle = 'Fetching freshest menus & live stores',
+  title: _title = 'Loading...',
+  subtitle: _subtitle,
   minHeight = 'min-h-[60vh]',
 }: PagePreloaderProps) {
   return (
-    <div
-      className={`w-full ${minHeight} flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300 relative select-none`}
-    >
-      <div className="relative flex items-center justify-center">
-        {/* Ambient Radial Neon Aura */}
-        <div className="absolute size-44 rounded-full bg-[#d9f447]/15 blur-3xl animate-pulse" />
+    <div className={`w-full ${minHeight} space-y-6 animate-pulse select-none`}>
+      {/* Top Banner Skeleton */}
+      <div className="h-44 sm:h-64 w-full rounded-3xl bg-stone-200/80 dark:bg-white/[0.06]" />
 
-        {/* Outer Orbital Glowing Track */}
-        <div className="relative size-24 flex items-center justify-center">
-          {/* Subtle Outer Boundary Ring */}
-          <div className="absolute inset-0 rounded-3xl border border-black/5 dark:border-white/10" />
-
-          {/* High-Precision Rotating Neon Orbit SVG */}
-          <svg
-            className="absolute inset-0 size-full animate-spin"
-            viewBox="0 0 96 96"
-            style={{ animationDuration: '2.2s' }}
-          >
-            <circle
-              cx="48"
-              cy="48"
-              r="42"
-              stroke="currentColor"
-              strokeWidth="2"
-              className="text-black/[0.04] dark:text-white/[0.06] fill-none"
-            />
-            <circle
-              cx="48"
-              cy="48"
-              r="42"
-              stroke="#d9f447"
-              strokeWidth="2.5"
-              strokeDasharray="60 200"
-              strokeLinecap="round"
-              className="fill-none drop-shadow-[0_0_10px_#d9f447]"
-            />
-          </svg>
-
-          {/* Central Frosted Glass Emblem */}
-          <div className="relative size-16 rounded-2xl bg-white/90 dark:bg-[#121815]/90 border border-black/10 dark:border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_20px_48px_rgba(0,0,0,0.6)] backdrop-blur-2xl flex items-center justify-center overflow-hidden">
-            <CraveLogo variant="small" size="lg" className="relative z-10 transition-transform" />
+      {/* Row of Category Pills Skeleton */}
+      <div className="flex items-center gap-3 overflow-hidden">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="flex flex-col items-center gap-2 shrink-0">
+            <div className="size-16 rounded-full bg-stone-200/80 dark:bg-white/[0.06]" />
+            <div className="h-3 w-12 rounded bg-stone-200/80 dark:bg-white/[0.06]" />
           </div>
-        </div>
+        ))}
       </div>
 
-      {/* Modern Shimmering Brand Typography */}
-      <div className="mt-6 max-w-sm space-y-1.5 px-4">
-        <h4 className="text-sm sm:text-base font-black tracking-tight text-[#18201c] dark:text-white flex items-center justify-center gap-2">
-          <span>{title}</span>
-        </h4>
-        <p className="text-xs text-stone-500 dark:text-stone-400 font-medium leading-relaxed">
-          {subtitle}
-        </p>
-      </div>
-
-      {/* Modern High-End Shimmer Progress Bar */}
-      <div className="mt-5 w-40 sm:w-48 h-1.5 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden relative backdrop-blur-md">
-        <div
-          className="absolute inset-y-0 w-2/5 rounded-full bg-gradient-to-r from-transparent via-[#d9f447] to-[#d9f447] shadow-[0_0_10px_#d9f447]"
-          style={{
-            animation: 'craveShimmer 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite',
-          }}
-        />
+      {/* Food Cards Grid Skeleton */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[1, 2, 3, 4, 5, 6].map((card) => (
+          <div
+            key={card}
+            className="rounded-3xl border border-stone-200/70 dark:border-white/5 bg-white dark:bg-[#131b15] p-4 space-y-3"
+          >
+            <div className="h-40 w-full rounded-2xl bg-stone-200/80 dark:bg-white/[0.06]" />
+            <div className="h-4 w-3/4 rounded bg-stone-200/80 dark:bg-white/[0.06]" />
+            <div className="h-3 w-1/2 rounded bg-stone-200/80 dark:bg-white/[0.06]" />
+          </div>
+        ))}
       </div>
     </div>
   )

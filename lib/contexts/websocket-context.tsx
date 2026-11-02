@@ -384,3 +384,39 @@ export function useVendorOrderUpdates(onOrderEvent: (data: any) => void) {
     },
   })
 }
+
+export function useMenuItemUpdates(
+  restaurantId: string | undefined,
+  onItemUpdate: (item: any) => void
+) {
+  // Adaptive polling fallback every 4s when a restaurant menu is open
+  useEffect(() => {
+    if (!restaurantId || typeof window === 'undefined') return
+    const syncMenu = () => {
+      fetch(`/api/menu-items?restaurantId=${encodeURIComponent(restaurantId)}`, { cache: 'no-store' })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.items && Array.isArray(data.items)) {
+            data.items.forEach((item: any) => onItemUpdate(item))
+          }
+        })
+        .catch(() => {})
+    }
+    const interval = setInterval(syncMenu, 4000)
+    return () => clearInterval(interval)
+  }, [restaurantId, onItemUpdate])
+
+  return useWebSocket({
+    channels: ['menu_items'],
+    onMessage: (msg) => {
+      if (msg.channel === 'menu_items') {
+        const data = msg.data as any
+        const item = data?.item || data
+        if (!restaurantId || !item?.restaurant_id || item.restaurant_id === restaurantId) {
+          onItemUpdate(item)
+        }
+      }
+    },
+  })
+}
+

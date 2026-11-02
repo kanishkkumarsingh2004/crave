@@ -2,14 +2,30 @@
 
 import CraveXPStore from '@/components/dashboards/CraveXPStore'
 import Navbar from '@/components/Navbar'
+<<<<<<< HEAD
 import { CraveXPSkeleton } from '@/components/ui/CraveSkeleton'
+=======
+import { CustomerDashboardSkeleton } from '@/components/ui/SkeletonLoaders'
+>>>>>>> caed678 (feat: add customer and vendor dashboard pages, layouts, and loading skeletons)
 import { useAuth } from '@/lib/auth-context'
 
 export default function UserCraveXPPage() {
   const { isLoading } = useAuth()
 
+<<<<<<< HEAD
   if (isLoading) {
     return <CraveXPSkeleton />
+=======
+  useEffect(() => {
+    if (isLoading) return
+    if (!user) {
+      router.replace('/login?logout=1')
+    }
+  }, [user, isLoading, router])
+
+  if (isLoading || !user) {
+    return <CustomerDashboardSkeleton />
+>>>>>>> caed678 (feat: add customer and vendor dashboard pages, layouts, and loading skeletons)
   }
 
   return (

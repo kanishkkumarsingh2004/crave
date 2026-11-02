@@ -1,7 +1,11 @@
 'use client'
 
 import CustomerDashboard from '@/components/dashboards/CustomerDashboard'
+<<<<<<< HEAD
 import { ProfileSkeleton } from '@/components/ui/CraveSkeleton'
+=======
+import { ProfileSkeleton } from '@/components/ui/SkeletonLoaders'
+>>>>>>> caed678 (feat: add customer and vendor dashboard pages, layouts, and loading skeletons)
 import { useAuth } from '@/lib/auth-context'
 import { ShieldAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
