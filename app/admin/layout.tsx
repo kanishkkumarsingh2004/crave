@@ -119,7 +119,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pageTitle = currentItem ? currentItem.label : 'Admin Console'
 
   return (
-    <div className="min-h-screen bg-[#f8f9f7] dark:bg-[#090d0b] text-[#18201c] dark:text-[#f0f4f1] flex flex-col lg:flex-row transition-colors duration-200">
+    <div className="h-screen bg-[#f8f9f7] dark:bg-[#090d0b] text-[#18201c] dark:text-[#f0f4f1] flex flex-col lg:flex-row transition-colors duration-200">
       {/* Mobile Overlay with Smooth Fade Transition */}
       <div
         onClick={() => setSidebarOpen(false)}
@@ -318,7 +318,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page Content Body */}
-        <main className="p-4 sm:p-6 lg:p-8 pb-safe flex-1 bg-[#f8f9f7] dark:bg-[#0b0f0d] text-[#18201c] dark:text-[#f0f4f1] transition-colors duration-200">
+        <main className="p-4 sm:p-6 lg:p-8 pb-safe flex-1 min-h-0 overflow-y-auto bg-[#f8f9f7] dark:bg-[#0b0f0d] text-[#18201c] dark:text-[#f0f4f1] transition-colors duration-200">
           {children}
         </main>
       </div>
