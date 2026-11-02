@@ -77,8 +77,7 @@ export function TaxInvoiceView({
           </p>
           <div className="mt-2 pt-1 border-t border-gray-200/60 dark:border-[#27342d] space-y-0.5 text-[9px] font-mono text-gray-500 dark:text-gray-400">
             <p>
-              GSTIN:{' '}
-              <strong className="text-gray-800 dark:text-gray-200">{supplierGstin}</strong> (
+              GSTIN: <strong className="text-gray-800 dark:text-gray-200">{supplierGstin}</strong> (
               {priceSnapshot.gstStatus})
             </p>
             <p>

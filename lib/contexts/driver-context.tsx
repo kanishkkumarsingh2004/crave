@@ -4,10 +4,7 @@ import CustomAlertModal from '@/components/CustomAlertModal'
 import { useAuth } from '@/lib/auth-context'
 import { playChimeSound, publishLiveEvent, useWebSocket } from '@/lib/websocket'
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
-import {
-  createBroadcastOfferFromOrder,
-  getDriverPayoutDetails,
-} from './driver-helpers'
+import { createBroadcastOfferFromOrder, getDriverPayoutDetails } from './driver-helpers'
 import type {
   BroadcastOrderOffer,
   CompletedTripItem,
@@ -191,7 +188,14 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
         if (json.success && Array.isArray(json.orders) && json.orders.length > 0) {
           const availableOrders = json.orders.filter(
             (o: any) =>
-              ['ready_for_pickup', 'ready', 'sent_to_vendor', 'preparing', 'cooking', 'packing'].includes(o.status) &&
+              [
+                'ready_for_pickup',
+                'ready',
+                'sent_to_vendor',
+                'preparing',
+                'cooking',
+                'packing',
+              ].includes(o.status) &&
               !o.rider_id &&
               (!o.driver_name ||
                 o.driver_name === 'Unassigned' ||
@@ -531,7 +535,14 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
       if (json.success && Array.isArray(json.orders) && json.orders.length > 0) {
         const availableOrders = json.orders.filter(
           (o: any) =>
-            ['ready_for_pickup', 'ready', 'sent_to_vendor', 'preparing', 'cooking', 'packing'].includes(o.status) &&
+            [
+              'ready_for_pickup',
+              'ready',
+              'sent_to_vendor',
+              'preparing',
+              'cooking',
+              'packing',
+            ].includes(o.status) &&
             !o.rider_id &&
             (!o.driver_name ||
               o.driver_name === 'Unassigned' ||
@@ -567,8 +578,12 @@ export function DriverProvider({ children }: { children: React.ReactNode }) {
     const realId = broadcastOffer.id
     const driverDisplayName = user?.name || 'Verified Delivery Partner'
     const driverDisplayPhone = user?.phone || '+91 98765 43210'
-    const currentLat = driverGpsCoords ? driverGpsCoords[0] : (broadcastOffer.restaurantLat ?? 12.9716)
-    const currentLng = driverGpsCoords ? driverGpsCoords[1] : (broadcastOffer.restaurantLng ?? 77.6412)
+    const currentLat = driverGpsCoords
+      ? driverGpsCoords[0]
+      : (broadcastOffer.restaurantLat ?? 12.9716)
+    const currentLng = driverGpsCoords
+      ? driverGpsCoords[1]
+      : (broadcastOffer.restaurantLng ?? 77.6412)
 
     const task: DeliveryTask = {
       id: realId,

@@ -631,7 +631,10 @@ export function AdminDashboardSkeleton() {
 
           <div className="space-y-3 pt-2">
             {[1, 2, 3, 4, 5].map((row) => (
-              <div key={row} className="flex items-center justify-between py-2 border-b border-stone-100 dark:border-white/5">
+              <div
+                key={row}
+                className="flex items-center justify-between py-2 border-b border-stone-100 dark:border-white/5"
+              >
                 <SkeletonBlock className="h-4 w-36 rounded" />
                 <SkeletonBlock className="h-4 w-24 rounded" />
                 <SkeletonBlock className="h-4 w-16 rounded" />
@@ -648,9 +651,15 @@ export function AdminDashboardSkeleton() {
 /**
  * Interactive Map Loading Skeleton
  */
-export function MapSkeleton({ className = 'h-[calc(100vh-200px)] min-h-[600px]' }: { className?: string }) {
+export function MapSkeleton({
+  className = 'h-[calc(100vh-200px)] min-h-[600px]',
+}: {
+  className?: string
+}) {
   return (
-    <div className={`w-full rounded-2xl bg-stone-100 dark:bg-[#121a14] border border-stone-200 dark:border-white/10 relative overflow-hidden flex flex-col justify-between p-6 ${className}`}>
+    <div
+      className={`w-full rounded-2xl bg-stone-100 dark:bg-[#121a14] border border-stone-200 dark:border-white/10 relative overflow-hidden flex flex-col justify-between p-6 ${className}`}
+    >
       {/* Top Map Controls Skeleton */}
       <div className="flex items-center justify-between z-10">
         <SkeletonBlock className="h-10 w-64 rounded-xl" />
@@ -676,4 +685,3 @@ export function MapSkeleton({ className = 'h-[calc(100vh-200px)] min-h-[600px]' 
     </div>
   )
 }
-

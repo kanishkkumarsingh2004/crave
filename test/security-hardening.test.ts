@@ -276,8 +276,15 @@ test('CR-03-A: reconciler queries both processing and unknown rows', () => {
   const reconciledStatuses = ['processing', 'unknown']
 
   assert.ok(reconciledStatuses.includes('unknown'), 'reconciler must cover unknown rows')
-  assert.ok(reconciledStatuses.includes('processing'), 'reconciler must still cover processing rows')
-  assert.equal(reconciledStatuses.includes('failed'), false, 'reconciler must not re-query failed rows')
+  assert.ok(
+    reconciledStatuses.includes('processing'),
+    'reconciler must still cover processing rows'
+  )
+  assert.equal(
+    reconciledStatuses.includes('failed'),
+    false,
+    'reconciler must not re-query failed rows'
+  )
 })
 
 test('CR-03-B: provider idempotency key is passed on every transfers.create call', () => {
@@ -368,4 +375,3 @@ test('CR-03-D: null recipient IDs are rejected before allocation building', () =
     'null rider_id with non-zero amount must throw'
   )
 })
-

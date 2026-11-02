@@ -1,6 +1,15 @@
 'use client'
 
-import { CookingPot, DollarSign, Flame, PackageCheck, Sparkles, Star, Timer, Truck } from 'lucide-react'
+import {
+  CookingPot,
+  DollarSign,
+  Flame,
+  PackageCheck,
+  Sparkles,
+  Star,
+  Timer,
+  Truck,
+} from 'lucide-react'
 
 interface KitchenMetricsProps {
   newCount: number

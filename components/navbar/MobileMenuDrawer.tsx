@@ -110,7 +110,12 @@ export function MobileMenuDrawer({
         }`}
       >
         <div className="flex items-center justify-between border-b border-black/[0.06] dark:border-white/[0.06] px-5 py-4">
-          <Link href={logoTargetLink} onClick={onClose} className="flex items-center gap-2" aria-label="crave home">
+          <Link
+            href={logoTargetLink}
+            onClick={onClose}
+            className="flex items-center gap-2"
+            aria-label="crave home"
+          >
             <CraveLogo variant="full" size="md" />
           </Link>
           <button

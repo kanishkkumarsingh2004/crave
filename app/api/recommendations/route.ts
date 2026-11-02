@@ -1,6 +1,5 @@
 import { getCartCrossSellItems, getUserReorderHistory } from '@/lib/dal/recommendations'
-import { verifyToken } from '@/lib/jwt'
-import { cookies } from 'next/headers'
+import { handleAuthError, requireRole } from '@/lib/auth-helpers'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -46,32 +45,15 @@ export async function GET(request: NextRequest) {
 
     // ─── 2. Personalized Re-Order History ─────────────────────
     if (type === 'reorder') {
-      let customerId = searchParams.get('customerId')
+      const actor = await requireRole(request, ['user', 'customer', 'admin'])
+      const requestedCustomerId = searchParams.get('customerId')
 
-      if (!customerId) {
-        // Fallback to active auth cookie
-        try {
-          const cookieStore = await cookies()
-          const token = cookieStore.get('token')?.value
-          if (token) {
-            const decoded = await verifyToken(token)
-            if (decoded && decoded.id) {
-              customerId = decoded.id
-            }
-          }
-        } catch {
-          // Unauthenticated caller
-        }
+      if (actor.role !== 'admin' && requestedCustomerId && requestedCustomerId !== actor.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
 
-      if (!customerId) {
-        return NextResponse.json({
-          success: true,
-          type: 'reorder',
-          count: 0,
-          packages: [],
-        })
-      }
+      const customerId =
+        actor.role === 'admin' && requestedCustomerId ? requestedCustomerId : actor.id
 
       const limit = Math.min(10, Math.max(1, Number(searchParams.get('limit')) || 4))
       const packages = await getUserReorderHistory(customerId, limit)
@@ -89,10 +71,6 @@ export async function GET(request: NextRequest) {
       { status: 400 }
     )
   } catch (error) {
-    console.error('Error in /api/recommendations:', error)
-    return NextResponse.json(
-      { success: false, error: 'Internal recommendation engine error' },
-      { status: 500 }
-    )
+    return handleAuthError(error)
   }
 }

@@ -277,7 +277,9 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                     {item.badge && !sidebarCollapsed && (
                       <span
                         className={`text-[10px] font-bold shrink-0 ${
-                          isActive ? 'text-white dark:text-[#1D1D1F]' : 'text-emerald-600 dark:text-emerald-400'
+                          isActive
+                            ? 'text-white dark:text-[#1D1D1F]'
+                            : 'text-emerald-600 dark:text-emerald-400'
                         }`}
                       >
                         {item.badge}
@@ -591,7 +593,9 @@ function DriverLayoutContent({ children }: { children: React.ReactNode }) {
                 <span className="text-[9px] font-bold uppercase text-amber-500">
                   Pickup Kitchen
                 </span>
-                <h3 className="text-base font-bold text-[#1D1D1F] dark:text-white">{broadcastOffer.restaurantName}</h3>
+                <h3 className="text-base font-bold text-[#1D1D1F] dark:text-white">
+                  {broadcastOffer.restaurantName}
+                </h3>
                 <p className="text-xs text-stone-500 dark:text-stone-400 flex items-center gap-1 mt-0.5">
                   <MapPin className="size-3 text-amber-500" /> {broadcastOffer.restaurantAddress}
                 </p>

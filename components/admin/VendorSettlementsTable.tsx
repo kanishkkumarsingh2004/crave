@@ -197,9 +197,7 @@ export default function VendorSettlementsTable({
                     {v.settlementStatus === 'settled' &&
                       v.disbursedAmount &&
                       v.disbursedAmount !== fin.netPayable && (
-                        <p className="text-[10px] text-amber-500 font-semibold">
-                          Custom Disbursed
-                        </p>
+                        <p className="text-[10px] text-amber-500 font-semibold">Custom Disbursed</p>
                       )}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">

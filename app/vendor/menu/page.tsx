@@ -152,9 +152,12 @@ export default function VendorMenuPage() {
 
   const refreshMenuAfterImport = async () => {
     if (!restaurantId) return
-    const response = await fetch(`/api/menu-items?restaurantId=${encodeURIComponent(restaurantId)}`, {
-      cache: 'no-store',
-    })
+    const response = await fetch(
+      `/api/menu-items?restaurantId=${encodeURIComponent(restaurantId)}`,
+      {
+        cache: 'no-store',
+      }
+    )
     const result = await response.json()
     if (!response.ok) throw new Error(result.error || 'Unable to refresh the menu.')
     setMenuItems((result.items || []).map((item: any) => formatMenuItem(item, restaurantId)))
@@ -225,7 +228,8 @@ export default function VendorMenuPage() {
   const filteredItems = useMemo(() => {
     return menuItems.filter((item) => {
       const q = searchQuery.toLowerCase()
-      const matchesSearch = item.name.toLowerCase().includes(q) || item.description.toLowerCase().includes(q)
+      const matchesSearch =
+        item.name.toLowerCase().includes(q) || item.description.toLowerCase().includes(q)
       const matchesCat = selectedCategory === 'All' || item.category === selectedCategory
       return matchesSearch && matchesCat
     })
@@ -251,7 +255,8 @@ export default function VendorMenuPage() {
                 {user?.restaurantName || 'Your restaurant'} Dish Catalog
               </h2>
               <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1 font-normal">
-                Manage dishes, categories, dietary types, portion sizes, pricing &amp; live kitchen inventory.
+                Manage dishes, categories, dietary types, portion sizes, pricing &amp; live kitchen
+                inventory.
               </p>
             </div>
 
@@ -316,7 +321,10 @@ export default function VendorMenuPage() {
               Loading menu from the database...
             </p>
           ) : menuError ? (
-            <p role="alert" className="col-span-full rounded-2xl border border-rose-500/30 bg-rose-500/10 p-8 text-center text-sm text-rose-600 dark:text-rose-300">
+            <p
+              role="alert"
+              className="col-span-full rounded-2xl border border-rose-500/30 bg-rose-500/10 p-8 text-center text-sm text-rose-600 dark:text-rose-300"
+            >
               {menuError}
             </p>
           ) : !restaurantId ? (
@@ -327,7 +335,9 @@ export default function VendorMenuPage() {
             <div className="col-span-full rounded-3xl border border-dashed border-stone-200 dark:border-[#222e27] bg-white dark:bg-[#121815] p-12 text-center text-stone-500 dark:text-gray-400">
               <Utensils className="mx-auto size-12 text-stone-400 dark:text-gray-600 mb-2" />
               <p className="font-bold text-base text-[#121815] dark:text-white">No Dishes Found</p>
-              <p className="text-xs mt-1">Click &apos;Add New Dish&apos; to create dishes for your kitchen menu.</p>
+              <p className="text-xs mt-1">
+                Click &apos;Add New Dish&apos; to create dishes for your kitchen menu.
+              </p>
             </div>
           ) : (
             filteredItems.map((item) => (

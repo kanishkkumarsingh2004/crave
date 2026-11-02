@@ -224,7 +224,10 @@ export async function acquireIdempotency(
     //
     // For non-financial scopes: return 'processing' as a safe conservative
     // fallback (blocks execution rather than permitting a potential duplicate).
-    console.error(`[idempotency] DB error during acquisition for scope=${scope} key=${cleanKey}:`, err?.message)
+    console.error(
+      `[idempotency] DB error during acquisition for scope=${scope} key=${cleanKey}:`,
+      err?.message
+    )
 
     if (isFinancial) {
       throw new Error(
@@ -331,4 +334,3 @@ function _primeRedisProcessing(scope: string, cleanKey: string, ttlSeconds: numb
     )
     .catch(() => {})
 }
-

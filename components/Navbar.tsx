@@ -97,7 +97,12 @@ export default function Navbar() {
       <header className="sticky top-0 z-50 pt-[env(safe-area-inset-top,0px)] border-b border-gray-200/70 dark:border-white/10 bg-white/90 dark:bg-[#121815]/90 backdrop-blur-md">
         <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2 group shrink-0" suppressHydrationWarning aria-label="crave home">
+            <Link
+              href="/"
+              className="flex items-center gap-2 group shrink-0"
+              suppressHydrationWarning
+              aria-label="crave home"
+            >
               <CraveLogo variant="full" size="md" />
             </Link>
           </div>
@@ -133,7 +138,11 @@ export default function Navbar() {
         <nav className="mx-auto flex max-w-[1240px] items-center justify-between px-3 py-2 sm:px-6 sm:py-2.5 gap-2">
           {/* Logo */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Link href={logoTargetLink} className="flex items-center gap-1.5 group shrink-0" aria-label="crave home">
+            <Link
+              href={logoTargetLink}
+              className="flex items-center gap-1.5 group shrink-0"
+              aria-label="crave home"
+            >
               <CraveLogo variant="full" size="md" />
             </Link>
           </div>

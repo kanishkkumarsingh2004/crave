@@ -18,7 +18,9 @@ import { AccountRecord, VendorStore } from '@/components/admin/types'
 export default function AdminDashboard() {
   const { toast } = useToast()
   const [activeTab, setActiveTabState] = useState<'users' | 'menu-pricing'>('users')
-  const [userTab, setUserTabState] = useState<'vendors' | 'customers' | 'drivers' | 'admins'>('vendors')
+  const [userTab, setUserTabState] = useState<'vendors' | 'customers' | 'drivers' | 'admins'>(
+    'vendors'
+  )
   const [searchQuery, setSearchQuery] = useState('')
 
   // Data States
@@ -32,7 +34,11 @@ export default function AdminDashboard() {
   const [editingAccount, setEditingAccount] = useState<AccountRecord | null>(null)
   const [selectedVendorForMenu, setSelectedVendorForMenu] = useState<VendorStore | null>(null)
   const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false)
-  const [deleteConfirmTarget, setDeleteConfirmTarget] = useState<{ id: string; name: string; email?: string } | null>(null)
+  const [deleteConfirmTarget, setDeleteConfirmTarget] = useState<{
+    id: string
+    name: string
+    email?: string
+  } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
@@ -105,11 +111,15 @@ export default function AdminDashboard() {
           (v) =>
             (v.userId && v.userId === u.id) ||
             v.id === u.id ||
-            (u.restaurant_name && v.storeName && u.restaurant_name.toLowerCase() === v.storeName.toLowerCase()) ||
+            (u.restaurant_name &&
+              v.storeName &&
+              u.restaurant_name.toLowerCase() === v.storeName.toLowerCase()) ||
             (u.name && v.storeName && u.name.toLowerCase() === v.storeName.toLowerCase())
         )
 
-        const isXP = matchedVendor?.description?.toLowerCase().includes('xp') || u.cuisine?.toLowerCase().includes('xp')
+        const isXP =
+          matchedVendor?.description?.toLowerCase().includes('xp') ||
+          u.cuisine?.toLowerCase().includes('xp')
 
         const normalizedRole: UserRole =
           u.role === 'user' || u.role === 'customer'
@@ -141,13 +151,23 @@ export default function AdminDashboard() {
           cuisine: u.cuisine || matchedVendor?.description || undefined,
           commissionRate: Number(u.commission_rate || matchedVendor?.commissionRate || 15),
           paymentModel:
-            u.payment_model === 'markup' || matchedVendor?.commissionType === 'MARKUP' ? 'markup' : 'commission',
+            u.payment_model === 'markup' || matchedVendor?.commissionType === 'MARKUP'
+              ? 'markup'
+              : 'commission',
           vendorType: isXP ? 'XP Store' : 'Restaurant Vendor',
           totalSpent: Number(u.total_spent || 0),
           totalOrders: Number(u.total_orders || 0),
           bannerUrl: matchedVendor?.bannerUrl || undefined,
-          latitude: u.latitude ? Number(u.latitude) : matchedVendor?.latitude ? Number(matchedVendor.latitude) : undefined,
-          longitude: u.longitude ? Number(u.longitude) : matchedVendor?.longitude ? Number(matchedVendor.longitude) : undefined,
+          latitude: u.latitude
+            ? Number(u.latitude)
+            : matchedVendor?.latitude
+              ? Number(matchedVendor.latitude)
+              : undefined,
+          longitude: u.longitude
+            ? Number(u.longitude)
+            : matchedVendor?.longitude
+              ? Number(matchedVendor.longitude)
+              : undefined,
         })
       })
 
@@ -180,7 +200,10 @@ export default function AdminDashboard() {
       const res = await fetch('/api/admin/delete-vendor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vendorId: deleteConfirmTarget.id, email: deleteConfirmTarget.email }),
+        body: JSON.stringify({
+          vendorId: deleteConfirmTarget.id,
+          email: deleteConfirmTarget.email,
+        }),
       })
       const data = await res.json()
       if (!res.ok || data.error) {
@@ -198,7 +221,9 @@ export default function AdminDashboard() {
 
   const toggleAccountStatus = (id: string, currentStatus: string) => {
     const nextStatus = currentStatus === 'active' ? 'suspended' : 'active'
-    setAccounts((prev) => prev.map((acc) => (acc.id === id ? { ...acc, status: nextStatus as any } : acc)))
+    setAccounts((prev) =>
+      prev.map((acc) => (acc.id === id ? { ...acc, status: nextStatus as any } : acc))
+    )
     toast(`Account status updated to ${nextStatus.toUpperCase()}`, 'success')
   }
 
@@ -207,16 +232,23 @@ export default function AdminDashboard() {
   const vendorAccounts = accounts.filter(
     (a) =>
       (a.role === 'vendor' || a.role === 'restaurant_vendor') &&
-      (a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q) || (a.restaurantName && a.restaurantName.toLowerCase().includes(q)))
+      (a.name.toLowerCase().includes(q) ||
+        a.email.toLowerCase().includes(q) ||
+        (a.restaurantName && a.restaurantName.toLowerCase().includes(q)))
   )
   const customerAccounts = accounts.filter(
-    (a) => (a.role === 'customer' || a.role === 'user') && (a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q))
+    (a) =>
+      (a.role === 'customer' || a.role === 'user') &&
+      (a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q))
   )
   const driverAccounts = accounts.filter(
-    (a) => (a.role === 'driver' || a.role === 'rider') && (a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q))
+    (a) =>
+      (a.role === 'driver' || a.role === 'rider') &&
+      (a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q))
   )
   const adminAccounts = accounts.filter(
-    (a) => a.role === 'admin' && (a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q))
+    (a) =>
+      a.role === 'admin' && (a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q))
   )
 
   return (
@@ -228,7 +260,8 @@ export default function AdminDashboard() {
             Platform Accounts &amp; Stores
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 dark:text-[#9eb3a4] mt-1 font-medium">
-            Restaurant vendor onboarding, pricing controls, customer insights &amp; live database sync.
+            Restaurant vendor onboarding, pricing controls, customer insights &amp; live database
+            sync.
           </p>
         </div>
 

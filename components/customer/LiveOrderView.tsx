@@ -97,7 +97,6 @@ export default function LiveOrderView({
           <div className="overflow-hidden rounded-2xl sm:rounded-3xl border border-[#dfe5db] bg-white shadow-xl">
             {/* Header Banner - Apple Solid Style */}
             <div className="bg-[#1C1C1E] p-4 sm:p-7 text-white relative overflow-hidden">
-
               <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-5">
                 <div className="space-y-2.5 sm:space-y-3 min-w-0">
                   <div className="flex flex-wrap items-center gap-3">
@@ -122,7 +121,8 @@ export default function LiveOrderView({
                         className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/20 border border-rose-500/30 px-2.5 py-0.5 text-[11px] font-black text-rose-300 hover:bg-rose-500/30 transition cursor-pointer shrink-0"
                         title={`Order can be cancelled within 15 seconds (${cancelTimeRemaining}s remaining)`}
                       >
-                        <Trash2 className="size-3 text-rose-300" /> Cancel Order ({cancelTimeRemaining}s)
+                        <Trash2 className="size-3 text-rose-300" /> Cancel Order (
+                        {cancelTimeRemaining}s)
                       </button>
                     )}
                     {(activeOrder.statusStep === 4 ||
@@ -165,7 +165,8 @@ export default function LiveOrderView({
                         <>
                           <span>•</span>
                           <span>
-                            {activeOrder.items.length} {activeOrder.items.length === 1 ? 'item' : 'items'}
+                            {activeOrder.items.length}{' '}
+                            {activeOrder.items.length === 1 ? 'item' : 'items'}
                           </span>
                         </>
                       )}
@@ -188,7 +189,9 @@ export default function LiveOrderView({
                     Estimated Delivery
                   </p>
                   <p className="text-lg sm:text-2xl font-black text-white sm:mt-0.5 tracking-tight">
-                    {activeOrder.statusStep === 4 ? 'Delivered' : activeOrderEta?.displayText || '25 mins'}
+                    {activeOrder.statusStep === 4
+                      ? 'Delivered'
+                      : activeOrderEta?.displayText || '25 mins'}
                   </p>
                   {activeOrder.statusStep !== 4 && activeOrderEta?.arrivalSubtitle && (
                     <p className="text-[10px] sm:text-[11px] font-semibold text-emerald-300 sm:mt-0.5">
@@ -205,7 +208,13 @@ export default function LiveOrderView({
                 <div className="flex items-center gap-3.5">
                   <div className="relative size-12 sm:size-14 shrink-0 grid place-items-center">
                     <svg className="size-full -rotate-90 transform" viewBox="0 0 44 44">
-                      <circle cx="22" cy="22" r="18" className="stroke-white/15 fill-none" strokeWidth="3.5" />
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        className="stroke-white/15 fill-none"
+                        strokeWidth="3.5"
+                      />
                       <circle
                         cx="22"
                         cy="22"
@@ -229,7 +238,8 @@ export default function LiveOrderView({
                       </p>
                     </div>
                     <p className="text-[11px] text-white/70 mt-0.5 max-w-lg leading-relaxed">
-                      Cancel now for an immediate refund routed directly to our admin settlement queue.
+                      Cancel now for an immediate refund routed directly to our admin settlement
+                      queue.
                     </p>
                   </div>
                 </div>
@@ -250,7 +260,9 @@ export default function LiveOrderView({
                     Kitchen Locked
                   </span>
                   <span className="text-gray-400">•</span>
-                  <span>Food is actively being prepared fresh. 15-second grace window concluded.</span>
+                  <span>
+                    Food is actively being prepared fresh. 15-second grace window concluded.
+                  </span>
                 </div>
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider hidden sm:inline font-mono">
                   Freshness Guaranteed
@@ -307,12 +319,18 @@ export default function LiveOrderView({
                                 : 'bg-white dark:bg-[#121815] border-2 border-gray-200 dark:border-[#28372e] text-gray-400 dark:text-gray-500'
                           }`}
                         >
-                          {isDone ? <Check className="size-4 sm:size-6 stroke-[3]" /> : <span>{step.num}</span>}
+                          {isDone ? (
+                            <Check className="size-4 sm:size-6 stroke-[3]" />
+                          ) : (
+                            <span>{step.num}</span>
+                          )}
                         </div>
                         <div className="mt-2.5 sm:mt-3.5 space-y-0.5">
                           <p
                             className={`text-xs sm:text-sm font-extrabold transition-colors leading-tight ${
-                              isPassedOrCurrent ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'
+                              isPassedOrCurrent
+                                ? 'text-gray-900 dark:text-white'
+                                : 'text-gray-400 dark:text-gray-500'
                             }`}
                           >
                             {step.title}
@@ -346,15 +364,40 @@ export default function LiveOrderView({
 
               {activeOrder.driverName && activeOrder.driverName !== 'Unassigned' ? (
                 <LiveDriverMap
-                  restaurantName={activeOrder.restaurantName || activeOrder.restaurant?.name || activeOrder.restaurant_name || 'Crave Kitchen Store'}
+                  restaurantName={
+                    activeOrder.restaurantName ||
+                    activeOrder.restaurant?.name ||
+                    activeOrder.restaurant_name ||
+                    'Crave Kitchen Store'
+                  }
                   driverName={activeOrder.driverName || activeOrder.driver_name}
                   statusStep={activeOrder.statusStep}
-                  driverLat={liveDriverPos?.lat ?? (activeOrder.driverLat ? Number(activeOrder.driverLat) : null)}
-                  driverLng={liveDriverPos?.lng ?? (activeOrder.driverLng ? Number(activeOrder.driverLng) : null)}
-                  restaurantLat={Number(activeOrder.restaurantLat ?? activeOrder.restaurant?.latitude ?? 12.9716)}
-                  restaurantLng={Number(activeOrder.restaurantLng ?? activeOrder.restaurant?.longitude ?? 77.6412)}
-                  customerLat={Number(activeOrder.customerLat ?? activeOrder.delivery_latitude ?? selectedMapPin?.lat ?? 12.9716)}
-                  customerLng={Number(activeOrder.customerLng ?? activeOrder.delivery_longitude ?? selectedMapPin?.lng ?? 77.5946)}
+                  driverLat={
+                    liveDriverPos?.lat ??
+                    (activeOrder.driverLat ? Number(activeOrder.driverLat) : null)
+                  }
+                  driverLng={
+                    liveDriverPos?.lng ??
+                    (activeOrder.driverLng ? Number(activeOrder.driverLng) : null)
+                  }
+                  restaurantLat={Number(
+                    activeOrder.restaurantLat ?? activeOrder.restaurant?.latitude ?? 12.9716
+                  )}
+                  restaurantLng={Number(
+                    activeOrder.restaurantLng ?? activeOrder.restaurant?.longitude ?? 77.6412
+                  )}
+                  customerLat={Number(
+                    activeOrder.customerLat ??
+                      activeOrder.delivery_latitude ??
+                      selectedMapPin?.lat ??
+                      12.9716
+                  )}
+                  customerLng={Number(
+                    activeOrder.customerLng ??
+                      activeOrder.delivery_longitude ??
+                      selectedMapPin?.lng ??
+                      77.5946
+                  )}
                   isStale={isDriverGpsStale}
                 />
               ) : (
@@ -367,7 +410,8 @@ export default function LiveOrderView({
                       Awaiting Driver Acceptance
                     </h5>
                     <p className="text-[11px] sm:text-xs text-[#737e77] dark:text-gray-400 max-w-md mt-1 leading-relaxed">
-                      Your order is confirmed and being prepared. The live GPS map will be displayed as soon as a delivery partner accepts the request.
+                      Your order is confirmed and being prepared. The live GPS map will be displayed
+                      as soon as a delivery partner accepts the request.
                     </p>
                   </div>
                 </div>
@@ -429,7 +473,10 @@ export default function LiveOrderView({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 self-start md:self-center">
-                  <div className="flex items-center gap-1 sm:gap-1.5" aria-label="Delivery OTP digits">
+                  <div
+                    className="flex items-center gap-1 sm:gap-1.5"
+                    aria-label="Delivery OTP digits"
+                  >
                     {String(activeOrder.otp)
                       .padStart(6, '0')
                       .split('')
@@ -489,9 +536,13 @@ export default function LiveOrderView({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="size-2 rounded-full bg-emerald-500" />
-                    <h4 className="text-sm font-black text-[#18201c] dark:text-white">Order Delivered Successfully</h4>
+                    <h4 className="text-sm font-black text-[#18201c] dark:text-white">
+                      Order Delivered Successfully
+                    </h4>
                   </div>
-                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">Hope you enjoyed your meal!</p>
+                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                    Hope you enjoyed your meal!
+                  </p>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <button
@@ -529,7 +580,8 @@ export default function LiveOrderView({
             {inProgressOrders.map((ord: any) => {
               let itemsArr: any[] = []
               try {
-                itemsArr = typeof ord.items === 'string' ? JSON.parse(ord.items || '[]') : ord.items || []
+                itemsArr =
+                  typeof ord.items === 'string' ? JSON.parse(ord.items || '[]') : ord.items || []
               } catch {}
 
               const ordStatusText = ord.status?.replace(/_/g, ' ') || 'In Progress'
@@ -556,7 +608,9 @@ export default function LiveOrderView({
 
                   <div className="flex items-center justify-between border-t border-gray-200 dark:border-white/10 pt-2.5 text-xs">
                     <div className="min-w-0 flex flex-col text-gray-500 dark:text-gray-400">
-                      <span>{itemsArr.length} items &bull; ₹{ord.total_amount || ord.subtotal || 0}</span>
+                      <span>
+                        {itemsArr.length} items &bull; ₹{ord.total_amount || ord.subtotal || 0}
+                      </span>
                     </div>
                     <button
                       type="button"
@@ -581,7 +635,9 @@ export default function LiveOrderView({
           <div className="mx-auto grid size-16 place-items-center rounded-2xl bg-[#f0f5db] dark:bg-[#27342d] text-[#7f9815] dark:text-[#d9f447]">
             <ShoppingBag className="size-8" />
           </div>
-          <h3 className="mt-4 text-xl font-bold text-[#18201c] dark:text-white">No Active Order Right Now</h3>
+          <h3 className="mt-4 text-xl font-bold text-[#18201c] dark:text-white">
+            No Active Order Right Now
+          </h3>
           <p className="mt-1 text-xs text-[#747e78] dark:text-gray-300 max-w-sm mx-auto">
             Browse delicious dishes and place an order to see live delivery tracking here.
           </p>

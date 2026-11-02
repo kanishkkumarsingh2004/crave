@@ -306,9 +306,7 @@ export default function AddEditXPProductModal({
                 )}
               </button>
 
-              {uploadError && (
-                <p className="text-[10px] font-bold text-red-500">{uploadError}</p>
-              )}
+              {uploadError && <p className="text-[10px] font-bold text-red-500">{uploadError}</p>}
 
               {/* OR paste URL divider */}
               <div className="flex items-center gap-2">

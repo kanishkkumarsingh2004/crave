@@ -273,7 +273,10 @@ export default function ProfileView({
 
       {/* 2. Edit Profile Details Drawer */}
       {editAddress && (
-        <form onSubmit={handleProfileSubmit} className="rounded-3xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] p-5 sm:p-7 shadow-xs space-y-4 animate-in fade-in duration-200">
+        <form
+          onSubmit={handleProfileSubmit}
+          className="rounded-3xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] p-5 sm:p-7 shadow-xs space-y-4 animate-in fade-in duration-200"
+        >
           <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] dark:border-white/[0.06]">
             <h3 className="text-sm font-bold text-[#1D1D1F] dark:text-white flex items-center gap-2">
               <User className="size-4 text-stone-500" /> Edit Profile Details
@@ -358,7 +361,9 @@ export default function ProfileView({
                 </p>
               </div>
             </div>
-            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Scrypt Encrypted</span>
+            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+              Scrypt Encrypted
+            </span>
           </div>
 
           {passwordFeedback && (
@@ -411,7 +416,11 @@ export default function ProfileView({
                     className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 cursor-pointer"
                     title={showCurrentPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showCurrentPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                    {showCurrentPassword ? (
+                      <EyeOff className="size-3.5" />
+                    ) : (
+                      <Eye className="size-3.5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -438,7 +447,11 @@ export default function ProfileView({
                     className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 cursor-pointer"
                     title={showNewPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showNewPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                    {showNewPassword ? (
+                      <EyeOff className="size-3.5" />
+                    ) : (
+                      <Eye className="size-3.5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -465,7 +478,11 @@ export default function ProfileView({
                     className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 cursor-pointer"
                     title={showConfirmPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showConfirmPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                    {showConfirmPassword ? (
+                      <EyeOff className="size-3.5" />
+                    ) : (
+                      <Eye className="size-3.5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -474,19 +491,25 @@ export default function ProfileView({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-black/[0.06] dark:border-white/[0.06]">
               <div className="flex flex-wrap items-center gap-2 text-[11px] text-stone-500 dark:text-stone-400 font-medium">
                 <span className="flex items-center gap-1">
-                  <span className={`inline-block size-1.5 rounded-full ${newPassword.length >= 8 ? 'bg-emerald-500' : 'bg-stone-300 dark:bg-stone-600'}`} />
+                  <span
+                    className={`inline-block size-1.5 rounded-full ${newPassword.length >= 8 ? 'bg-emerald-500' : 'bg-stone-300 dark:bg-stone-600'}`}
+                  />
                   At least 8 characters
                 </span>
                 <span>&bull;</span>
                 <span className="flex items-center gap-1">
-                  <span className={`inline-block size-1.5 rounded-full ${newPassword && confirmPassword && newPassword === confirmPassword ? 'bg-emerald-500' : 'bg-stone-300 dark:bg-stone-600'}`} />
+                  <span
+                    className={`inline-block size-1.5 rounded-full ${newPassword && confirmPassword && newPassword === confirmPassword ? 'bg-emerald-500' : 'bg-stone-300 dark:bg-stone-600'}`}
+                  />
                   Passwords match
                 </span>
               </div>
 
               <button
                 type="submit"
-                disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
+                disabled={
+                  isChangingPassword || !currentPassword || !newPassword || !confirmPassword
+                }
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1D1D1F] dark:bg-white px-6 py-2.5 text-xs font-semibold text-white dark:text-[#1D1D1F] hover:bg-[#2C2C2E] dark:hover:bg-stone-200 transition shadow-xs disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] cursor-pointer"
               >
                 {isChangingPassword ? (
@@ -555,8 +578,12 @@ export default function ProfileView({
           {savedAddresses.length === 0 ? (
             <div className="sm:col-span-2 rounded-2xl border border-dashed border-black/[0.12] dark:border-white/[0.12] p-6 text-center">
               <MapPin className="size-8 mx-auto text-stone-300 dark:text-stone-600 mb-2" />
-              <p className="text-xs font-bold text-[#1D1D1F] dark:text-white">No saved addresses yet</p>
-              <p className="text-[11px] text-stone-500 mt-1">Tap Add New to drop a pin or save your address.</p>
+              <p className="text-xs font-bold text-[#1D1D1F] dark:text-white">
+                No saved addresses yet
+              </p>
+              <p className="text-[11px] text-stone-500 mt-1">
+                Tap Add New to drop a pin or save your address.
+              </p>
             </div>
           ) : (
             savedAddresses.map((addr) => {
@@ -615,14 +642,21 @@ export default function ProfileView({
                     {hasCoords && (
                       <p className="text-[10px] text-stone-400 dark:text-stone-500 font-mono mb-3 flex items-center gap-1">
                         <LocateFixed className="size-2.5 text-stone-400" />
-                        <span>{addr.lat!.toFixed(4)}°, {addr.lng!.toFixed(4)}°</span>
+                        <span>
+                          {addr.lat!.toFixed(4)}°, {addr.lng!.toFixed(4)}°
+                        </span>
                       </p>
                     )}
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => onSelectAddress(addr.address, hasCoords ? { lat: addr.lat!, lng: addr.lng! } : null)}
+                    onClick={() =>
+                      onSelectAddress(
+                        addr.address,
+                        hasCoords ? { lat: addr.lat!, lng: addr.lng! } : null
+                      )
+                    }
                     className={`w-full py-2 rounded-full text-xs font-semibold transition cursor-pointer min-h-[38px] ${
                       isSelected
                         ? 'bg-[#1D1D1F] dark:bg-white text-white dark:text-[#1D1D1F]'
@@ -650,7 +684,10 @@ export default function ProfileView({
             </h4>
             <p className="text-[11px] text-stone-500 dark:text-stone-400 font-medium">
               Call priority helpline at{' '}
-              <a href="tel:+919625694673" className="font-semibold text-[#1D1D1F] dark:text-white underline">
+              <a
+                href="tel:+919625694673"
+                className="font-semibold text-[#1D1D1F] dark:text-white underline"
+              >
                 -9625694673
               </a>{' '}
               (24/7).

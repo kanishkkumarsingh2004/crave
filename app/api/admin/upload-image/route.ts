@@ -6,14 +6,14 @@ import path from 'path'
 
 export const dynamic = 'force-dynamic'
 
-const ALLOWED_MIME_TYPES = new Set([
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-  'image/svg+xml',
-])
+const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+
+const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+  'image/gif': '.gif',
+}
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
 
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
     if (!ALLOWED_MIME_TYPES.has(file.type.toLowerCase())) {
       return NextResponse.json(
-        { error: 'Invalid file format. Allowed formats: PNG, JPG, WebP, GIF, SVG.' },
+        { error: 'Invalid file format. Allowed formats: PNG, JPG, WebP, GIF.' },
         { status: 400 }
       )
     }
@@ -45,10 +45,9 @@ export async function POST(request: Request) {
       )
     }
 
-    // Determine extension
-    const extension =
-      path.extname(file.name).toLowerCase() ||
-      (file.type === 'image/jpeg' ? '.jpg' : file.type === 'image/png' ? '.png' : '.webp')
+    // Never trust a user-supplied extension. In particular, allowing a spoofed
+    // .html or active SVG filename would create same-origin executable content.
+    const extension = EXTENSION_BY_MIME_TYPE[file.type.toLowerCase()]
 
     const filename = `product_${Date.now()}_${randomUUID().slice(0, 8)}${extension}`
     const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'cravexp')

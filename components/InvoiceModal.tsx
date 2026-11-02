@@ -1,13 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import {
-  FileText,
-  Loader2,
-  Printer,
-  ShieldCheck,
-  X,
-} from 'lucide-react'
+import { FileText, Loader2, Printer, ShieldCheck, X } from 'lucide-react'
 import {
   calculateOrderPriceSnapshot,
   ImmutablePriceSnapshot,
@@ -175,7 +169,13 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
     items:
       itemsList.length > 0
         ? itemsList
-        : [{ name: 'Chef Special Food Order', quantity: 1, price: Number(order.subtotal || order.total || 300) }],
+        : [
+            {
+              name: 'Chef Special Food Order',
+              quantity: 1,
+              price: Number(order.subtotal || order.total || 300),
+            },
+          ],
     tip,
     couponCode: couponCode || undefined,
     couponDiscountAmount: discountAmount,
@@ -267,9 +267,7 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
 
   // Resolved final financial breakdown honoring canonical server values
   const finalSubtotal =
-    priceSnapshot.subtotal > 0
-      ? priceSnapshot.subtotal
-      : (dbData?.subtotal ?? order.subtotal ?? 0)
+    priceSnapshot.subtotal > 0 ? priceSnapshot.subtotal : (dbData?.subtotal ?? order.subtotal ?? 0)
 
   const finalPackagingFee =
     priceSnapshot.packagingFee > 0
@@ -430,10 +428,7 @@ export default function InvoiceModal({ order, onClose, showVendorTab = false }: 
         }
       `}</style>
 
-      <div
-        className="modal-content modal-content-lg"
-        role="document"
-      >
+      <div className="modal-content modal-content-lg" role="document">
         {/* Top Header & Actions (hidden during print) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 dark:border-[#27342d] pb-4 mb-4 gap-3.5 no-print">
           <div className="flex items-center gap-2.5 min-w-0">

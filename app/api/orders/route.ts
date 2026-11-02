@@ -303,7 +303,10 @@ export async function POST(request: Request) {
       }
 
       // Secondary IP-based check to catch distributed attacks
-      const ipResult = await checkRateLimit(getRateLimitKey(request, null, 'order_ip'), 'ORDER_CREATE')
+      const ipResult = await checkRateLimit(
+        getRateLimitKey(request, null, 'order_ip'),
+        'ORDER_CREATE'
+      )
       if (!ipResult.allowed) {
         return rateLimitResponse(ipResult.resetTime, ipResult.retryAfter)
       }
@@ -573,11 +576,11 @@ export async function POST(request: Request) {
       for (const { itemId, variantId, quantity } of validatedRaw) {
         let menuItem = menuItemMap.get(itemId)
         if (!menuItem) {
-            return NextResponse.json(
-              { error: `${isCraveXPOrder ? 'XP product' : 'Menu item'} not found: ${itemId}` },
-              { status: 404 }
-            )
-          }
+          return NextResponse.json(
+            { error: `${isCraveXPOrder ? 'XP product' : 'Menu item'} not found: ${itemId}` },
+            { status: 404 }
+          )
+        }
 
         // Verify item belongs to the requested restaurant (or one of its menu)
         if (restaurant && menuItem.restaurant_id !== restaurant.id) {
@@ -836,7 +839,8 @@ export async function POST(request: Request) {
           // coordinates, geocode it server-side rather than trusting client input.
           return NextResponse.json(
             {
-              error: 'Selected delivery address is missing coordinates. Please choose a different address or update your saved address.',
+              error:
+                'Selected delivery address is missing coordinates. Please choose a different address or update your saved address.',
             },
             { status: 400 }
           )
@@ -918,7 +922,8 @@ export async function POST(request: Request) {
           // and require the customer to add a verified address first.
           return NextResponse.json(
             {
-              error: 'No saved delivery address found. Please add a delivery address from your account before ordering.',
+              error:
+                'No saved delivery address found. Please add a delivery address from your account before ordering.',
             },
             { status: 400 }
           )
@@ -929,7 +934,8 @@ export async function POST(request: Request) {
           // The customer must have a saved address with verified coordinates.
           return NextResponse.json(
             {
-              error: 'Delivery address is missing coordinates. Please update your saved address or add a new one.',
+              error:
+                'Delivery address is missing coordinates. Please update your saved address or add a new one.',
             },
             { status: 400 }
           )

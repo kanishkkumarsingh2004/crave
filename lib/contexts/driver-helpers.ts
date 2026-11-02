@@ -111,36 +111,35 @@ export function createBroadcastOfferFromOrder(
     return null
   }
 
-  const rLat = target.restaurant?.latitude != null
-    ? Number(target.restaurant.latitude)
-    : target.restaurant_latitude != null
-    ? Number(target.restaurant_latitude)
-    : DEFAULT_RESTAURANT_LAT
-  const rLng = target.restaurant?.longitude != null
-    ? Number(target.restaurant.longitude)
-    : target.restaurant_longitude != null
-    ? Number(target.restaurant_longitude)
-    : DEFAULT_RESTAURANT_LNG
+  const rLat =
+    target.restaurant?.latitude != null
+      ? Number(target.restaurant.latitude)
+      : target.restaurant_latitude != null
+        ? Number(target.restaurant_latitude)
+        : DEFAULT_RESTAURANT_LAT
+  const rLng =
+    target.restaurant?.longitude != null
+      ? Number(target.restaurant.longitude)
+      : target.restaurant_longitude != null
+        ? Number(target.restaurant_longitude)
+        : DEFAULT_RESTAURANT_LNG
 
-  const cLat = target.delivery_latitude != null
-    ? Number(target.delivery_latitude)
-    : target.customer_lat != null
-    ? Number(target.customer_lat)
-    : DEFAULT_CUSTOMER_LAT
-  const cLng = target.delivery_longitude != null
-    ? Number(target.delivery_longitude)
-    : target.customer_lng != null
-    ? Number(target.customer_lng)
-    : DEFAULT_CUSTOMER_LNG
+  const cLat =
+    target.delivery_latitude != null
+      ? Number(target.delivery_latitude)
+      : target.customer_lat != null
+        ? Number(target.customer_lat)
+        : DEFAULT_CUSTOMER_LAT
+  const cLng =
+    target.delivery_longitude != null
+      ? Number(target.delivery_longitude)
+      : target.customer_lng != null
+        ? Number(target.customer_lng)
+        : DEFAULT_CUSTOMER_LNG
 
   const driverLat = driverGpsCoords ? driverGpsCoords[0] : rLat
   const driverLng = driverGpsCoords ? driverGpsCoords[1] : rLng
-  const distKm = calculateHaversineDistanceKm(
-    driverLat,
-    driverLng,
-    rLat,
-    rLng
-  )
+  const distKm = calculateHaversineDistanceKm(driverLat, driverLng, rLat, rLng)
 
   let itemsArr: any[] = []
   try {
@@ -171,4 +170,3 @@ export function createBroadcastOfferFromOrder(
     customerLng: cLng,
   }
 }
-

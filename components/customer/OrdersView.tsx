@@ -71,7 +71,8 @@ export default function OrdersView({
       ) : (
         <div className="flex flex-col gap-4">
           {pastOrders.map((order) => {
-            const isDelivered = order.status === 'Delivered' || (order.status as string) === 'completed'
+            const isDelivered =
+              order.status === 'Delivered' || (order.status as string) === 'completed'
             const isInProgress = order.status === 'In Progress'
             const isPending = order.status === 'Pending'
             const isCancelled = order.status === 'Cancelled'
@@ -105,7 +106,9 @@ export default function OrdersView({
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-stone-500 dark:text-stone-400 font-medium">
-                        <span className="font-mono text-stone-400">#{order.id.slice(0, 8).toUpperCase()}</span>
+                        <span className="font-mono text-stone-400">
+                          #{order.id.slice(0, 8).toUpperCase()}
+                        </span>
                         <span>&bull;</span>
                         <span className="flex items-center gap-1">
                           <Clock className="size-3 text-stone-400" />
@@ -127,8 +130,18 @@ export default function OrdersView({
                               : 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/25'
                       }`}
                     >
-                      <span className={`size-1.5 rounded-full ${isDelivered ? 'bg-emerald-500' : isInProgress ? 'bg-sky-500 animate-ping' : isPending ? 'bg-amber-500' : 'bg-rose-500'}`} />
-                      <span>{order.status === 'Delivered' ? 'Delivered' : isInProgress ? 'Out for Delivery' : isPending ? 'Payment Pending' : 'Cancelled'}</span>
+                      <span
+                        className={`size-1.5 rounded-full ${isDelivered ? 'bg-emerald-500' : isInProgress ? 'bg-sky-500 animate-ping' : isPending ? 'bg-amber-500' : 'bg-rose-500'}`}
+                      />
+                      <span>
+                        {order.status === 'Delivered'
+                          ? 'Delivered'
+                          : isInProgress
+                            ? 'Out for Delivery'
+                            : isPending
+                              ? 'Payment Pending'
+                              : 'Cancelled'}
+                      </span>
                     </span>
 
                     <p className="font-black text-base text-[#18201c] dark:text-white font-mono">
@@ -148,10 +161,14 @@ export default function OrdersView({
                         key={idx}
                         className="inline-flex items-center gap-2 rounded-xl bg-stone-50 dark:bg-white/[0.03] border border-stone-200/70 dark:border-white/10 px-3 py-1.5 text-xs text-stone-700 dark:text-stone-300"
                       >
-                        <span className="font-extrabold text-emerald-700 dark:text-[#d9f447]">{item.qty}×</span>
+                        <span className="font-extrabold text-emerald-700 dark:text-[#d9f447]">
+                          {item.qty}×
+                        </span>
                         <span className="font-semibold">{item.name}</span>
                         {item.variantName && (
-                          <span className="text-[10px] font-bold text-stone-400">({item.variantName})</span>
+                          <span className="text-[10px] font-bold text-stone-400">
+                            ({item.variantName})
+                          </span>
                         )}
                         <span className="font-mono font-bold text-stone-500 dark:text-stone-400 ml-1">
                           ₹{item.price * item.qty}

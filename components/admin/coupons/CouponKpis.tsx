@@ -71,9 +71,7 @@ export function CouponKpis({ coupons }: CouponKpisProps) {
         <p className="mt-2 text-3xl font-bold text-amber-700 dark:text-amber-400">
           ₹{totalDiscountGiven.toLocaleString('en-IN')}
         </p>
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Customer savings delivered
-        </p>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Customer savings delivered</p>
       </div>
     </div>
   )

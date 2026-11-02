@@ -248,9 +248,7 @@ export function CreateEditCouponModal({
               </div>
 
               <div>
-                <label className="font-bold text-[#18201c] dark:text-white">
-                  Min Order (₹) *
-                </label>
+                <label className="font-bold text-[#18201c] dark:text-white">Min Order (₹) *</label>
                 <input
                   type="number"
                   required

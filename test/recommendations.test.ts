@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { GET as getRecommendations } from '../app/api/recommendations/route'
+import { createTestRequest, MOCK_TEST_USER } from '../lib/auth/test-auth'
 import { computeAssociationRules } from '../lib/dal/recommendations'
 
 test('Association Rule Mining — Support, Confidence, Lift calculation', () => {
@@ -50,7 +52,13 @@ test('Association Rule Mining — Support, Confidence, Lift calculation', () => 
 test('Recommendation Invariants — Candidate Filtering & Diet Compliance', () => {
   // Verify strict diet and stock invariants conceptually
   const mockCandidates = [
-    { id: '1', name: 'Paneer Butter Masala', is_veg: true, in_stock: true, restaurant_id: 'rest_1' },
+    {
+      id: '1',
+      name: 'Paneer Butter Masala',
+      is_veg: true,
+      in_stock: true,
+      restaurant_id: 'rest_1',
+    },
     { id: '2', name: 'Chicken Tikka', is_veg: false, in_stock: true, restaurant_id: 'rest_1' },
     { id: '3', name: 'Veg Pulao', is_veg: true, in_stock: false, restaurant_id: 'rest_1' },
     { id: '4', name: 'Gulab Jamun', is_veg: true, in_stock: true, restaurant_id: 'rest_2' },
@@ -72,9 +80,24 @@ test('Recommendation Invariants — Candidate Filtering & Diet Compliance', () =
   // Invariant 3: Vegetarian Invariant
   const vegFiltered = inStockFiltered.filter((c) => !isVegOnly || c.is_veg)
   assert.ok(vegFiltered.every((c) => c.is_veg))
-  assert.ok(!vegFiltered.some((c) => !c.is_veg), 'Non-veg item must be excluded when isVegOnly is true')
+  assert.ok(
+    !vegFiltered.some((c) => !c.is_veg),
+    'Non-veg item must be excluded when isVegOnly is true'
+  )
 
   // Result must be strictly Paneer Butter Masala
   assert.equal(vegFiltered.length, 1)
   assert.equal(vegFiltered[0].id, '1')
+})
+
+test('reorder recommendations reject access to another customer history', async () => {
+  const request = createTestRequest(
+    'GET',
+    'http://localhost:3000/api/recommendations?type=reorder&customerId=another-customer',
+    undefined,
+    MOCK_TEST_USER
+  )
+
+  const response = await getRecommendations(request)
+  assert.equal(response.status, 403)
 })

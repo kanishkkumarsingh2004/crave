@@ -1,6 +1,14 @@
 'use client'
 
-import { AlertTriangle, CheckCircle2, Loader2, LocateFixed, Navigation, Search, X } from 'lucide-react'
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
+  LocateFixed,
+  Navigation,
+  Search,
+  X,
+} from 'lucide-react'
 import dynamic from 'next/dynamic'
 import type { SearchResult } from './types'
 

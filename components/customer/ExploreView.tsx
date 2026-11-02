@@ -31,41 +31,152 @@ import RestaurantProfileView, { calculateEstimatedDistanceKm } from './Restauran
 import OrderAgainStrip from './OrderAgainStrip'
 
 const CATEGORY_LIST = [
-  { id: 'All', label: 'All Cravings', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Biryani', label: 'Dum Biryani', image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Pizza', label: 'Artisanal Pizza', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=300&q=80' },
-  { id: 'North Indian', label: 'North Indian', image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Burgers', label: 'Gourmet Burgers', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Starters', label: 'Asian Momos', image: 'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Chinese', label: 'Wok & Chinese', image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Pasta', label: 'Italian Pasta', image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=300&q=80' },
-  { id: 'South Indian', label: 'South Indian', image: 'https://images.unsplash.com/photo-1610192244261-3f33de3f55e4?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Healthy', label: 'Healthy Bowls', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Wraps', label: 'Wraps & Rolls', image: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Kebabs', label: 'Tandoor & Kebabs', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Chaat', label: 'Street Chaat', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Chicken', label: 'Crispy Chicken', image: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Sandwich', label: 'Gourmet Subs', image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Desserts', label: 'Cakes & Treats', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Ice Cream', label: 'Ice Creams', image: 'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Beverages', label: 'Brews & Shakes', image: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Coffee', label: 'Specialty Coffee', image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=300&q=80' },
-  { id: 'Thali', label: 'Royal Thalis', image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=300&q=80' },
+  {
+    id: 'All',
+    label: 'All Cravings',
+    image:
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Biryani',
+    label: 'Dum Biryani',
+    image:
+      'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Pizza',
+    label: 'Artisanal Pizza',
+    image:
+      'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'North Indian',
+    label: 'North Indian',
+    image:
+      'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Burgers',
+    label: 'Gourmet Burgers',
+    image:
+      'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Starters',
+    label: 'Asian Momos',
+    image:
+      'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Chinese',
+    label: 'Wok & Chinese',
+    image:
+      'https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Pasta',
+    label: 'Italian Pasta',
+    image:
+      'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'South Indian',
+    label: 'South Indian',
+    image:
+      'https://images.unsplash.com/photo-1610192244261-3f33de3f55e4?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Healthy',
+    label: 'Healthy Bowls',
+    image:
+      'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Wraps',
+    label: 'Wraps & Rolls',
+    image:
+      'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Kebabs',
+    label: 'Tandoor & Kebabs',
+    image:
+      'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Chaat',
+    label: 'Street Chaat',
+    image:
+      'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Chicken',
+    label: 'Crispy Chicken',
+    image:
+      'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Sandwich',
+    label: 'Gourmet Subs',
+    image:
+      'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Desserts',
+    label: 'Cakes & Treats',
+    image:
+      'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Ice Cream',
+    label: 'Ice Creams',
+    image:
+      'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Beverages',
+    label: 'Brews & Shakes',
+    image:
+      'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Coffee',
+    label: 'Specialty Coffee',
+    image:
+      'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    id: 'Thali',
+    label: 'Royal Thalis',
+    image:
+      'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=300&q=80',
+  },
 ]
 
 const CATEGORY_IMAGE_MAP: Record<string, string> = {
   All: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=300&q=80',
-  Biryani: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=300&q=80',
-  Pizzas: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=300&q=80',
-  Pizza: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=300&q=80',
-  Curries: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=300&q=80',
-  'North Indian': 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=300&q=80',
-  Pastas: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=300&q=80',
-  Pasta: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=300&q=80',
-  Breads: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=300&q=80',
-  Desserts: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=300&q=80',
-  Italian: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=300&q=80',
-  Mughlai: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=300&q=80',
+  Biryani:
+    'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=300&q=80',
+  Pizzas:
+    'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=300&q=80',
+  Pizza:
+    'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=300&q=80',
+  Curries:
+    'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=300&q=80',
+  'North Indian':
+    'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=300&q=80',
+  Pastas:
+    'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=300&q=80',
+  Pasta:
+    'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=300&q=80',
+  Breads:
+    'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=300&q=80',
+  Desserts:
+    'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=300&q=80',
+  Italian:
+    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=300&q=80',
+  Mughlai:
+    'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=300&q=80',
 }
 
 const CATEGORY_SYNONYMS: Record<string, string[]> = {
@@ -151,9 +262,7 @@ export default function ExploreView({
       }
     })
 
-    const list = [
-      { id: 'All', label: 'All Cravings', image: CATEGORY_IMAGE_MAP.All },
-    ]
+    const list = [{ id: 'All', label: 'All Cravings', image: CATEGORY_IMAGE_MAP.All }]
 
     Array.from(set).forEach((name) => {
       const matchKey = Object.keys(CATEGORY_IMAGE_MAP).find((k) =>
@@ -174,8 +283,6 @@ export default function ExploreView({
   const [pureVegOnly, setPureVegOnly] = useState(false)
   const [offersOnly, setOffersOnly] = useState(false)
   const [fastDeliveryOnly, setFastDeliveryOnly] = useState(false)
-
-
 
   // Variant Picker State
   const [variantPickerItem, setVariantPickerItem] = useState<MenuItem | null>(null)
@@ -199,7 +306,9 @@ export default function ExploreView({
       try {
         localStorage.setItem('crave_favorite_restaurants', JSON.stringify(next))
       } catch {}
-      triggerToast(exists ? `Removed ${name} from saved favorites` : `Added ${name} to saved favorites!`)
+      triggerToast(
+        exists ? `Removed ${name} from saved favorites` : `Added ${name} to saved favorites!`
+      )
       return next
     })
   }
@@ -242,7 +351,8 @@ export default function ExploreView({
   }
 
   const openVariantPicker = (item: MenuItem) => {
-    const defaultVariant = item.variants?.find((v) => v.isDefault && v.inStock) || item.variants?.find((v) => v.inStock)
+    const defaultVariant =
+      item.variants?.find((v) => v.isDefault && v.inStock) || item.variants?.find((v) => v.inStock)
     setVariantPickerItem(item)
     setVariantPickerSelection(defaultVariant?.id || '')
   }
@@ -424,7 +534,8 @@ export default function ExploreView({
                     (c) =>
                       c.id === item.id ||
                       c.menuItemId === item.id ||
-                      ((c as any).variantId && item.variants?.some((v) => v.id === (c as any).variantId))
+                      ((c as any).variantId &&
+                        item.variants?.some((v) => v.id === (c as any).variantId))
                   )
                 : []
               const variantQtyTotal = variantItemsInCart.reduce((sum, c) => sum + c.qty, 0)
@@ -465,22 +576,34 @@ export default function ExploreView({
                       )}
 
                       <div className="absolute top-2.5 left-2.5 rounded-lg bg-white/95 dark:bg-[#121815]/95 p-1 flex items-center gap-1 shadow-xs">
-                        <div className={`size-3 rounded-sm border flex items-center justify-center ${item.veg ? 'border-emerald-600' : 'border-rose-600'}`}>
-                          <div className={`size-1.5 rounded-full ${item.veg ? 'bg-emerald-600' : 'bg-rose-600'}`} />
+                        <div
+                          className={`size-3 rounded-sm border flex items-center justify-center ${item.veg ? 'border-emerald-600' : 'border-rose-600'}`}
+                        >
+                          <div
+                            className={`size-1.5 rounded-full ${item.veg ? 'bg-emerald-600' : 'bg-rose-600'}`}
+                          />
                         </div>
-                        <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 pr-1">{item.veg ? 'Veg' : 'Non-Veg'}</span>
+                        <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 pr-1">
+                          {item.veg ? 'Veg' : 'Non-Veg'}
+                        </span>
                       </div>
                     </div>
 
                     <div className="mt-3.5">
-                      <p className="font-extrabold text-sm sm:text-base text-[#18201c] dark:text-white line-clamp-1">{item.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">{item.detail}</p>
+                      <p className="font-extrabold text-sm sm:text-base text-[#18201c] dark:text-white line-clamp-1">
+                        {item.name}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">
+                        {item.detail}
+                      </p>
                     </div>
                   </div>
 
                   <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/5">
                     <div>
-                      <span className="text-[10px] uppercase font-bold text-gray-400 block">Price</span>
+                      <span className="text-[10px] uppercase font-bold text-gray-400 block">
+                        Price
+                      </span>
                       <span className="font-black text-base text-[#18201c] dark:text-white">
                         {hasVariants ? 'From ' : ''}₹{menuItemDisplayPrice(item)}
                       </span>
@@ -526,7 +649,9 @@ export default function ExploreView({
                         >
                           <Minus className="size-3.5 stroke-[2.5]" />
                         </button>
-                        <span className="min-w-6 text-center text-xs font-mono font-black px-1">{inCart.qty}</span>
+                        <span className="min-w-6 text-center text-xs font-mono font-black px-1">
+                          {inCart.qty}
+                        </span>
                         <button
                           type="button"
                           onClick={() => onUpdateQty(item.id, 1)}
@@ -578,7 +703,8 @@ export default function ExploreView({
               No Partner Kitchens Live Yet
             </h4>
             <p className="text-xs sm:text-sm text-[#86868B] dark:text-[#98989D] max-w-md mt-1.5 leading-relaxed">
-              When partner restaurants register through the vendor portal and activate their kitchen, their live menu dishes and accurate ETAs will display here.
+              When partner restaurants register through the vendor portal and activate their
+              kitchen, their live menu dishes and accurate ETAs will display here.
             </p>
             <button
               type="button"
@@ -591,174 +717,174 @@ export default function ExploreView({
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredRestaurants.map((rest) => {
-            // Real GPS distance calculation
-            const hasCoords =
-              rest.latitude != null &&
-              rest.longitude != null &&
-              customerLocation?.lat != null &&
-              customerLocation?.lng != null
-            const distanceKm = hasCoords
-              ? calculateEstimatedDistanceKm(
-                  rest.latitude,
-                  rest.longitude,
-                  customerLocation.lat,
-                  customerLocation.lng
-                )
-              : rest.distance
-              ? Number(rest.distance)
-              : null
+            {filteredRestaurants.map((rest) => {
+              // Real GPS distance calculation
+              const hasCoords =
+                rest.latitude != null &&
+                rest.longitude != null &&
+                customerLocation?.lat != null &&
+                customerLocation?.lng != null
+              const distanceKm = hasCoords
+                ? calculateEstimatedDistanceKm(
+                    rest.latitude,
+                    rest.longitude,
+                    customerLocation.lat,
+                    customerLocation.lng
+                  )
+                : rest.distance
+                  ? Number(rest.distance)
+                  : null
 
-            // Real ETA: kitchen prep (delivery_minutes) + transit (~2.5 mins/km)
-            const prepMinutes = Number(rest.delivery_minutes || rest.deliveryMinutes) || 20
-            const travelMinutes = distanceKm ? Math.max(3, Math.round(distanceKm * 2.5)) : 5
-            const totalEtaMin = prepMinutes + travelMinutes
-            const displayEta = `${totalEtaMin}-${totalEtaMin + 5} min`
-            const displayDistance = distanceKm ? `${distanceKm} km` : null
+              // Real ETA: kitchen prep (delivery_minutes) + transit (~2.5 mins/km)
+              const prepMinutes = Number(rest.delivery_minutes || rest.deliveryMinutes) || 20
+              const travelMinutes = distanceKm ? Math.max(3, Math.round(distanceKm * 2.5)) : 5
+              const totalEtaMin = prepMinutes + travelMinutes
+              const displayEta = `${totalEtaMin}-${totalEtaMin + 5} min`
+              const displayDistance = distanceKm ? `${distanceKm} km` : null
 
-            // Real data only from database
-            const displayOffer = rest.offer || null
-            const displayCost = rest.costForTwo || null
+              // Real data only from database
+              const displayOffer = rest.offer || null
+              const displayCost = rest.costForTwo || null
 
-            const isFavorited = favoriteIds.includes(rest.id)
+              const isFavorited = favoriteIds.includes(rest.id)
 
-            return (
-              <div
-                key={rest.id}
-                onClick={() => onSelectRestaurant(rest)}
-                className="group relative cursor-pointer overflow-hidden rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#1C1C1E] shadow-[0_2px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_12px_32px_rgba(0,0,0,0.4)] transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] active:scale-[0.99] flex flex-col justify-between"
-              >
-                <div>
-                  {/* Photo Visual Frame - Clean Apple Framing (Zero Gradients) */}
-                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-t-2xl bg-[#F2F2F7] dark:bg-[#2C2C2E]">
-                    {rest.image ? (
-                      <img
-                        src={rest.image}
-                        alt={rest.name}
-                        className="h-full w-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="grid size-full place-items-center bg-[#F2F2F7] dark:bg-[#2C2C2E] text-[#8E8E93]">
-                        <UtensilsCrossed className="size-8 stroke-[1.5]" />
-                      </div>
-                    )}
-
-                    {/* Top Floating Chips & SF Action Controls */}
-                    <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 z-10">
-                      <div className="flex items-center gap-1.5 flex-wrap pointer-events-none">
-                        {rest.isPureVeg && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-black/40 backdrop-blur-md border border-white/15 px-2.5 py-1 text-[11px] font-medium text-white shadow-sm">
-                            <span className="size-1.5 rounded-full bg-[#34C759]" />
-                            Pure Veg
-                          </span>
-                        )}
-                        {rest.tag && (
-                          <span className="inline-flex items-center rounded-full bg-black/40 backdrop-blur-md border border-white/15 px-2.5 py-1 text-[11px] font-medium tracking-wide uppercase text-white shadow-sm">
-                            {rest.tag}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {/* SF Symbol Heart (Favorite Button) */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            toggleFavorite(rest.id, rest.name)
-                          }}
-                          aria-label={isFavorited ? 'Remove from favorites' : 'Save to favorites'}
-                          className="size-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/15 grid place-items-center text-white transition-all active:scale-90 shadow-sm cursor-pointer"
-                        >
-                          <Heart
-                            className={`size-4 stroke-[1.75] transition-all duration-200 ${
-                              isFavorited
-                                ? 'fill-[#FF3B30] text-[#FF3B30] scale-105'
-                                : 'text-white'
-                            }`}
-                          />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Bottom Floating Metadata on Photo */}
-                    <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2 pointer-events-none z-10">
-                      {displayOffer ? (
-                        <div className="inline-flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white font-medium text-[11px] px-3 py-1 shadow-sm">
-                          <Tag className="size-3 stroke-[2] text-[#FF9500]" />
-                          <span>{displayOffer}</span>
-                        </div>
-                      ) : <div />}
-
-                      <div className="inline-flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 px-2.5 py-1 text-[11px] font-medium text-white shadow-sm">
-                        <Clock className="size-3 stroke-[2] text-white/90" />
-                        <span>{displayEta}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Card Content Body */}
-                  <div className="p-4 sm:p-4.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <h4 className="font-semibold text-[17px] tracking-[-0.015em] text-[#1D1D1F] dark:text-[#F5F5F7] group-hover:text-[#007AFF] dark:group-hover:text-[#0A84FF] transition-colors flex items-center gap-1.5 truncate">
-                          <span>{rest.name}</span>
-                          <CheckCircle2 className="size-4 text-[#34C759] shrink-0 stroke-[2]" />
-                        </h4>
-                        {rest.cuisine && (
-                          <p className="mt-0.5 text-[13px] text-[#86868B] dark:text-[#98989D] font-normal line-clamp-1">
-                            {rest.cuisine}
-                          </p>
-                        )}
-                      </div>
-
-                      {displayCost && (
-                        <div className="text-right shrink-0">
-                          <span className="inline-block text-[12px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7] bg-[#F2F2F7] dark:bg-[#2C2C2E] px-2.5 py-0.5 rounded-full">
-                            {displayCost}
-                          </span>
+              return (
+                <div
+                  key={rest.id}
+                  onClick={() => onSelectRestaurant(rest)}
+                  className="group relative cursor-pointer overflow-hidden rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#1C1C1E] shadow-[0_2px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_12px_32px_rgba(0,0,0,0.4)] transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] active:scale-[0.99] flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Photo Visual Frame - Clean Apple Framing (Zero Gradients) */}
+                    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-t-2xl bg-[#F2F2F7] dark:bg-[#2C2C2E]">
+                      {rest.image ? (
+                        <img
+                          src={rest.image}
+                          alt={rest.name}
+                          className="h-full w-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="grid size-full place-items-center bg-[#F2F2F7] dark:bg-[#2C2C2E] text-[#8E8E93]">
+                          <UtensilsCrossed className="size-8 stroke-[1.5]" />
                         </div>
                       )}
+
+                      {/* Top Floating Chips & SF Action Controls */}
+                      <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 z-10">
+                        <div className="flex items-center gap-1.5 flex-wrap pointer-events-none">
+                          {rest.isPureVeg && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-black/40 backdrop-blur-md border border-white/15 px-2.5 py-1 text-[11px] font-medium text-white shadow-sm">
+                              <span className="size-1.5 rounded-full bg-[#34C759]" />
+                              Pure Veg
+                            </span>
+                          )}
+                          {rest.tag && (
+                            <span className="inline-flex items-center rounded-full bg-black/40 backdrop-blur-md border border-white/15 px-2.5 py-1 text-[11px] font-medium tracking-wide uppercase text-white shadow-sm">
+                              {rest.tag}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {/* SF Symbol Heart (Favorite Button) */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleFavorite(rest.id, rest.name)
+                            }}
+                            aria-label={isFavorited ? 'Remove from favorites' : 'Save to favorites'}
+                            className="size-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/15 grid place-items-center text-white transition-all active:scale-90 shadow-sm cursor-pointer"
+                          >
+                            <Heart
+                              className={`size-4 stroke-[1.75] transition-all duration-200 ${
+                                isFavorited
+                                  ? 'fill-[#FF3B30] text-[#FF3B30] scale-105'
+                                  : 'text-white'
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Bottom Floating Metadata on Photo */}
+                      <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2 pointer-events-none z-10">
+                        {displayOffer ? (
+                          <div className="inline-flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white font-medium text-[11px] px-3 py-1 shadow-sm">
+                            <Tag className="size-3 stroke-[2] text-[#FF9500]" />
+                            <span>{displayOffer}</span>
+                          </div>
+                        ) : (
+                          <div />
+                        )}
+
+                        <div className="inline-flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 px-2.5 py-1 text-[11px] font-medium text-white shadow-sm">
+                          <Clock className="size-3 stroke-[2] text-white/90" />
+                          <span>{displayEta}</span>
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Maps Style Distance Row */}
-                    <div className="mt-3 flex items-center gap-2 pt-2.5 border-t border-black/[0.05] dark:border-white/[0.06] text-[12px] text-[#86868B] dark:text-[#98989D]">
-                      <span className="flex items-center gap-1 font-normal">
-                        <MapPin className="size-3.5 text-[#86868B] dark:text-[#98989D] stroke-[1.75]" />
-                        <span>{displayDistance || rest.address || 'Kitchen Live'}</span>
+                    {/* Card Content Body */}
+                    <div className="p-4 sm:p-4.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-semibold text-[17px] tracking-[-0.015em] text-[#1D1D1F] dark:text-[#F5F5F7] group-hover:text-[#007AFF] dark:group-hover:text-[#0A84FF] transition-colors flex items-center gap-1.5 truncate">
+                            <span>{rest.name}</span>
+                            <CheckCircle2 className="size-4 text-[#34C759] shrink-0 stroke-[2]" />
+                          </h4>
+                          {rest.cuisine && (
+                            <p className="mt-0.5 text-[13px] text-[#86868B] dark:text-[#98989D] font-normal line-clamp-1">
+                              {rest.cuisine}
+                            </p>
+                          )}
+                        </div>
+
+                        {displayCost && (
+                          <div className="text-right shrink-0">
+                            <span className="inline-block text-[12px] font-medium text-[#1D1D1F] dark:text-[#F5F5F7] bg-[#F2F2F7] dark:bg-[#2C2C2E] px-2.5 py-0.5 rounded-full">
+                              {displayCost}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Maps Style Distance Row */}
+                      <div className="mt-3 flex items-center gap-2 pt-2.5 border-t border-black/[0.05] dark:border-white/[0.06] text-[12px] text-[#86868B] dark:text-[#98989D]">
+                        <span className="flex items-center gap-1 font-normal">
+                          <MapPin className="size-3.5 text-[#86868B] dark:text-[#98989D] stroke-[1.75]" />
+                          <span>{displayDistance || rest.address || 'Kitchen Live'}</span>
+                        </span>
+                        <span>&bull;</span>
+                        <span className="flex items-center gap-1 font-medium text-[#34C759]">
+                          <Clock className="size-3.5 stroke-[1.75]" />
+                          <span>Fast Doorstep Delivery</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer Action Bar - Apple App Store Button Style */}
+                  <div className="px-4 sm:px-4.5 pb-4 pt-0">
+                    <div className="flex items-center justify-between border-t border-black/[0.05] dark:border-white/[0.06] pt-3">
+                      <span className="flex items-center gap-2 text-[12px] font-medium text-[#86868B] dark:text-[#98989D]">
+                        <span className="size-2 rounded-full bg-[#34C759]" />
+                        <span className="text-[#1D1D1F] dark:text-[#F5F5F7]">Kitchen Live</span>
                       </span>
-                      <span>&bull;</span>
-                      <span className="flex items-center gap-1 font-medium text-[#34C759]">
-                        <Clock className="size-3.5 stroke-[1.75]" />
-                        <span>Fast Doorstep Delivery</span>
+
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] dark:bg-[#2C2C2E] dark:hover:bg-[#3A3A3C] group-hover:bg-[#007AFF] group-hover:text-white dark:group-hover:bg-[#0A84FF] dark:group-hover:text-white text-[#007AFF] dark:text-[#0A84FF] px-3.5 py-1.5 text-[13px] font-semibold transition-all duration-200">
+                        <span>View</span>
+                        <ChevronRight className="size-3.5 stroke-[2.5]" />
                       </span>
                     </div>
                   </div>
                 </div>
-
-                {/* Footer Action Bar - Apple App Store Button Style */}
-                <div className="px-4 sm:px-4.5 pb-4 pt-0">
-                  <div className="flex items-center justify-between border-t border-black/[0.05] dark:border-white/[0.06] pt-3">
-                    <span className="flex items-center gap-2 text-[12px] font-medium text-[#86868B] dark:text-[#98989D]">
-                      <span className="size-2 rounded-full bg-[#34C759]" />
-                      <span className="text-[#1D1D1F] dark:text-[#F5F5F7]">Kitchen Live</span>
-                    </span>
-
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] dark:bg-[#2C2C2E] dark:hover:bg-[#3A3A3C] group-hover:bg-[#007AFF] group-hover:text-white dark:group-hover:bg-[#0A84FF] dark:group-hover:text-white text-[#007AFF] dark:text-[#0A84FF] px-3.5 py-1.5 text-[13px] font-semibold transition-all duration-200">
-                      <span>View</span>
-                      <ChevronRight className="size-3.5 stroke-[2.5]" />
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
-
-
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Variant Picker Modal */}
       {variantPickerItem && (
@@ -772,7 +898,9 @@ export default function ExploreView({
           >
             <div className="flex items-start justify-between border-b border-[#25332a] pb-3">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#d9f447]">Choose Size</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#d9f447]">
+                  Choose Size
+                </span>
                 <h3 className="text-lg font-black text-white">{variantPickerItem.name}</h3>
               </div>
               <button
@@ -828,7 +956,6 @@ export default function ExploreView({
           </div>
         </div>
       )}
-
     </div>
   )
 }

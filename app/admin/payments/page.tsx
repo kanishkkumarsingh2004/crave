@@ -1,14 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
-import {
-  CheckCircle2,
-  CreditCard,
-  Download,
-  RefreshCw,
-  Search,
-  X,
-} from 'lucide-react'
+import { CheckCircle2, CreditCard, Download, RefreshCw, Search, X } from 'lucide-react'
 import { TransactionRecord } from '@/components/admin/payments/types'
 import { PaymentMetrics } from '@/components/admin/payments/PaymentMetrics'
 import { PaymentLedgerTable } from '@/components/admin/payments/PaymentLedgerTable'
@@ -43,49 +36,47 @@ export default function AdminPaymentLedgerPage() {
 
           const subtotal = Number(
             (snapshot.grossSubtotalPaise != null ? snapshot.grossSubtotalPaise / 100 : null) ??
-            o.subtotal ??
-            o.total_amount ??
-            0
+              o.subtotal ??
+              o.total_amount ??
+              0
           )
           const deliveryFee = Number(
             (snapshot.deliveryFeePaise != null ? snapshot.deliveryFeePaise / 100 : null) ??
-            billingBreakdown.delivery_fee ??
-            o.delivery_fee ??
-            0
+              billingBreakdown.delivery_fee ??
+              o.delivery_fee ??
+              0
           )
           const platformFee = Number(
             (snapshot.platformFeePaise != null ? snapshot.platformFeePaise / 100 : null) ??
-            billingBreakdown.platform_fee ??
-            o.platform_fee ??
-            0
+              billingBreakdown.platform_fee ??
+              o.platform_fee ??
+              0
           )
           const handlingFee = Number(
             (snapshot.handlingFeePaise != null ? snapshot.handlingFeePaise / 100 : null) ??
-            billingBreakdown.handling_fee ??
-            o.handling_fee ??
-            0
+              billingBreakdown.handling_fee ??
+              o.handling_fee ??
+              0
           )
           const packagingFee = Number(
             (snapshot.packagingFeePaise != null ? snapshot.packagingFeePaise / 100 : null) ??
-            billingBreakdown.packaging_fee ??
-            o.packaging_fee ??
-            0
+              billingBreakdown.packaging_fee ??
+              o.packaging_fee ??
+              0
           )
           const gst = Number(
             (snapshot.platformServiceTaxBreakdown?.totalGstPaise != null
               ? snapshot.platformServiceTaxBreakdown.totalGstPaise / 100
               : null) ??
-            billingBreakdown.gst ??
-            o.gst ??
-            0
+              billingBreakdown.gst ??
+              o.gst ??
+              0
           )
           const totalAmount = Number(
-            (snapshot.customerPayablePaise != null
-              ? snapshot.customerPayablePaise / 100
-              : null) ??
-            billingBreakdown.total_amount ??
-            o.total_amount ??
-            (subtotal + deliveryFee + platformFee + handlingFee + packagingFee + gst)
+            (snapshot.customerPayablePaise != null ? snapshot.customerPayablePaise / 100 : null) ??
+              billingBreakdown.total_amount ??
+              o.total_amount ??
+              subtotal + deliveryFee + platformFee + handlingFee + packagingFee + gst
           )
 
           // Canonical splits derived from financial_snapshot / database columns (paise exact):
@@ -94,20 +85,19 @@ export default function AdminPaymentLedgerPage() {
             (snapshot.vendorPayableNetPaise != null
               ? snapshot.vendorPayableNetPaise / 100
               : null) ??
-            billingBreakdown.vendor_net_payout ??
-            o.restaurant_payout ??
-            Math.round(subtotal * 0.85)
+              billingBreakdown.vendor_net_payout ??
+              o.restaurant_payout ??
+              Math.round(subtotal * 0.85)
           )
 
           // 2. Driver Payout
           const driverCut = Number(
-            (snapshot.riderPayablePaise != null
-              ? snapshot.riderPayablePaise / 100
-              : null) ??
-            (billingBreakdown.driver_base_payout && billingBreakdown.driver_extra_distance_payout
-              ? billingBreakdown.driver_base_payout + billingBreakdown.driver_extra_distance_payout
-              : billingBreakdown.driver_payout) ??
-            Math.round(deliveryFee * 0.8) + (Number(o.tip) || 0)
+            (snapshot.riderPayablePaise != null ? snapshot.riderPayablePaise / 100 : null) ??
+              (billingBreakdown.driver_base_payout && billingBreakdown.driver_extra_distance_payout
+                ? billingBreakdown.driver_base_payout +
+                  billingBreakdown.driver_extra_distance_payout
+                : billingBreakdown.driver_payout) ??
+              Math.round(deliveryFee * 0.8) + (Number(o.tip) || 0)
           )
 
           // 3. Crave Platform Net Retained Margin
@@ -115,9 +105,9 @@ export default function AdminPaymentLedgerPage() {
             (snapshot.platformNetRevenuePaise != null
               ? snapshot.platformNetRevenuePaise / 100
               : null) ??
-            billingBreakdown.platform_net_profit ??
-            o.platform_revenue ??
-            Math.max(0, totalAmount - vendorCut - driverCut)
+              billingBreakdown.platform_net_profit ??
+              o.platform_revenue ??
+              Math.max(0, totalAmount - vendorCut - driverCut)
           )
 
           // Method & Status detection

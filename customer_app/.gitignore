@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+.DS_Store
+android/.gradle
+android/build
+android/app/build
+ios/build
+ios/App/build
+ios/App/Pods

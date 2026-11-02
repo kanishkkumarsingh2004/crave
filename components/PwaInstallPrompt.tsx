@@ -50,11 +50,14 @@ export default function PwaInstallPrompt() {
         })
       } else {
         // Automatically unregister any previously registered local dev service workers to prevent refresh loops
-        navigator.serviceWorker.getRegistrations().then((registrations) => {
-          for (const registration of registrations) {
-            registration.unregister()
-          }
-        }).catch(() => {})
+        navigator.serviceWorker
+          .getRegistrations()
+          .then((registrations) => {
+            for (const registration of registrations) {
+              registration.unregister()
+            }
+          })
+          .catch(() => {})
       }
     }
 

@@ -28,10 +28,7 @@ interface OrderAgainStripProps {
   triggerToast?: (msg: string) => void
 }
 
-export default function OrderAgainStrip({
-  customerId,
-  triggerToast,
-}: OrderAgainStripProps) {
+export default function OrderAgainStrip({ customerId, triggerToast }: OrderAgainStripProps) {
   const router = useRouter()
   const { addItem, clearCart } = useCart()
   const [packages, setPackages] = useState<ReorderPackage[]>([])

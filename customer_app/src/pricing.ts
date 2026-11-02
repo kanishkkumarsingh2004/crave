@@ -14,12 +14,7 @@ function cacheKey(lat1: number, lng1: number, lat2: number, lng2: number): strin
   return `${lat1.toFixed(1)},${lng1.toFixed(1)}→${lat2.toFixed(1)},${lng2.toFixed(1)}`
 }
 
-function getCachedDistance(
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number
-): number | null {
+function getCachedDistance(lat1: number, lng1: number, lat2: number, lng2: number): number | null {
   const key = cacheKey(lat1, lng1, lat2, lng2)
   const cached = distanceCache.get(key)
   if (cached && cached.expiresAt > Date.now()) return cached.km

@@ -219,7 +219,8 @@ async function beginWebhookEvent(
   if (existing.status === 'processing') {
     // Check for stale lease (worker crashed mid-processing).
     const leaseExpired =
-      existing.received_at && Date.now() - new Date(existing.received_at).getTime() > PROCESSING_LEASE_MS
+      existing.received_at &&
+      Date.now() - new Date(existing.received_at).getTime() > PROCESSING_LEASE_MS
 
     if (leaseExpired) {
       // Atomically reclaim the stale lease.

@@ -57,13 +57,17 @@ export async function POST(request: Request) {
     })
     if (!rest) {
       return NextResponse.json(
-        { error: `Payment rejected: Restaurant "${order.restaurant_id}" does not exist in the database.` },
+        {
+          error: `Payment rejected: Restaurant "${order.restaurant_id}" does not exist in the database.`,
+        },
         { status: 404 }
       )
     }
     if (rest.is_open === false) {
       return NextResponse.json(
-        { error: `Payment rejected: Restaurant "${rest.name}" is currently closed and not accepting payments.` },
+        {
+          error: `Payment rejected: Restaurant "${rest.name}" is currently closed and not accepting payments.`,
+        },
         { status: 400 }
       )
     }
@@ -72,11 +76,14 @@ export async function POST(request: Request) {
     const rawOrderItems: any[] = Array.isArray(order.items)
       ? (order.items as any[])
       : typeof order.items === 'string'
-      ? JSON.parse(order.items)
-      : []
+        ? JSON.parse(order.items)
+        : []
 
     if (rawOrderItems.length === 0) {
-      return NextResponse.json({ error: 'Payment rejected: Order contains no items.' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Payment rejected: Order contains no items.' },
+        { status: 400 }
+      )
     }
 
     const itemIds = rawOrderItems
@@ -101,7 +108,10 @@ export async function POST(request: Request) {
       })
       if (dbItems.length !== itemIds.length) {
         return NextResponse.json(
-          { error: 'Payment rejected: One or more items do not exist in the database or do not belong to the restaurant.' },
+          {
+            error:
+              'Payment rejected: One or more items do not exist in the database or do not belong to the restaurant.',
+          },
           { status: 404 }
         )
       }

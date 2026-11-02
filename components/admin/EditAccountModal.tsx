@@ -134,7 +134,15 @@ export default function EditAccountModal({
               Account Management &amp; Editing
             </span>
             <h3 className="text-xl font-bold text-[#18201c] dark:text-white mt-0.5">
-              Edit {isVendor ? 'Store & Vendor' : isDriver ? 'Driver Partner' : account.role === 'admin' ? 'Admin' : 'Customer'} Details
+              Edit{' '}
+              {isVendor
+                ? 'Store & Vendor'
+                : isDriver
+                  ? 'Driver Partner'
+                  : account.role === 'admin'
+                    ? 'Admin'
+                    : 'Customer'}{' '}
+              Details
             </h3>
           </div>
           <button
@@ -147,7 +155,9 @@ export default function EditAccountModal({
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4 text-xs">
           <div>
-            <label className="font-bold text-[#18201c] dark:text-white">Full Name / Owner Name *</label>
+            <label className="font-bold text-[#18201c] dark:text-white">
+              Full Name / Owner Name *
+            </label>
             <input
               type="text"
               required
@@ -184,11 +194,14 @@ export default function EditAccountModal({
           {isVendor && (
             <div className="rounded-xl bg-amber-50/70 dark:bg-amber-950/30 p-4 border border-amber-200 dark:border-amber-900/50 space-y-3">
               <p className="font-bold text-[#18201c] dark:text-amber-200 flex items-center gap-1.5 text-xs">
-                <Store className="size-4 text-amber-700 dark:text-amber-400" /> Store &amp; Commercial Settings
+                <Store className="size-4 text-amber-700 dark:text-amber-400" /> Store &amp;
+                Commercial Settings
               </p>
 
               <div>
-                <label className="font-bold text-gray-700 dark:text-gray-300">Display Store Name *</label>
+                <label className="font-bold text-gray-700 dark:text-gray-300">
+                  Display Store Name *
+                </label>
                 <input
                   type="text"
                   required
@@ -200,7 +213,9 @@ export default function EditAccountModal({
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="font-bold text-gray-700 dark:text-gray-300">Cuisine / Category</label>
+                  <label className="font-bold text-gray-700 dark:text-gray-300">
+                    Cuisine / Category
+                  </label>
                   <input
                     type="text"
                     value={form.cuisine}
@@ -210,7 +225,9 @@ export default function EditAccountModal({
                 </div>
 
                 <div>
-                  <label className="font-bold text-gray-700 dark:text-gray-300">Commission Rate (%)</label>
+                  <label className="font-bold text-gray-700 dark:text-gray-300">
+                    Commission Rate (%)
+                  </label>
                   <input
                     type="number"
                     min={0}
@@ -227,7 +244,8 @@ export default function EditAccountModal({
           {isDriver && (
             <div className="rounded-xl bg-cyan-50/70 dark:bg-cyan-950/30 p-4 border border-cyan-200 dark:border-cyan-900/50 space-y-3">
               <p className="font-bold text-[#18201c] dark:text-cyan-200 flex items-center gap-1.5 text-xs">
-                <Zap className="size-4 text-cyan-700 dark:text-cyan-400" /> Driver Vehicle &amp; Fleet Details
+                <Zap className="size-4 text-cyan-700 dark:text-cyan-400" /> Driver Vehicle &amp;
+                Fleet Details
               </p>
 
               <div className="grid gap-3 sm:grid-cols-2">
@@ -247,7 +265,9 @@ export default function EditAccountModal({
                 </div>
 
                 <div>
-                  <label className="font-bold text-gray-700 dark:text-gray-300">License Plate Number</label>
+                  <label className="font-bold text-gray-700 dark:text-gray-300">
+                    License Plate Number
+                  </label>
                   <input
                     type="text"
                     placeholder="KA-05-EV-1234"
@@ -301,7 +321,9 @@ export default function EditAccountModal({
           )}
 
           <div>
-            <label className="font-bold text-[#18201c] dark:text-white">Reset Account Password (Optional)</label>
+            <label className="font-bold text-[#18201c] dark:text-white">
+              Reset Account Password (Optional)
+            </label>
             <input
               type="password"
               placeholder="Leave blank to keep unchanged"

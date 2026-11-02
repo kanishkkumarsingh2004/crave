@@ -67,7 +67,9 @@ export default function StoreInventoryView({
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-[#18201c]">craveXP Inventory &amp; Stock Manager</h2>
+          <h2 className="text-lg font-bold text-[#18201c]">
+            craveXP Inventory &amp; Stock Manager
+          </h2>
           <p className="text-xs text-[#5c6861]">
             Manage SKU availability, stock counts, shelf expiry, and prices in real-time.
           </p>
@@ -153,7 +155,9 @@ export default function StoreInventoryView({
         {filteredInventory.length === 0 ? (
           <div className="col-span-full py-16 text-center rounded-3xl border border-dashed border-[#e2e7dc] bg-white">
             <Tag className="mx-auto size-10 text-gray-300 mb-3" />
-            <p className="text-base font-bold text-[#18201c]">No inventory products matched your query.</p>
+            <p className="text-base font-bold text-[#18201c]">
+              No inventory products matched your query.
+            </p>
           </div>
         ) : (
           filteredInventory.map((item) => (
@@ -166,7 +170,11 @@ export default function StoreInventoryView({
               <div>
                 <div className="relative aspect-square w-full mb-3 rounded-xl overflow-hidden bg-[#f8f9f6] flex items-center justify-center">
                   {item.image ? (
-                    <img src={item.image} alt={item.name} className="h-full w-full object-contain p-2" />
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="h-full w-full object-contain p-2"
+                    />
                   ) : (
                     <Tag className="size-8 text-gray-300" />
                   )}
@@ -187,7 +195,9 @@ export default function StoreInventoryView({
                   )}
                 </div>
 
-                <p className="text-[10px] font-mono text-gray-400 mt-1 truncate">Barcode: {item.skuCode}</p>
+                <p className="text-[10px] font-mono text-gray-400 mt-1 truncate">
+                  Barcode: {item.skuCode}
+                </p>
               </div>
 
               {/* Stock Controls */}

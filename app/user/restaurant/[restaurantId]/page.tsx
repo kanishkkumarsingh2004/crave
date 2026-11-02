@@ -20,7 +20,9 @@ export default function RestaurantDirectRoutePage() {
     <div className="min-h-screen flex items-center justify-center bg-[#fafbfa] dark:bg-[#0c120e]">
       <div className="flex flex-col items-center gap-3">
         <div className="size-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
-        <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">Opening Restaurant...</p>
+        <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">
+          Opening Restaurant...
+        </p>
       </div>
     </div>
   )

@@ -44,7 +44,16 @@ export function calculateEstimatedDistanceKm(
   const cLat = Number(custLat)
   const cLng = Number(custLng)
 
-  if (!rLat || !rLng || !cLat || !cLng || isNaN(rLat) || isNaN(rLng) || isNaN(cLat) || isNaN(cLng)) {
+  if (
+    !rLat ||
+    !rLng ||
+    !cLat ||
+    !cLng ||
+    isNaN(rLat) ||
+    isNaN(rLng) ||
+    isNaN(cLat) ||
+    isNaN(cLng)
+  ) {
     return 2.4
   }
 
@@ -164,7 +173,9 @@ export default function RestaurantProfileView({
 
       const matchesVeg = vegOnly ? dish.veg : true
       const matchesNonVeg = nonVegOnly ? !dish.veg : true
-      const matchesBestseller = bestsellerOnly ? Boolean(dish.bestseller || dish.price >= 250) : true
+      const matchesBestseller = bestsellerOnly
+        ? Boolean(dish.bestseller || dish.price >= 250)
+        : true
       const matchesCategory =
         selectedCategory === 'All' || (dish.category || 'Recommended') === selectedCategory
 
@@ -294,7 +305,8 @@ export default function RestaurantProfileView({
             </div>
 
             <div className="text-xs font-semibold text-stone-500 dark:text-gray-400">
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">Open now</span> • Closes 11:30 pm
+              <span className="font-bold text-emerald-600 dark:text-emerald-400">Open now</span> •
+              Closes 11:30 pm
             </div>
           </div>
 
@@ -333,7 +345,8 @@ export default function RestaurantProfileView({
                   </span>
                 </div>
                 <p className="text-[11px] text-stone-500 dark:text-gray-400 mt-0.5">
-                  ~{prepTimeMinutes} mins avg kitchen prep + ~{roadTravelMinutes} mins road delivery to{' '}
+                  ~{prepTimeMinutes} mins avg kitchen prep + ~{roadTravelMinutes} mins road delivery
+                  to{' '}
                   <span className="font-bold text-stone-700 dark:text-gray-300 truncate max-w-[300px] inline-block align-bottom">
                     {destinationLabel}
                   </span>
@@ -345,307 +358,310 @@ export default function RestaurantProfileView({
 
         {/* Menu & Dishes */}
         <div className="space-y-6">
-            {/* Search and Dietary Filter Bar */}
-            <div className="sticky top-2 z-20 rounded-2xl border border-stone-200/90 dark:border-[#223026] bg-white/95 dark:bg-[#131c16]/95 backdrop-blur-md p-3 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              {/* Search in Restaurant */}
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-stone-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={`Search dishes in ${restaurant.name}...`}
-                  className="w-full rounded-full border border-stone-200 dark:border-[#243328] bg-stone-50 dark:bg-[#0f1611] pl-9 pr-4 py-2 text-xs font-semibold text-[#121815] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#f97316] dark:focus:ring-[#d9f447]"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 dark:hover:text-white"
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Veg / Non-Veg / Bestseller Filter Pills */}
-              <div className="flex items-center gap-2 shrink-0 overflow-x-auto py-1">
-                {/* Veg Toggle */}
+          {/* Search and Dietary Filter Bar */}
+          <div className="sticky top-2 z-20 rounded-2xl border border-stone-200/90 dark:border-[#223026] bg-white/95 dark:bg-[#131c16]/95 backdrop-blur-md p-3 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {/* Search in Restaurant */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-stone-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={`Search dishes in ${restaurant.name}...`}
+                className="w-full rounded-full border border-stone-200 dark:border-[#243328] bg-stone-50 dark:bg-[#0f1611] pl-9 pr-4 py-2 text-xs font-semibold text-[#121815] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#f97316] dark:focus:ring-[#d9f447]"
+              />
+              {searchQuery && (
                 <button
-                  type="button"
-                  onClick={() => {
-                    setVegOnly(!vegOnly)
-                    if (!vegOnly) setNonVegOnly(false)
-                  }}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition border cursor-pointer ${
-                    vegOnly
-                      ? 'border-emerald-600 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
-                      : 'border-stone-200 dark:border-[#26352a] text-stone-600 dark:text-gray-300 hover:border-emerald-500'
-                  }`}
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 dark:hover:text-white"
                 >
-                  <span className="grid size-3.5 place-items-center rounded-xs border border-emerald-600 p-0.5">
-                    <span className="size-1.5 rounded-full bg-emerald-600" />
-                  </span>
-                  <span>Veg</span>
+                  <X className="size-3.5" />
                 </button>
-
-                {/* Non-Veg Toggle */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNonVegOnly(!nonVegOnly)
-                    if (!nonVegOnly) setVegOnly(false)
-                  }}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition border cursor-pointer ${
-                    nonVegOnly
-                      ? 'border-rose-600 bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300'
-                      : 'border-stone-200 dark:border-[#26352a] text-stone-600 dark:text-gray-300 hover:border-rose-500'
-                  }`}
-                >
-                  <span className="grid size-3.5 place-items-center rounded-xs border border-rose-600 p-0.5">
-                    <span className="size-1.5 rounded-full bg-rose-600" />
-                  </span>
-                  <span>Non-Veg</span>
-                </button>
-
-                {/* Bestseller Toggle */}
-                <button
-                  type="button"
-                  onClick={() => setBestsellerOnly(!bestsellerOnly)}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition border cursor-pointer ${
-                    bestsellerOnly
-                      ? 'border-[#f97316] bg-orange-50 text-[#f97316] dark:bg-orange-950/40 dark:text-orange-300'
-                      : 'border-stone-200 dark:border-[#26352a] text-stone-600 dark:text-gray-300 hover:border-orange-500'
-                  }`}
-                >
-                  <Sparkles className="size-3" />
-                  <span>Bestseller</span>
-                </button>
-              </div>
+              )}
             </div>
 
-            {/* Category Pills Navigation */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`rounded-full px-4 py-1.5 text-xs font-bold whitespace-nowrap transition cursor-pointer ${
-                    selectedCategory === cat
-                      ? 'bg-[#121815] text-white dark:bg-[#d9f447] dark:text-[#0c120e]'
-                      : 'bg-stone-100 text-stone-600 dark:bg-[#18221b] dark:text-gray-300 hover:bg-stone-200 dark:hover:bg-[#202d24]'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+            {/* Veg / Non-Veg / Bestseller Filter Pills */}
+            <div className="flex items-center gap-2 shrink-0 overflow-x-auto py-1">
+              {/* Veg Toggle */}
+              <button
+                type="button"
+                onClick={() => {
+                  setVegOnly(!vegOnly)
+                  if (!vegOnly) setNonVegOnly(false)
+                }}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition border cursor-pointer ${
+                  vegOnly
+                    ? 'border-emerald-600 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
+                    : 'border-stone-200 dark:border-[#26352a] text-stone-600 dark:text-gray-300 hover:border-emerald-500'
+                }`}
+              >
+                <span className="grid size-3.5 place-items-center rounded-xs border border-emerald-600 p-0.5">
+                  <span className="size-1.5 rounded-full bg-emerald-600" />
+                </span>
+                <span>Veg</span>
+              </button>
+
+              {/* Non-Veg Toggle */}
+              <button
+                type="button"
+                onClick={() => {
+                  setNonVegOnly(!nonVegOnly)
+                  if (!nonVegOnly) setVegOnly(false)
+                }}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition border cursor-pointer ${
+                  nonVegOnly
+                    ? 'border-rose-600 bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300'
+                    : 'border-stone-200 dark:border-[#26352a] text-stone-600 dark:text-gray-300 hover:border-rose-500'
+                }`}
+              >
+                <span className="grid size-3.5 place-items-center rounded-xs border border-rose-600 p-0.5">
+                  <span className="size-1.5 rounded-full bg-rose-600" />
+                </span>
+                <span>Non-Veg</span>
+              </button>
+
+              {/* Bestseller Toggle */}
+              <button
+                type="button"
+                onClick={() => setBestsellerOnly(!bestsellerOnly)}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition border cursor-pointer ${
+                  bestsellerOnly
+                    ? 'border-[#f97316] bg-orange-50 text-[#f97316] dark:bg-orange-950/40 dark:text-orange-300'
+                    : 'border-stone-200 dark:border-[#26352a] text-stone-600 dark:text-gray-300 hover:border-orange-500'
+                }`}
+              >
+                <Sparkles className="size-3" />
+                <span>Bestseller</span>
+              </button>
             </div>
+          </div>
 
-            {/* Dish Sections */}
-            {filteredDishes.length === 0 ? (
-              <div className="rounded-3xl border border-stone-200 dark:border-[#223026] bg-white dark:bg-[#131c16] p-12 text-center">
-                <UtensilsCrossed className="size-10 text-stone-400 mx-auto mb-2 opacity-60" />
-                <h4 className="text-base font-bold text-[#121815] dark:text-white">
-                  No matching dishes found
-                </h4>
-                <p className="text-xs text-stone-500 dark:text-gray-400 mt-1">
-                  Try clearing your filters or search keywords to view the full menu.
-                </p>
-                <button
-                  onClick={() => {
-                    setSearchQuery('')
-                    setVegOnly(false)
-                    setNonVegOnly(false)
-                    setBestsellerOnly(false)
-                    setSelectedCategory('All')
-                  }}
-                  className="mt-4 rounded-full bg-stone-100 dark:bg-[#1a231d] px-4 py-2 text-xs font-bold text-[#121815] dark:text-white hover:bg-stone-200 dark:hover:bg-[#25332a] cursor-pointer"
-                >
-                  Reset all filters
-                </button>
-              </div>
-            ) : (
-              Object.entries(groupedDishes).map(([categoryName, dishes]) => (
-                <div
-                  key={categoryName}
-                  className="rounded-2xl sm:rounded-3xl border border-stone-200 dark:border-[#223026] bg-white dark:bg-[#131c16] p-4 sm:p-6 shadow-xs space-y-4"
-                >
-                  <div className="flex items-center justify-between border-b border-stone-100 dark:border-[#1d2920] pb-3">
-                    <h2 className="text-base sm:text-lg font-black text-[#121815] dark:text-white flex items-center gap-2">
-                      <span>{categoryName}</span>
-                      <span className="text-xs font-bold text-stone-400 dark:text-gray-500">
-                        ({dishes.length})
-                      </span>
-                    </h2>
-                  </div>
+          {/* Category Pills Navigation */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`rounded-full px-4 py-1.5 text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                  selectedCategory === cat
+                    ? 'bg-[#121815] text-white dark:bg-[#d9f447] dark:text-[#0c120e]'
+                    : 'bg-stone-100 text-stone-600 dark:bg-[#18221b] dark:text-gray-300 hover:bg-stone-200 dark:hover:bg-[#202d24]'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
 
-                  {/* Dishes in this category */}
-                  <div className="divide-y divide-stone-100 dark:divide-[#1d2920]">
-                    {dishes.map((item) => {
-                      const hasVariants = Boolean(item.variants && item.variants.length > 0)
-                      const variantItemsInCart = hasVariants
-                        ? cart.filter(
-                            (c) =>
-                              c.id === item.id ||
-                              c.menuItemId === item.id ||
-                              ((c as any).variantId && item.variants?.some((v) => v.id === (c as any).variantId))
-                          )
-                        : []
-                      const variantQtyTotal = variantItemsInCart.reduce((sum, c) => sum + c.qty, 0)
-                      const inCart = hasVariants ? undefined : cart.find((i) => i.id === item.id)
-                      const isOutOfStock =
-                        item.in_stock === false ||
-                        item.inStock === false ||
-                        (item.stock_count != null && item.stock_count <= 0)
+          {/* Dish Sections */}
+          {filteredDishes.length === 0 ? (
+            <div className="rounded-3xl border border-stone-200 dark:border-[#223026] bg-white dark:bg-[#131c16] p-12 text-center">
+              <UtensilsCrossed className="size-10 text-stone-400 mx-auto mb-2 opacity-60" />
+              <h4 className="text-base font-bold text-[#121815] dark:text-white">
+                No matching dishes found
+              </h4>
+              <p className="text-xs text-stone-500 dark:text-gray-400 mt-1">
+                Try clearing your filters or search keywords to view the full menu.
+              </p>
+              <button
+                onClick={() => {
+                  setSearchQuery('')
+                  setVegOnly(false)
+                  setNonVegOnly(false)
+                  setBestsellerOnly(false)
+                  setSelectedCategory('All')
+                }}
+                className="mt-4 rounded-full bg-stone-100 dark:bg-[#1a231d] px-4 py-2 text-xs font-bold text-[#121815] dark:text-white hover:bg-stone-200 dark:hover:bg-[#25332a] cursor-pointer"
+              >
+                Reset all filters
+              </button>
+            </div>
+          ) : (
+            Object.entries(groupedDishes).map(([categoryName, dishes]) => (
+              <div
+                key={categoryName}
+                className="rounded-2xl sm:rounded-3xl border border-stone-200 dark:border-[#223026] bg-white dark:bg-[#131c16] p-4 sm:p-6 shadow-xs space-y-4"
+              >
+                <div className="flex items-center justify-between border-b border-stone-100 dark:border-[#1d2920] pb-3">
+                  <h2 className="text-base sm:text-lg font-black text-[#121815] dark:text-white flex items-center gap-2">
+                    <span>{categoryName}</span>
+                    <span className="text-xs font-bold text-stone-400 dark:text-gray-500">
+                      ({dishes.length})
+                    </span>
+                  </h2>
+                </div>
 
-                      return (
-                        <div
-                          key={item.id}
-                          className="py-5 flex items-start justify-between gap-4 sm:gap-6 group transition"
-                        >
-                          {/* Left: Dish Information */}
-                          <div className="min-w-0 flex-1 space-y-1">
-                            {/* Veg / Non-Veg square badge */}
-                            <div className="flex items-center gap-2">
+                {/* Dishes in this category */}
+                <div className="divide-y divide-stone-100 dark:divide-[#1d2920]">
+                  {dishes.map((item) => {
+                    const hasVariants = Boolean(item.variants && item.variants.length > 0)
+                    const variantItemsInCart = hasVariants
+                      ? cart.filter(
+                          (c) =>
+                            c.id === item.id ||
+                            c.menuItemId === item.id ||
+                            ((c as any).variantId &&
+                              item.variants?.some((v) => v.id === (c as any).variantId))
+                        )
+                      : []
+                    const variantQtyTotal = variantItemsInCart.reduce((sum, c) => sum + c.qty, 0)
+                    const inCart = hasVariants ? undefined : cart.find((i) => i.id === item.id)
+                    const isOutOfStock =
+                      item.in_stock === false ||
+                      item.inStock === false ||
+                      (item.stock_count != null && item.stock_count <= 0)
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="py-5 flex items-start justify-between gap-4 sm:gap-6 group transition"
+                      >
+                        {/* Left: Dish Information */}
+                        <div className="min-w-0 flex-1 space-y-1">
+                          {/* Veg / Non-Veg square badge */}
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`grid size-4 place-items-center rounded-xs border p-0.5 ${
+                                item.veg
+                                  ? 'border-emerald-600 text-emerald-600'
+                                  : 'border-rose-600 text-rose-600'
+                              }`}
+                              title={item.veg ? 'Pure Vegetarian' : 'Non-Vegetarian'}
+                            >
                               <span
-                                className={`grid size-4 place-items-center rounded-xs border p-0.5 ${
-                                  item.veg
-                                    ? 'border-emerald-600 text-emerald-600'
-                                    : 'border-rose-600 text-rose-600'
+                                className={`size-2 rounded-full ${
+                                  item.veg ? 'bg-emerald-600' : 'bg-rose-600'
                                 }`}
-                                title={item.veg ? 'Pure Vegetarian' : 'Non-Vegetarian'}
-                              >
-                                <span
-                                  className={`size-2 rounded-full ${
-                                    item.veg ? 'bg-emerald-600' : 'bg-rose-600'
-                                  }`}
-                                />
+                              />
+                            </span>
+
+                            {(item.bestseller || item.price >= 300) && (
+                              <span className="inline-flex items-center gap-1 rounded-sm bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-extrabold text-amber-600 dark:text-amber-400">
+                                <Sparkles className="size-2.5" />
+                                <span>Bestseller</span>
                               </span>
-
-                              {(item.bestseller || item.price >= 300) && (
-                                <span className="inline-flex items-center gap-1 rounded-sm bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-extrabold text-amber-600 dark:text-amber-400">
-                                  <Sparkles className="size-2.5" />
-                                  <span>Bestseller</span>
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Dish Name */}
-                            <h3 className="font-extrabold text-sm sm:text-base text-[#121815] dark:text-white leading-snug">
-                              {item.name}
-                            </h3>
-
-                            {/* Price */}
-                            <div className="font-black text-sm text-[#121815] dark:text-white">
-                              {hasVariants ? 'From ' : ''}₹{item.price}
-                            </div>
-
-                            {/* Description */}
-                            {item.detail && (
-                              <p className="text-xs text-stone-500 dark:text-gray-400 line-clamp-2 leading-relaxed pt-0.5">
-                                {item.detail}
-                              </p>
                             )}
                           </div>
 
-                          {/* Right: Dish Photo & Swiggy-style Add Button */}
-                          <div className="relative shrink-0 flex flex-col items-center">
-                            <div className="relative w-32 h-28 sm:w-36 sm:h-32 rounded-2xl overflow-hidden bg-stone-100 dark:bg-[#1a231d] shadow-xs border border-stone-200/60 dark:border-[#243328]">
-                              <img
-                                src={
-                                  item.image ||
-                                  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'
-                                }
-                                alt={item.name}
-                                className={`size-full object-cover transition duration-300 ${
-                                  isOutOfStock ? 'grayscale opacity-60' : 'group-hover:scale-105'
-                                }`}
-                              />
+                          {/* Dish Name */}
+                          <h3 className="font-extrabold text-sm sm:text-base text-[#121815] dark:text-white leading-snug">
+                            {item.name}
+                          </h3>
 
-                              {/* Real-time Out of Stock Overlay */}
-                              {isOutOfStock && (
-                                <div className="absolute inset-0 bg-black/70 backdrop-blur-xs flex flex-col items-center justify-center p-2 text-center animate-fade-in">
-                                  <span className="rounded-full bg-rose-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
-                                    Out of Stock
-                                  </span>
-                                  <span className="text-[10px] text-white/80 font-medium mt-1">
-                                    Restocking soon
-                                  </span>
-                                </div>
-                              )}
-                            </div>
+                          {/* Price */}
+                          <div className="font-black text-sm text-[#121815] dark:text-white">
+                            {hasVariants ? 'From ' : ''}₹{item.price}
+                          </div>
 
-                            {/* Swiggy ADD Button (Overlapping Photo Bottom) */}
-                            <div className="relative -mt-4 z-10">
-                              {isOutOfStock ? (
-                                <button
-                                  type="button"
-                                  disabled
-                                  className="rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-200 dark:bg-[#202a23] px-5 py-1.5 text-xs font-black text-stone-400 dark:text-stone-500 cursor-not-allowed shadow-xs"
-                                >
+                          {/* Description */}
+                          {item.detail && (
+                            <p className="text-xs text-stone-500 dark:text-gray-400 line-clamp-2 leading-relaxed pt-0.5">
+                              {item.detail}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Right: Dish Photo & Swiggy-style Add Button */}
+                        <div className="relative shrink-0 flex flex-col items-center">
+                          <div className="relative w-32 h-28 sm:w-36 sm:h-32 rounded-2xl overflow-hidden bg-stone-100 dark:bg-[#1a231d] shadow-xs border border-stone-200/60 dark:border-[#243328]">
+                            <img
+                              src={
+                                item.image ||
+                                'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'
+                              }
+                              alt={item.name}
+                              className={`size-full object-cover transition duration-300 ${
+                                isOutOfStock ? 'grayscale opacity-60' : 'group-hover:scale-105'
+                              }`}
+                            />
+
+                            {/* Real-time Out of Stock Overlay */}
+                            {isOutOfStock && (
+                              <div className="absolute inset-0 bg-black/70 backdrop-blur-xs flex flex-col items-center justify-center p-2 text-center animate-fade-in">
+                                <span className="rounded-full bg-rose-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
                                   Out of Stock
-                                </button>
-                              ) : hasVariants ? (
-                                <div className="flex flex-col items-center">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenVariantPicker(item)}
-                                    className={`flex items-center gap-1.5 rounded-xl border px-4 py-2 text-xs font-black shadow-sm active:scale-95 transition cursor-pointer min-h-[36px] ${
-                                      variantQtyTotal > 0
-                                        ? 'border-emerald-500/50 dark:border-[#d9f447]/50 bg-emerald-50 dark:bg-[#1a2920] text-emerald-700 dark:text-[#d9f447]'
-                                        : 'border-stone-200 dark:border-[#2c3d31] bg-white dark:bg-[#17221b] text-emerald-600 dark:text-[#d9f447] hover:bg-stone-50 dark:hover:bg-[#1e2d24]'
-                                    }`}
-                                  >
-                                    <span>{variantQtyTotal > 0 ? `${variantQtyTotal} ADDED` : 'ADD'}</span>
-                                    <Plus className="size-3.5 stroke-[2.5]" />
-                                  </button>
-                                  <span className="text-[9px] font-bold text-stone-400 dark:text-gray-500 mt-0.5">
-                                    Customisable
-                                  </span>
-                                </div>
-                              ) : inCart ? (
-                                <div className="flex items-center rounded-xl border border-emerald-600/30 bg-white dark:bg-[#17221b] shadow-sm overflow-hidden">
-                                  <button
-                                    type="button"
-                                    onClick={() => onUpdateQty(item.id, -1)}
-                                    className="size-8 grid place-items-center text-stone-600 dark:text-stone-300 hover:text-rose-500 hover:bg-rose-500/10 transition cursor-pointer active:scale-90"
-                                    title="Decrease quantity"
-                                    aria-label="Decrease quantity"
-                                  >
-                                    <Minus className="size-3.5 stroke-[2.5]" />
-                                  </button>
-                                  <span className="min-w-6 text-center text-xs font-mono font-black text-[#121815] dark:text-white px-1">
-                                    {inCart.qty}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => onUpdateQty(item.id, 1)}
-                                    className="size-8 grid place-items-center text-stone-600 dark:text-stone-300 hover:text-emerald-500 hover:bg-emerald-500/10 transition cursor-pointer active:scale-90"
-                                    title="Increase quantity"
-                                    aria-label="Increase quantity"
-                                  >
-                                    <Plus className="size-3.5 stroke-[2.5]" />
-                                  </button>
-                                </div>
-                              ) : (
+                                </span>
+                                <span className="text-[10px] text-white/80 font-medium mt-1">
+                                  Restocking soon
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Swiggy ADD Button (Overlapping Photo Bottom) */}
+                          <div className="relative -mt-4 z-10">
+                            {isOutOfStock ? (
+                              <button
+                                type="button"
+                                disabled
+                                className="rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-200 dark:bg-[#202a23] px-5 py-1.5 text-xs font-black text-stone-400 dark:text-stone-500 cursor-not-allowed shadow-xs"
+                              >
+                                Out of Stock
+                              </button>
+                            ) : hasVariants ? (
+                              <div className="flex flex-col items-center">
                                 <button
                                   type="button"
-                                  onClick={() => onAddToCart(item)}
-                                  className="flex items-center gap-1.5 rounded-xl border border-stone-200 dark:border-[#2c3d31] bg-white dark:bg-[#17221b] px-5 py-2 text-xs font-black text-emerald-600 dark:text-[#d9f447] shadow-sm hover:bg-stone-50 dark:hover:bg-[#1e2d24] active:scale-95 transition cursor-pointer min-h-[36px]"
+                                  onClick={() => handleOpenVariantPicker(item)}
+                                  className={`flex items-center gap-1.5 rounded-xl border px-4 py-2 text-xs font-black shadow-sm active:scale-95 transition cursor-pointer min-h-[36px] ${
+                                    variantQtyTotal > 0
+                                      ? 'border-emerald-500/50 dark:border-[#d9f447]/50 bg-emerald-50 dark:bg-[#1a2920] text-emerald-700 dark:text-[#d9f447]'
+                                      : 'border-stone-200 dark:border-[#2c3d31] bg-white dark:bg-[#17221b] text-emerald-600 dark:text-[#d9f447] hover:bg-stone-50 dark:hover:bg-[#1e2d24]'
+                                  }`}
                                 >
-                                  <span>ADD</span>
+                                  <span>
+                                    {variantQtyTotal > 0 ? `${variantQtyTotal} ADDED` : 'ADD'}
+                                  </span>
                                   <Plus className="size-3.5 stroke-[2.5]" />
                                 </button>
-                              )}
-                            </div>
+                                <span className="text-[9px] font-bold text-stone-400 dark:text-gray-500 mt-0.5">
+                                  Customisable
+                                </span>
+                              </div>
+                            ) : inCart ? (
+                              <div className="flex items-center rounded-xl border border-emerald-600/30 bg-white dark:bg-[#17221b] shadow-sm overflow-hidden">
+                                <button
+                                  type="button"
+                                  onClick={() => onUpdateQty(item.id, -1)}
+                                  className="size-8 grid place-items-center text-stone-600 dark:text-stone-300 hover:text-rose-500 hover:bg-rose-500/10 transition cursor-pointer active:scale-90"
+                                  title="Decrease quantity"
+                                  aria-label="Decrease quantity"
+                                >
+                                  <Minus className="size-3.5 stroke-[2.5]" />
+                                </button>
+                                <span className="min-w-6 text-center text-xs font-mono font-black text-[#121815] dark:text-white px-1">
+                                  {inCart.qty}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => onUpdateQty(item.id, 1)}
+                                  className="size-8 grid place-items-center text-stone-600 dark:text-stone-300 hover:text-emerald-500 hover:bg-emerald-500/10 transition cursor-pointer active:scale-90"
+                                  title="Increase quantity"
+                                  aria-label="Increase quantity"
+                                >
+                                  <Plus className="size-3.5 stroke-[2.5]" />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => onAddToCart(item)}
+                                className="flex items-center gap-1.5 rounded-xl border border-stone-200 dark:border-[#2c3d31] bg-white dark:bg-[#17221b] px-5 py-2 text-xs font-black text-emerald-600 dark:text-[#d9f447] shadow-sm hover:bg-stone-50 dark:hover:bg-[#1e2d24] active:scale-95 transition cursor-pointer min-h-[36px]"
+                              >
+                                <span>ADD</span>
+                                <Plus className="size-3.5 stroke-[2.5]" />
+                              </button>
+                            )}
                           </div>
                         </div>
-                      )
-                    })}
-                  </div>
+                      </div>
+                    )
+                  })}
                 </div>
-              ))
-            )}
-          </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {/* Variant Selector Modal */}

@@ -219,7 +219,7 @@ export async function createOrder(data: {
   // CR-004: Immutable canonical financial snapshot
   financial_snapshot?: any
 }) {
-  const { utr_ref, customer_vpa, ...prismaData } = data
+  const { customer_vpa, ...prismaData } = data
   const created = await prisma.order.create({ data: prismaData as any })
   invalidateOrdersCache()
   return created

@@ -262,7 +262,6 @@ export async function updateDriverLocation(params: {
   driverSpatialIndex.set(driverId, updatedState)
   await persistCurrentDriverLocation(updatedState, previousCell, cellChanged)
 
-
   // Buffer position for history (async, non-blocking)
   bufferPositionHistory(driverId, { lat, lng, ts: effectiveTimestamp, h3Cell: newH3Cell })
 

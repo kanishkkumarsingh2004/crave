@@ -46,7 +46,10 @@ export async function POST(request: Request) {
     }
 
     // Secondary IP-based check to catch distributed attacks
-    const ipResult = await checkRateLimit(getRateLimitKey(request, null, 'signup_ip'), 'AUTH_SIGNUP')
+    const ipResult = await checkRateLimit(
+      getRateLimitKey(request, null, 'signup_ip'),
+      'AUTH_SIGNUP'
+    )
     if (!ipResult.allowed) {
       return rateLimitResponse(ipResult.resetTime, ipResult.retryAfter)
     }

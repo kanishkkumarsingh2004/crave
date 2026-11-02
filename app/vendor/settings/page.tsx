@@ -321,7 +321,9 @@ export default function VendorSettingsPage() {
               </div>
 
               <div>
-                <label className="font-semibold text-stone-600 dark:text-stone-300">Bank Name</label>
+                <label className="font-semibold text-stone-600 dark:text-stone-300">
+                  Bank Name
+                </label>
                 <input
                   type="text"
                   required
@@ -347,7 +349,9 @@ export default function VendorSettingsPage() {
               </div>
 
               <div>
-                <label className="font-semibold text-stone-600 dark:text-stone-300">IFSC Code</label>
+                <label className="font-semibold text-stone-600 dark:text-stone-300">
+                  IFSC Code
+                </label>
                 <input
                   type="text"
                   required
@@ -626,11 +630,7 @@ export default function VendorSettingsPage() {
               disabled={saving}
               className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-[#1D1D1F] dark:bg-white text-white dark:text-[#1D1D1F] hover:bg-[#2C2C2E] dark:hover:bg-stone-200 px-8 py-3.5 min-h-[48px] text-sm sm:text-xs font-semibold transition active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 shadow-xs"
             >
-              {saving ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Save className="size-4" />
-              )}{' '}
+              {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}{' '}
               {saving ? 'Saving...' : 'Save Bank & Store Settings'}
             </button>
           </div>

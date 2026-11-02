@@ -220,7 +220,10 @@ export function getClientIp(request: Request): string {
       if (TRUSTED_PROXY_RANGES.length > 0) {
         const xff = headers.get('x-forwarded-for')
         if (xff) {
-          const parts = xff.split(',').map((p) => p.trim()).filter(Boolean)
+          const parts = xff
+            .split(',')
+            .map((p) => p.trim())
+            .filter(Boolean)
           if (parts.length > 0) return sanitizeIp(parts[0])
         }
       }
