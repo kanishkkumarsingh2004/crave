@@ -10,6 +10,7 @@ import {
 } from '../lib/auth/order-access'
 import type { JWTPayload } from '../lib/jwt'
 import { hashPassword, validatePassword, verifyPassword } from '../lib/password'
+import { resolveClientIp } from '../lib/rate-limit'
 
 function actor(role: JWTPayload['role'], id: string, restaurantId?: string): JWTPayload {
   return { id, role, restaurantId, name: role, email: `${role}@example.test` }
@@ -130,6 +131,31 @@ test('customer order-list scope is derived from the authenticated actor', () => 
   assert.equal(getCustomerOrderScope(actor('user', 'customer-1'), 'customer-2'), 'customer-1')
   assert.equal(getCustomerOrderScope(actor('rider', 'rider-1'), 'customer-1'), null)
   assert.equal(getCustomerOrderScope(actor('admin', 'admin-1'), 'customer-2'), 'customer-2')
+})
+
+test('forwarded client IP headers are only trusted from configured proxies', () => {
+  const directRequest = new Request('http://localhost', {
+    headers: { 'cf-connecting-ip': '198.51.100.50', 'x-forwarded-for': '198.51.100.51' },
+  })
+  Object.defineProperty(directRequest, 'socket', {
+    value: { remoteAddress: '203.0.113.10' },
+  })
+
+  assert.equal(
+    resolveClientIp(directRequest, { behindProxy: true, trustedProxyRanges: ['10.0.0.0/8'] }),
+    '203.0.113.10'
+  )
+
+  const proxiedRequest = new Request('http://localhost', {
+    headers: { 'cf-connecting-ip': '198.51.100.50' },
+  })
+  Object.defineProperty(proxiedRequest, 'socket', {
+    value: { remoteAddress: '10.20.30.40' },
+  })
+  assert.equal(
+    resolveClientIp(proxiedRequest, { behindProxy: true, trustedProxyRanges: ['10.0.0.0/8'] }),
+    '198.51.100.50'
+  )
 })
 
 test('password hashing rejects oversized inputs before scrypt work', () => {

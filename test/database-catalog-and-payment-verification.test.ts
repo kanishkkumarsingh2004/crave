@@ -91,15 +91,19 @@ before(async () => {
 after(async () => {
   if (!dbEnabled) return
 
-  await prisma.menuItem.deleteMany({
-    where: { id: FIXTURE_ITEM_2 },
-  })
-  await prisma.restaurant.deleteMany({
-    where: { id: { in: [FIXTURE_REST_1, FIXTURE_REST_2] } },
-  })
-  await prisma.user.deleteMany({
-    where: { id: { in: [TEST_CUSTOMER.id, FIXTURE_VENDOR] } },
-  })
+  try {
+    await prisma.menuItem.deleteMany({
+      where: { id: FIXTURE_ITEM_2 },
+    })
+    await prisma.restaurant.deleteMany({
+      where: { id: { in: [FIXTURE_REST_1, FIXTURE_REST_2] } },
+    })
+    await prisma.user.deleteMany({
+      where: { id: { in: [TEST_CUSTOMER.id, FIXTURE_VENDOR] } },
+    })
+  } finally {
+    await prisma.$disconnect()
+  }
 })
 
 test(
@@ -130,7 +134,7 @@ test(
     const res = await createOrderPost(req)
     assert.equal(res.status, 404, 'Must return 404 when restaurant does not exist in DB')
     const json = await res.json()
-    assert.match(json.error, /Restaurant not found in database/i)
+    assert.match(json.error, /Restaurant not found/i)
   }
 )
 
@@ -162,7 +166,7 @@ test(
     const res = await createOrderPost(req)
     assert.equal(res.status, 404, 'Must return 404 when item does not exist in DB')
     const json = await res.json()
-    assert.match(json.error, /not found in database/i)
+    assert.match(json.error, /Menu item not found/i)
   }
 )
 
@@ -194,7 +198,7 @@ test(
     const res = await createOrderPost(req)
     assert.equal(res.status, 400, 'Must return 400 when item does not belong to target restaurant')
     const json = await res.json()
-    assert.match(json.error, /does not belong to/i)
+    assert.match(json.error, /not available at this restaurant/i)
   }
 )
 

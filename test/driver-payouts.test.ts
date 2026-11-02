@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import test from 'node:test'
+import test, { after } from 'node:test'
 import { prisma } from '../lib/prisma'
 import {
   createDriverPayoutIfWithinBalance,
@@ -18,6 +18,10 @@ import { hashPassword } from '../lib/password'
  */
 
 const dbEnabled = process.env.ALLOW_DATABASE_TESTS === 'true' && Boolean(prisma)
+
+after(async () => {
+  if (dbEnabled) await prisma.$disconnect()
+})
 
 async function seedRiderFixture(suffix: string) {
   const riderId = `payout_rider_${suffix}`

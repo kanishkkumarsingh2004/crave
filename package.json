@@ -29,6 +29,7 @@
     "db:studio": "prisma studio",
     "push:generate-keys": "web-push generate-vapid-keys --json",
     "db:seed": "tsx scripts/db-reset-and-seed.ts",
+    "db:seed:full": "tsx scripts/db-reset-and-seed.ts",
     "loadtest:gps": "tsx scripts/gps-load-test.ts",
     "load-test": "node scripts/run-load-test.mjs",
     "load-test:ci": "node scripts/run-load-test.mjs --out load-test-results.json",

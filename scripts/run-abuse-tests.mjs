@@ -43,6 +43,7 @@ Options:
   -u, --url <url>      Base HTTP URL of the target (default http://localhost:3000)
       --ws-url <url>   WebSocket URL (default ws://localhost:8000/api/ws)
       --env-file <p>   Load KEY=VALUE settings (seed credentials) from a file
+      --reset-rate-limits Clear Redis rate-limit keys between cases (isolated test Redis only)
       --concurrency <n> Parallel copies of a request (default 8)
       --retries <n>     Retries after a timeout (default 2)
       --timeout <dur>   k6 request timeout (default 60s)
@@ -64,6 +65,7 @@ function parseArgs(argv) {
     retries: null,
     timeout: '60s',
     failOn: 'integrity',
+    resetRateLimits: false,
     help: false,
   }
   const tokens = []
@@ -116,6 +118,9 @@ function parseArgs(argv) {
       case '--fail-on':
         options.failOn = take(index, token)
         index += 1
+        break
+      case '--reset-rate-limits':
+        options.resetRateLimits = true
         break
       case '--help':
       case '-h':
@@ -172,6 +177,78 @@ function runK6(args, env, cwd) {
   })
 }
 
+const AUTH_ROLES = [
+  { role: 'customer', email: 'SEED_CUSTOMER_EMAIL', app: 'customer' },
+  { role: 'admin', email: 'SEED_ADMIN_EMAIL', app: 'admin' },
+  { role: 'vendor', email: 'SEED_VENDOR_EMAIL', app: 'restaurant' },
+  { role: 'rider', email: 'SEED_RIDER_EMAIL', app: 'driver' },
+]
+
+function taggedEmail(email, tag) {
+  const separator = email.lastIndexOf('@')
+  if (separator < 1) return email
+  return `${email.slice(0, separator)}+abuse-${tag}${email.slice(separator)}`
+}
+
+async function fetchRoleToken({ email, password, app, address }, baseUrl) {
+  try {
+    const response = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-crave-native-app': app,
+        'x-forwarded-for': address,
+      },
+      body: JSON.stringify({ email, password }),
+    })
+    if (!response.ok) return ''
+    const payload = await response.json()
+    return payload?.token || ''
+  } catch {
+    return ''
+  }
+}
+
+async function loadRoleTokens(env, baseUrl) {
+  for (const [index, { role, email: emailKey, app }] of AUTH_ROLES.entries()) {
+    const tokenKey = `ABUSE_${role.toUpperCase()}_TOKEN`
+    if (env[tokenKey]) continue
+
+    const email = env[emailKey]
+    const password = env[`SEED_${role.toUpperCase()}_PASSWORD`] || env.SEED_PASSWORD
+    if (!email || !password) continue
+
+    const token = await fetchRoleToken(
+      { email, password, app, address: `198.51.100.${index + 1}` },
+      baseUrl
+    )
+    if (token) env[tokenKey] = token
+  }
+}
+
+async function clearRateLimits(redisUrl) {
+  if (!redisUrl) throw new Error('--reset-rate-limits requires REDIS_URL')
+  const { default: Redis } = await import('ioredis')
+  const client = new Redis(redisUrl, { lazyConnect: true, maxRetriesPerRequest: 1 })
+  try {
+    await client.connect()
+    let cursor = '0'
+    do {
+      const [nextCursor, keys] = await client.scan(
+        cursor,
+        'MATCH',
+        'crave:ratelimit:*',
+        'COUNT',
+        200
+      )
+      cursor = nextCursor
+      if (keys.length > 0) await client.del(...keys)
+    } while (cursor !== '0')
+  } finally {
+    await client.quit().catch(() => client.disconnect())
+  }
+}
+
 async function main() {
   let options
   try {
@@ -219,6 +296,11 @@ async function main() {
   if (options.retries) env.ABUSE_RETRIES = options.retries
   env.ABUSE_TIMEOUT = options.timeout
 
+  if (options.resetRateLimits) {
+    await clearRateLimits(env.REDIS_URL)
+  }
+  await loadRoleTokens(env, baseUrl)
+
   rmSync(reportDirectory, { recursive: true, force: true })
   mkdirSync(reportDirectory, { recursive: true })
 
@@ -242,6 +324,28 @@ async function main() {
     }
     console.log(`\n──────── ${testCase.name} ────────`)
 
+    if (options.resetRateLimits) {
+      await clearRateLimits(env.REDIS_URL)
+    }
+
+    const caseEnv = { ...env }
+    if (env.SEED_CUSTOMER_EMAIL && env.SEED_PASSWORD) {
+      const caseEmail = taggedEmail(env.SEED_CUSTOMER_EMAIL, testCase.name)
+      const caseToken = await fetchRoleToken(
+        {
+          email: caseEmail,
+          password: env.SEED_CUSTOMER_PASSWORD || env.SEED_PASSWORD,
+          app: 'customer',
+          address: `198.51.100.${100 + selected.indexOf(testCase)}`,
+        },
+        baseUrl
+      )
+      if (caseToken) {
+        caseEnv.SEED_CUSTOMER_EMAIL = caseEmail
+        caseEnv.ABUSE_CUSTOMER_TOKEN = caseToken
+      }
+    }
+
     const args = [
       'run',
       '--quiet',
@@ -256,14 +360,14 @@ async function main() {
       '--env',
       `ABUSE_IP=198.51.100.${10 + selected.indexOf(testCase)}`,
     ]
-    for (const [key, value] of Object.entries(env)) {
+    for (const [key, value] of Object.entries(caseEnv)) {
       if (key === 'BASE_URL' || key === 'WS_URL') continue
       if (value === undefined || value === null) continue
       args.push('--env', `${key}=${value}`)
     }
     args.push(script)
 
-    const outcome = await runK6(args, env, reportDirectory)
+    const outcome = await runK6(args, caseEnv, reportDirectory)
     const reportPath = join(reportDirectory, `${testCase.name}.json`)
     let report = null
     if (existsSync(reportPath)) {

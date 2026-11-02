@@ -17,6 +17,7 @@
 
 import http from 'k6/http'
 import { check } from 'k6'
+import encoding from 'k6/encoding'
 import { Counter, Gauge, Rate } from 'k6/metrics'
 
 export const env =
@@ -119,6 +120,17 @@ export function rolePassword(role) {
 export function signIn(role) {
   const config = ROLE_ACCOUNTS[role]
   if (!config) return { token: '', email: '' }
+  const configuredEmail = config.emails
+    .map((name) => optionalSetting(name))
+    .find((email) => Boolean(email))
+  const runnerToken = optionalSetting(`ABUSE_${role.toUpperCase()}_TOKEN`)
+  if (runnerToken) {
+    return {
+      token: runnerToken,
+      email: configuredEmail || '',
+      restaurantId: tokenRestaurantId(runnerToken),
+    }
+  }
   const password = rolePassword(role)
   const candidates = [
     ...config.emails.map((name) => optionalSetting(name)),
@@ -136,9 +148,18 @@ export function loginFirst(emails, password, app = 'customer') {
   for (const email of list) {
     if (!email) continue
     const token = login(email, password, app)
-    if (token) return { token, email }
+    if (token) return { token, email, restaurantId: tokenRestaurantId(token) }
   }
-  return { token: '', email: list[0] || '' }
+  return { token: '', email: list[0] || '', restaurantId: '' }
+}
+
+function tokenRestaurantId(token) {
+  try {
+    const payload = JSON.parse(encoding.b64decode(token.split('.')[1], 'rawurl', 's'))
+    return payload.restaurantId || payload.restaurant_id || ''
+  } catch {
+    return ''
+  }
 }
 
 /** The orders a list response carries. */
@@ -182,7 +203,7 @@ export function authHeaders(token, ip) {
 }
 
 /** Finds a restaurant and a menu item that the target database actually has. */
-export function resolveCatalog() {
+export function resolveCatalog(preferredRestaurantId = '') {
   const fallback = { restaurantId: 'rest_01', menuItemId: 'mi_01', resolved: false }
   const res = http.get(`${BASE_URL}/api/restaurants`, { timeout: '15s' })
   if (res.status !== 200 || !res.body) return fallback
@@ -194,7 +215,10 @@ export function resolveCatalog() {
   }
   const restaurants =
     payload?.restaurants || payload?.data || (Array.isArray(payload) ? payload : [])
-  const restaurant = restaurants[0]
+  const restaurant =
+    restaurants.find((candidate) => candidate.id === preferredRestaurantId) ||
+    restaurants.find((candidate) => !candidate.is_dark_store) ||
+    restaurants[0]
   if (!restaurant?.id) return fallback
 
   const menuRes = http.get(

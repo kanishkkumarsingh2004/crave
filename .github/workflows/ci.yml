@@ -8,7 +8,7 @@ on:
 
 env:
   NODE_VERSION: '20.x'
-  PNPM_VERSION: '12.3.4'
+  PNPM_VERSION: '12.8.1'
 
 jobs:
   lint-and-format:
@@ -138,6 +138,7 @@ jobs:
     # The job as a whole is therefore gated on concurrency correctness, not
     # on load-test flakiness.
     env:
+      REDIS_URL: redis://localhost:6379
       SEED_PASSWORD: 'ci-${{ github.run_id }}-${{ github.run_attempt }}-A9x!'
       SEED_ADMIN_EMAIL: 'load-admin-${{ github.run_id }}@example.test'
       SEED_CUSTOMER_EMAIL: 'load-customer-${{ github.run_id }}@example.test'
@@ -283,7 +284,7 @@ jobs:
 
       - name: Install k6 for the abuse suite
         run: |
-          K6_VERSION=v1.2.0
+          K6_VERSION=1.2.0
           curl -sL "https://github.com/grafana/k6/releases/download/v${K6_VERSION}/k6-v${K6_VERSION}-linux-amd64.tar.gz" | tar xz
           sudo mv "k6-v${K6_VERSION}-linux-amd64/k6" /usr/local/bin/k6
           k6 version
@@ -304,6 +305,7 @@ jobs:
             --url http://localhost:3000 \
             --ws-url ws://localhost:8000/api/ws \
             --env-file load-tests/.env \
+            --reset-rate-limits \
             --fail-on integrity
 
       - name: Upload abuse test results

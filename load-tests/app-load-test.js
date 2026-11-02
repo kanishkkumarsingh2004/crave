@@ -159,7 +159,7 @@ function resolveCatalog() {
     const payload = json(restaurantsRes)
     const restaurants =
       payload?.restaurants || payload?.data || (Array.isArray(payload) ? payload : [])
-    const restaurant = restaurants[0]
+    const restaurant = restaurants.find((candidate) => !candidate.is_dark_store) || restaurants[0]
     if (!restaurant?.id) return fallback
 
     const menuRes = http.get(

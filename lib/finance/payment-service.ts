@@ -21,6 +21,7 @@ import { sendWebPushToUsers } from '@/lib/web-push'
 import { broadcast } from '@/lib/ws-server'
 import { stripOrderSecrets } from '@/lib/auth/order-access'
 import { PaymentStatus, type OrderStatus } from '@prisma/client'
+import { invalidateOrdersCache } from '@/lib/dal/orders'
 
 export interface PaymentVerificationInput {
   orderId: string
@@ -297,6 +298,8 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
     }
   })
 
+  invalidateOrdersCache()
+
   if (!result.alreadyVerified && result.order) {
     const safeOrder = stripOrderSecrets(result.order as any)
 
@@ -452,6 +455,8 @@ export async function processPaymentRejectionTx(input: PaymentRejectionInput) {
 
     return { success: true, order: updatedOrder }
   })
+
+  invalidateOrdersCache()
 
   if (!result.alreadyRejected && result.order) {
     const safeOrder = stripOrderSecrets(result.order as any)

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import crypto from 'node:crypto'
-import test from 'node:test'
+import test, { after } from 'node:test'
 import { prisma } from '../lib/prisma'
 import { checkAndIncrementCouponUsage } from '../lib/dal/coupons'
 import { hashPassword } from '../lib/password'
@@ -17,6 +17,10 @@ import { hashPassword } from '../lib/password'
 
 // The database tests need both the opt-in flag and a reachable database.
 const dbEnabled = process.env.ALLOW_DATABASE_TESTS === 'true' && Boolean(prisma)
+
+after(async () => {
+  if (dbEnabled) await prisma.$disconnect()
+})
 
 /** Creates a customer, a restaurant and a menu item with a known stock. */
 async function seedOrderFixture(options: { stock?: number; suffix: string }) {

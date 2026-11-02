@@ -2,8 +2,33 @@ import 'dotenv/config'
 import { prisma } from '../lib/prisma'
 import { hashPassword } from '../lib/password'
 import { cacheDelPattern } from '../lib/cache'
+import { closeRedisClient } from '../lib/redis'
 
 const DEFAULT_PASSWORD = '123456789'
+
+const seedPassword = process.env.SEED_PASSWORD || DEFAULT_PASSWORD
+const seedEmails = {
+  admin: process.env.SEED_ADMIN_EMAIL || 'admin@crave.com',
+  customer: process.env.SEED_CUSTOMER_EMAIL || 'user@crave.com',
+  vendor: process.env.SEED_VENDOR_EMAIL || 'vendor@crave.com',
+  store: process.env.SEED_STORE_EMAIL || 'darkstore@crave.com',
+  rider: process.env.SEED_RIDER_EMAIL || 'rider@crave.com',
+}
+const ABUSE_CASES = [
+  'order-lifecycle',
+  'double-click',
+  'timeout-retry',
+  'capacity-race',
+  'rate-limit',
+  'otp-bruteforce',
+  'socket-abuse',
+] as const
+
+function taggedEmail(email: string, tag: string): string {
+  const separator = email.lastIndexOf('@')
+  if (separator < 1) return email
+  return `${email.slice(0, separator)}+abuse-${tag}${email.slice(separator)}`
+}
 
 async function dbResetAndSeed() {
   if (!prisma) {
@@ -54,15 +79,15 @@ async function dbResetAndSeed() {
 
   console.log('✅ All existing records safely wiped.\n')
 
-  console.log('👥 [2/5] Creating canonical test accounts for all 5 roles (Password: 123456789)...')
+  console.log('👥 [2/5] Creating canonical test accounts for all 5 roles...')
 
-  const passwordHash = hashPassword(DEFAULT_PASSWORD)
+  const passwordHash = hashPassword(seedPassword)
 
   const users = [
     {
       id: 'usr_admin_01',
       name: 'System Administrator',
-      email: 'admin@crave.com',
+      email: seedEmails.admin,
       role: 'admin' as const,
       password_hash: passwordHash,
       phone: '+919876543210',
@@ -70,7 +95,7 @@ async function dbResetAndSeed() {
     {
       id: 'usr_customer_01',
       name: 'Priya Sharma (Customer)',
-      email: 'user@crave.com',
+      email: seedEmails.customer,
       role: 'user' as const,
       password_hash: passwordHash,
       phone: '+919876543211',
@@ -79,7 +104,7 @@ async function dbResetAndSeed() {
     {
       id: 'usr_vendor_01',
       name: 'Chef Marco (Vendor)',
-      email: 'vendor@crave.com',
+      email: seedEmails.vendor,
       role: 'restaurant_vendor' as const,
       password_hash: passwordHash,
       phone: '+919876543212',
@@ -89,7 +114,7 @@ async function dbResetAndSeed() {
     {
       id: 'usr_darkstore_01',
       name: 'Dark Store Operator',
-      email: 'darkstore@crave.com',
+      email: seedEmails.store,
       role: 'cravexp_store_vendor' as const,
       password_hash: passwordHash,
       phone: '+919876543213',
@@ -99,7 +124,7 @@ async function dbResetAndSeed() {
     {
       id: 'usr_rider_01',
       name: 'Rider Rahul (Fleet Driver)',
-      email: 'rider@crave.com',
+      email: seedEmails.rider,
       role: 'rider' as const,
       password_hash: passwordHash,
       phone: '+919876543214',
@@ -112,6 +137,19 @@ async function dbResetAndSeed() {
     await prisma.user.create({ data: u })
     console.log(`  ✓ Profile created: ${u.email} [${u.role}] (ID: ${u.id})`)
   }
+
+  for (const caseName of ABUSE_CASES) {
+    await prisma.user.create({
+      data: {
+        id: `usr_customer_abuse_${caseName.replaceAll('-', '_')}`,
+        name: `Abuse Test Customer (${caseName})`,
+        email: taggedEmail(seedEmails.customer, caseName),
+        role: 'user',
+        password_hash: passwordHash,
+      },
+    })
+  }
+  console.log(`  ✓ Isolated customers created for ${ABUSE_CASES.length} abuse cases`)
 
   console.log('\n📍 [3/5] Seeding Customer Addresses...')
   const addresses = [
@@ -139,6 +177,20 @@ async function dbResetAndSeed() {
   for (const addr of addresses) {
     await prisma.customerAddress.create({ data: addr })
     console.log(`  ✓ Address: ${addr.label} (${addr.address})`)
+  }
+
+  for (const caseName of ABUSE_CASES) {
+    await prisma.customerAddress.create({
+      data: {
+        id: `addr_abuse_${caseName.replaceAll('-', '_')}`,
+        customer_id: `usr_customer_abuse_${caseName.replaceAll('-', '_')}`,
+        label: 'Test Address',
+        address: '124, 4th Cross, Koramangala 4th Block, Bengaluru, Karnataka 560034',
+        latitude: 12.9352,
+        longitude: 77.6245,
+        is_default: true,
+      },
+    })
   }
 
   console.log('\n🏪 [4/5] Seeding Restaurants & Menu Catalog (Directly Integrated to Frontend)...')
@@ -446,13 +498,13 @@ async function dbResetAndSeed() {
 
   console.log('\n======================================================')
   console.log('🎉 DATABASE RESET & SEED COMPLETE!')
-  console.log('🔑 ALL 5 TEST ACCOUNTS CREATED (Password: 123456789)')
+  console.log('🔑 ALL 5 TEST ACCOUNTS CREATED')
   console.log('------------------------------------------------------')
-  console.log('1. Admin:    admin@crave.com     | 123456789 (ID: usr_admin_01)')
-  console.log('2. Customer: user@crave.com      | 123456789 (ID: usr_customer_01)')
-  console.log('3. Vendor:   vendor@crave.com    | 123456789 (ID: usr_vendor_01)')
-  console.log('4. Store:    darkstore@crave.com | 123456789 (ID: usr_darkstore_01)')
-  console.log('5. Rider:    rider@crave.com     | 123456789 (ID: usr_rider_01)')
+  console.log(`1. Admin:    ${seedEmails.admin} (ID: usr_admin_01)`)
+  console.log(`2. Customer: ${seedEmails.customer} (ID: usr_customer_01)`)
+  console.log(`3. Vendor:   ${seedEmails.vendor} (ID: usr_vendor_01)`)
+  console.log(`4. Store:    ${seedEmails.store} (ID: usr_darkstore_01)`)
+  console.log(`5. Rider:    ${seedEmails.rider} (ID: usr_rider_01)`)
   console.log('------------------------------------------------------')
   console.log('Featured Restaurant ID: rest_01 (Spice Garden Gourmet)')
   console.log('Second Restaurant ID:   rest_02 (Bella Italia Bistro)')
@@ -466,5 +518,6 @@ dbResetAndSeed()
     process.exit(1)
   })
   .finally(async () => {
+    await closeRedisClient()
     await prisma.$disconnect()
   })

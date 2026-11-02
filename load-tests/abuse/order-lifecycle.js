@@ -43,12 +43,13 @@ export const options = {
 
 export function setup() {
   // Every role may have its own password and more than one known address.
+  const vendor = signIn('vendor')
   return {
     customer: signIn('customer'),
     admin: signIn('admin'),
-    vendor: signIn('vendor'),
+    vendor,
     rider: signIn('rider'),
-    catalog: resolveCatalog(),
+    catalog: resolveCatalog(vendor.restaurantId),
   }
 }
 

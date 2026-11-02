@@ -166,7 +166,7 @@ function ipInCidr(ip: string, cidr: string): boolean {
   // this is a minimal implementation sufficient for common deployments.
   const [range, bitsStr] = cidr.split('/')
   const bits = parseInt(bitsStr, 10)
-  if (!range || !bits || bits < 0 || bits > 32) return false
+  if (!range || !Number.isInteger(bits) || bits < 0 || bits > 32) return false
   const ipNum = ipToNum(ip)
   const rangeNum = ipToNum(range)
   if (ipNum === null || rangeNum === null) return false
@@ -186,9 +186,9 @@ function ipToNum(ip: string): number | null {
   return num >>> 0
 }
 
-function isTrustedIp(ip: string): boolean {
-  if (TRUSTED_PROXY_RANGES.length === 0) return false
-  return TRUSTED_PROXY_RANGES.some((cidr) => ipInCidr(ip, cidr))
+function isTrustedIp(ip: string, trustedProxyRanges = TRUSTED_PROXY_RANGES): boolean {
+  if (trustedProxyRanges.length === 0) return false
+  return trustedProxyRanges.some((cidr) => ipInCidr(ip, cidr))
 }
 
 function sanitizeIp(ip: string | null): string {
@@ -200,14 +200,23 @@ function sanitizeIp(ip: string | null): string {
   return cleaned
 }
 
-export function getClientIp(request: Request): string {
+export function resolveClientIp(
+  request: Request,
+  options: { behindProxy?: boolean; trustedProxyRanges?: string[] } = {}
+): string {
   try {
     const headers = request.headers
+    // @ts-expect-error - socket may not exist on all Request implementations
+    const directIp = request.socket?.remoteAddress
+      ? // @ts-expect-error - guarded above
+        sanitizeIp(request.socket.remoteAddress)
+      : null
+    const behindProxy = options.behindProxy ?? BEHIND_PROXY
+    const trustedProxyRanges = options.trustedProxyRanges ?? TRUSTED_PROXY_RANGES
 
-    // Only trust forwarded headers if we are behind a known proxy AND the
-    // direct connection IP is in a trusted proxy range.
-    if (BEHIND_PROXY) {
-      // Cloudflare always sets cf-connecting-ip when behind CF.
+    // Forwarded headers are attacker-controlled unless the direct peer is a
+    // configured reverse proxy. This rule applies to Cloudflare headers too.
+    if (behindProxy && directIp && isTrustedIp(directIp, trustedProxyRanges)) {
       const cfIp = headers.get('cf-connecting-ip')
       if (cfIp) return sanitizeIp(cfIp)
 
@@ -217,24 +226,23 @@ export function getClientIp(request: Request): string {
 
       // X-Forwarded-For: take the leftmost (original client) entry.
       // Only trust it if we have configured trusted proxy ranges.
-      if (TRUSTED_PROXY_RANGES.length > 0) {
-        const xff = headers.get('x-forwarded-for')
-        if (xff) {
-          const parts = xff
-            .split(',')
-            .map((p) => p.trim())
-            .filter(Boolean)
-          if (parts.length > 0) return sanitizeIp(parts[0])
-        }
+      const xff = headers.get('x-forwarded-for')
+      if (xff) {
+        const parts = xff
+          .split(',')
+          .map((p) => p.trim())
+          .filter(Boolean)
+        if (parts.length > 0) return sanitizeIp(parts[0])
       }
     }
 
-    // Fall back to the direct connection address.
-    // @ts-expect-error - socket may not exist on all Request implementations
-    const socketIp = request.socket?.remoteAddress
-    if (socketIp) return sanitizeIp(socketIp)
+    if (directIp) return directIp
   } catch {}
   return '127.0.0.1'
+}
+
+export function getClientIp(request: Request): string {
+  return resolveClientIp(request)
 }
 
 /**
