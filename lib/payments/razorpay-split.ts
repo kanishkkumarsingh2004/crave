@@ -1,7 +1,7 @@
 /**
  * lib/payments/razorpay-split.ts
  *
- * Durable Razorpay Route split-transfer service.
+ * Durable Razorpay payment-linked Route split-transfer service.
  *
  * Triggered from an outbox worker only after the configured release condition
  * (razorpay_transfer_release: DELIVERY_COMPLETE | ADMIN_APPROVAL) is met.
@@ -23,6 +23,12 @@
  *   processed   – provider confirmed successful transfer
  *   failed      – provider confirmed rejection (terminal)
  *   reversed    – provider reversed the transfer (terminal)
+ *
+ * CR-11: This service uses PAYMENT-LINKED transfers, not direct transfers.
+ * The customer's captured payment is the source of funds. Each transfer is
+ * anchored to the payment via client.payments.transfers.create(paymentId, ...).
+ * Direct transfers (client.transfers.create) are NOT used — they pull from
+ * the merchant account balance, not from the captured payment.
  */
 
 import { prisma } from '@/lib/prisma'
@@ -296,16 +302,22 @@ export async function createRouteSplits(params: SplitOrderParams) {
       data: { razorpay_payment_id: razorpayPaymentId },
     })
 
-    // CR-03-B: Pass the local idempotency key as an X-Idempotency-Key header
-    // on every transfers.create call. A local DB key alone cannot guarantee
-    // exactly-once execution at an external provider. The header instructs
-    // Razorpay to deduplicate on its side: a retry of the same key returns the
-    // original transfer rather than creating a second one.
+    // CR-11: Use PAYMENT-LINKED transfers, not direct transfers.
+    // client.payments.transfers.create(paymentId, params) anchors the transfer
+    // to the customer's captured payment. Direct transfers (client.transfers.create)
+    // pull from the merchant account balance — the wrong source of funds.
+    //
+    // CR-11: Use the documented idempotency contract for this endpoint.
+    // Razorpay's payment-linked transfer idempotency header is
+    // X-Transfer-Idempotency, not the generic X-Idempotency-Key. The generic
+    // header is not honored by the transfers endpoint, so provider-side
+    // deduplication was never actually enabled.
     let providerTransferId: string | undefined
     let providerStatus: string | undefined
 
     try {
-      const routeResp: any = await client.transfers.create(
+      const routeResp: any = await client.payments.transfers.create(
+        razorpayPaymentId,
         {
           account: linked.razorpay_account_id,
           amount: alloc.amountPaise,
@@ -314,7 +326,7 @@ export async function createRouteSplits(params: SplitOrderParams) {
         },
         // Razorpay Node SDK passes extra options (including custom headers) as
         // the second argument to resource methods.
-        { headers: { 'X-Idempotency-Key': idempotencyKey } } as any
+        { headers: { 'X-Transfer-Idempotency': idempotencyKey } } as any
       )
 
       providerTransferId = routeResp.id
@@ -428,6 +440,11 @@ export async function handleRouteTransferWebhook(event: any) {
  * re-submission until the provider state is confirmed here. Once the
  * provider outcome is known, this job transitions rows to the correct status
  * ('processed' or 'failed'), unblocking any subsequent retry if needed.
+ *
+ * CR-11: Queries payment-linked transfers via client.payments.transfers.all(paymentId),
+ * not the direct transfers endpoint. Each stale row carries its
+ * razorpay_payment_id, so we look up transfers attached to that specific
+ * payment rather than scanning the merchant's transfer history.
  */
 export async function reconcileStaleTransfers() {
   const staleCutoff = new Date(Date.now() - 30 * 60 * 1000) // 30 min
@@ -447,14 +464,30 @@ export async function reconcileStaleTransfers() {
   const client = getRazorpayClient()
 
   for (const t of stale) {
+    if (!t.razorpay_payment_id) {
+      // CR-11: Cannot reconcile a payment-linked transfer without its payment ID.
+      await prisma.razorpayTransfer.update({
+        where: { id: t.id },
+        data: {
+          status: 'failed',
+          failure_reason: 'Missing razorpay_payment_id — cannot query payment-linked transfers',
+          updated_at: new Date(),
+        },
+      })
+      results.push({ transferId: t.id, reconciled: 'missing_payment_id' })
+      continue
+    }
+
     try {
-      const transfers: any = await client.transfers.all({
-        from: Date.now() - 7 * 24 * 60 * 60 * 1000,
+      // CR-11: Query payment-linked transfers for this specific payment.
+      const transfers: any = await client.payments.transfers.all(t.razorpay_payment_id, {
         count: 100,
       })
 
-      const match = transfers.items.find(
-        (item: any) => item.notes?.crave_order_id === t.order_id && item.amount === t.amount_paise
+      const match = transfers.items?.find(
+        (item: any) =>
+          item.notes?.crave_order_id === t.order_id &&
+          item.amount === t.amount_paise
       )
 
       if (match) {
