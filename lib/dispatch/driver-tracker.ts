@@ -65,40 +65,68 @@ async function persistCurrentDriverLocation(
   previousCell?: string,
   cellChanged = false
 ): Promise<void> {
-  await prisma.driverCurrentLocation.upsert({
-    where: { driver_id: state.driverId },
-    create: {
-      driver_id: state.driverId,
-      latitude: state.lat,
-      longitude: state.lng,
-      h3_cell: state.h3Cell,
-      resolution: state.resolution,
-      status: state.status,
-      available: state.available,
-      vehicle_type: state.vehicleType,
-      reported_at: new Date(state.reportedAt ?? state.lastUpdated),
-    },
-    update: {
-      latitude: state.lat,
-      longitude: state.lng,
-      h3_cell: state.h3Cell,
-      resolution: state.resolution,
-      status: state.status,
-      available: state.available,
-      vehicle_type: state.vehicleType,
-      reported_at: new Date(state.reportedAt ?? state.lastUpdated),
-    },
-  })
+  const reportedAt = new Date(state.reportedAt ?? state.lastUpdated)
+  const accepted = await prisma.$queryRaw<Array<{ driver_id: string }>>`
+    INSERT INTO "driver_current_locations" (
+      "driver_id", "latitude", "longitude", "h3_cell", "resolution",
+      "status", "available", "vehicle_type", "reported_at", "updated_at"
+    ) VALUES (
+      ${state.driverId}, ${state.lat}, ${state.lng}, ${state.h3Cell}, ${state.resolution},
+      ${state.status}, ${state.available}, ${state.vehicleType}, ${reportedAt}, NOW()
+    )
+    ON CONFLICT ("driver_id") DO UPDATE SET
+      "latitude" = EXCLUDED."latitude",
+      "longitude" = EXCLUDED."longitude",
+      "h3_cell" = EXCLUDED."h3_cell",
+      "resolution" = EXCLUDED."resolution",
+      "status" = EXCLUDED."status",
+      "available" = EXCLUDED."available",
+      "vehicle_type" = EXCLUDED."vehicle_type",
+      "reported_at" = EXCLUDED."reported_at",
+      "updated_at" = NOW()
+    WHERE "driver_current_locations"."reported_at" <= EXCLUDED."reported_at"
+    RETURNING "driver_id"
+  `
+  if (accepted.length !== 1) {
+    const error = new Error('Stale GPS update rejected by authoritative location record')
+    ;(error as Error & { code?: string }).code = 'STALE_GPS_UPDATE'
+    throw error
+  }
 
   if (!isRedisAvailable() || !redis) return
-  const pipe = redis.pipeline()
-  pipe.set(`crave:driver:loc:${state.driverId}`, JSON.stringify(state), 'EX', 120)
-  if (cellChanged && previousCell) {
-    pipe.srem(`crave:h3:cell:${previousCell}`, state.driverId)
+  const lua = `
+    local current = redis.call('GET', KEYS[1])
+    if current then
+      local ok, decoded = pcall(cjson.decode, current)
+      if ok and tonumber(decoded.reportedAt or 0) > tonumber(ARGV[5]) then
+        return 0
+      end
+    end
+    redis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[2])
+    if KEYS[2] ~= '' and KEYS[2] ~= KEYS[3] then
+      redis.call('SREM', KEYS[2], ARGV[3])
+    end
+    redis.call('SADD', KEYS[3], ARGV[3])
+    redis.call('EXPIRE', KEYS[3], ARGV[4])
+    return 1
+  `
+  const redisAccepted = await redis.eval(
+    lua,
+    3,
+    `crave:driver:loc:${state.driverId}`,
+    cellChanged && previousCell ? `crave:h3:cell:${previousCell}` : '',
+    `crave:h3:cell:${state.h3Cell}`,
+    JSON.stringify(state),
+    '120',
+    state.driverId,
+    '180',
+    String(state.reportedAt ?? state.lastUpdated)
+  )
+  if (redisAccepted !== 1) {
+    const error = new Error('Stale GPS update rejected by distributed location record')
+    ;(error as Error & { code?: string }).code = 'STALE_GPS_UPDATE'
+    throw error
   }
-  pipe.sadd(`crave:h3:cell:${state.h3Cell}`, state.driverId)
-  pipe.expire(`crave:h3:cell:${state.h3Cell}`, 180)
-  await pipe.exec().catch(() => {})
 }
 
 /**
@@ -150,7 +178,16 @@ export async function updateDriverLocation(params: {
     clientTs = now
   }
 
-  const existingState = driverSpatialIndex.get(driverId)
+  const existingState =
+    driverSpatialIndex.get(driverId) ??
+    (await getDriverLocationDistributed(driverId, GPS_CONFIG.CURRENT_LOCATION_TTL_MS))
+  if (existingState && !driverSpatialIndex.has(driverId)) {
+    driverSpatialIndex.set(driverId, existingState)
+    if (!cellToDriverMap.has(existingState.h3Cell)) {
+      cellToDriverMap.set(existingState.h3Cell, new Set())
+    }
+    cellToDriverMap.get(existingState.h3Cell)!.add(driverId)
+  }
   const previousCell = existingState?.h3Cell
 
   // OUT-OF-ORDER PACKET DETECTION:
@@ -175,6 +212,11 @@ export async function updateDriverLocation(params: {
   }
 
   const isStalePacket = now - clientTs > 60000 // Packet took > 60s to arrive
+  if (isStalePacket) {
+    const error = new Error('Stale GPS sample rejected')
+    ;(error as Error & { code?: string }).code = 'STALE_GPS_UPDATE'
+    throw error
+  }
   const newH3Cell = h3.latLngToCell(lat, lng, resolution)
   const cellChanged = previousCell !== newH3Cell
 
@@ -212,8 +254,8 @@ export async function updateDriverLocation(params: {
         isStale: false,
         staleDurationSeconds: 0,
       }
-      driverSpatialIndex.set(driverId, heartbeatState)
       await persistCurrentDriverLocation(heartbeatState)
+      driverSpatialIndex.set(driverId, heartbeatState)
       return {
         state: heartbeatState,
         cellChanged: false,
@@ -224,21 +266,6 @@ export async function updateDriverLocation(params: {
       }
     }
   }
-
-  // Update Inverted Cell Index if cell changed
-  if (cellChanged && previousCell) {
-    const prevSet = cellToDriverMap.get(previousCell)
-    if (prevSet) {
-      prevSet.delete(driverId)
-      if (prevSet.size === 0) cellToDriverMap.delete(previousCell)
-    }
-  }
-
-  // Register in new H3 cell
-  if (!cellToDriverMap.has(newH3Cell)) {
-    cellToDriverMap.set(newH3Cell, new Set())
-  }
-  cellToDriverMap.get(newH3Cell)!.add(driverId)
 
   const effectiveTimestamp = clientTs
   const updatedState: DriverLocationState = {
@@ -258,9 +285,22 @@ export async function updateDriverLocation(params: {
     staleDurationSeconds: isStalePacket ? Math.floor((now - clientTs) / 1000) : 0,
   }
 
-  // Update primary spatial cache & persist to driver_current_locations table
-  driverSpatialIndex.set(driverId, updatedState)
+  // Persist with an authoritative timestamp compare before mutating local
+  // indexes. A stale concurrent packet therefore cannot corrupt this pod.
   await persistCurrentDriverLocation(updatedState, previousCell, cellChanged)
+
+  if (cellChanged && previousCell) {
+    const prevSet = cellToDriverMap.get(previousCell)
+    if (prevSet) {
+      prevSet.delete(driverId)
+      if (prevSet.size === 0) cellToDriverMap.delete(previousCell)
+    }
+  }
+  if (!cellToDriverMap.has(newH3Cell)) {
+    cellToDriverMap.set(newH3Cell, new Set())
+  }
+  cellToDriverMap.get(newH3Cell)!.add(driverId)
+  driverSpatialIndex.set(driverId, updatedState)
 
   // Buffer position for history (async, non-blocking)
   bufferPositionHistory(driverId, { lat, lng, ts: effectiveTimestamp, h3Cell: newH3Cell })
@@ -613,8 +653,14 @@ export async function getDriversInH3CellDistributed(
   // Always collect local drivers first
   const local = getDriversInH3Cell(h3Cell, maxAgeMs)
 
-  // If Redis is unavailable fall back to local-only
-  if (!isRedisAvailable() || !redis) return local
+  // Candidate selection must not silently become process-local in production;
+  // that can offer one driver to multiple pods simultaneously.
+  if (!isRedisAvailable() || !redis) {
+    if (process.env.NODE_ENV === 'production' && process.env.REDIS_DISABLED !== 'true') {
+      throw new Error('Redis unavailable for distributed driver candidate selection')
+    }
+    return local
+  }
 
   // Build a dedup map seeded with local entries (local wins on conflict)
   const merged = new Map<string, DriverLocationState>()
@@ -641,8 +687,12 @@ export async function getDriversInH3CellDistributed(
         }
       })
     }
-  } catch {
-    // Redis error — return whatever we have so far (local at minimum)
+  } catch (error) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Redis failed during distributed driver candidate selection', {
+        cause: error,
+      })
+    }
   }
 
   return Array.from(merged.values())

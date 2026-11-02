@@ -4,11 +4,17 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const repositoryRoot = join(dirname(fileURLToPath(import.meta.url)), '..')
-const githubRawBase =
-  'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds'
+const artifactBaseUrl = process.env.ANDROID_RELEASE_BASE_URL?.replace(/\/$/, '')
 
 const flavorArgIndex = process.argv.indexOf('--flavor')
-const flavor = flavorArgIndex !== -1 && process.argv[flavorArgIndex + 1] === 'release' ? 'release' : 'debug'
+const flavor =
+  flavorArgIndex !== -1 && process.argv[flavorArgIndex + 1] === 'release' ? 'release' : 'debug'
+if (flavor === 'release' && !artifactBaseUrl) {
+  throw new Error('ANDROID_RELEASE_BASE_URL is required for a release manifest')
+}
+const downloadBaseUrl =
+  artifactBaseUrl ||
+  'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds'
 
 const apps = {
   admin: {
@@ -50,7 +56,7 @@ async function appManifest({ directory, apk, releaseNotes }) {
   return {
     versionCode,
     versionName,
-    androidUrl: `${githubRawBase}/${apk}?sha256=${sha256}`,
+    androidUrl: `${downloadBaseUrl}/${apk}?sha256=${sha256}`,
     sha256,
     releaseNotes,
   }

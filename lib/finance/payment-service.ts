@@ -44,7 +44,8 @@ export interface PaymentRejectionInput {
 
 export interface RefundInput {
   orderId: string
-  amount: number // in rupees
+  amount?: number // in rupees (legacy/manual flows only)
+  amountPaise?: number // exact provider amount
   reason: string
   idempotencyKey?: string
   gatewayRefundId?: string
@@ -499,13 +500,19 @@ export async function processPaymentRejectionTx(input: PaymentRejectionInput) {
  * - Vendor settlements are adjusted or cancelled accordingly.
  */
 export async function processRefundTx(input: RefundInput) {
-  const { orderId, amount, reason, idempotencyKey, gatewayRefundId } = input
+  const { orderId, amount, amountPaise, reason, idempotencyKey, gatewayRefundId } = input
+  const refundPaise =
+    amountPaise != null
+      ? amountPaise
+      : Number.isSafeInteger(amount) && Number(amount) > 0
+        ? Number(amount) * 100
+        : 0
 
-  if (!orderId || !amount || amount <= 0) {
+  if (!orderId || !Number.isSafeInteger(refundPaise) || refundPaise <= 0) {
     throw new Error('Valid orderId and positive refund amount are required')
   }
 
-  const cleanIdempotencyKey = idempotencyKey || `refund_${orderId}_${amount}_${Date.now()}`
+  const cleanIdempotencyKey = idempotencyKey || `refund_${orderId}_${refundPaise}_${Date.now()}`
 
   return await prisma.$transaction(async (tx) => {
     // 1. Check idempotency for existing refund
@@ -531,10 +538,18 @@ export async function processRefundTx(input: RefundInput) {
       throw new Error(`Order not found: ${orderId}`)
     }
 
-    const priorRefundedTotal = order.refunds.reduce((sum, r) => sum + r.amount, 0)
-    if (priorRefundedTotal + amount > order.total_amount) {
+    const priorRefundedPaise = order.refunds.reduce(
+      (sum, refund) => sum + (refund.amount_paise ?? refund.amount * 100),
+      0
+    )
+    const orderTotalPaise =
+      order.total_amount_paise ??
+      (order.financial_snapshot as { customerPayablePaise?: number } | null)
+        ?.customerPayablePaise ??
+      order.total_amount * 100
+    if (priorRefundedPaise + refundPaise > orderTotalPaise) {
       throw new Error(
-        `Refund limit exceeded: Total refunded (₹${priorRefundedTotal} + ₹${amount}) exceeds order total ₹${order.total_amount}`
+        `Refund limit exceeded: total ${priorRefundedPaise + refundPaise} paise exceeds order total ${orderTotalPaise} paise`
       )
     }
 
@@ -543,7 +558,8 @@ export async function processRefundTx(input: RefundInput) {
       data: {
         order_id: orderId,
         idempotency_key: cleanIdempotencyKey,
-        amount,
+        amount: Math.ceil(refundPaise / 100),
+        amount_paise: refundPaise,
         reason,
         status: 'completed',
         gateway_refund_id: gatewayRefundId || null,
@@ -552,7 +568,7 @@ export async function processRefundTx(input: RefundInput) {
     })
 
     // 4. If full refund, cancel or update vendor settlement
-    const isFullRefund = priorRefundedTotal + amount >= order.total_amount
+    const isFullRefund = priorRefundedPaise + refundPaise >= orderTotalPaise
     if (isFullRefund) {
       await tx.order.update({
         where: { id: orderId },
@@ -570,11 +586,7 @@ export async function processRefundTx(input: RefundInput) {
 
     // 5. Post Balanced Double-Entry Subledger Refund Entry
     try {
-      const refundJournal = buildRefundInitiatedJournal(
-        orderId,
-        refund.id,
-        amount * 100 // in paise
-      )
+      const refundJournal = buildRefundInitiatedJournal(orderId, refund.id, refundPaise)
       for (let i = 0; i < refundJournal.lines.length; i++) {
         const line = refundJournal.lines[i]
         const lineKey = `${refundJournal.idempotencyKey}_line_${i}`

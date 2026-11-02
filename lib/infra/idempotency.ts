@@ -86,12 +86,11 @@ export function hashPayload(payload: any): string {
 }
 
 /**
- * Compare two payload hashes. Returns true when either hash is missing (unknown) or when
- * both are present and equal. Returns false only when both are non-empty and differ.
+ * Compare two payload hashes. Missing hashes are never trusted: financial operations
+ * require an exact, non-empty match before replay or lease recovery.
  */
 function hashesMatch(a: string | null | undefined, b: string | null | undefined): boolean {
-  if (!a || !b) return true // one side unknown → cannot reject
-  return a === b
+  return Boolean(a && b && a === b)
 }
 
 /**
@@ -128,6 +127,9 @@ export async function acquireIdempotency(
   const cleanKey = key.trim()
   const payloadHash = hashPayload(payload)
   const isFinancial = FINANCIAL_SCOPES.has(scope)
+  if (isFinancial && !payloadHash) {
+    throw new Error(`Unable to hash request payload for financial operation (scope=${scope})`)
+  }
   const now = new Date()
   const expiresAt = new Date(now.getTime() + ttlSeconds * 1000)
   const fencingToken = generateFencingToken()
@@ -149,10 +151,7 @@ export async function acquireIdempotency(
           // CR-14: Reject cache hits whose stored payload hash differs from
           // the current request. Fall through to the DB path for authoritative
           // validation rather than trusting the cache.
-          if (parsed.payloadHash && payloadHash && parsed.payloadHash !== payloadHash) {
-            // Cache entry is for a different payload — ignore it and let the
-            // DB path decide (it will return 'conflict').
-          } else {
+          if (parsed.payloadHash && payloadHash && parsed.payloadHash === payloadHash) {
             return {
               status: 'completed',
               statusCode: parsed.statusCode || 200,
@@ -160,9 +159,8 @@ export async function acquireIdempotency(
             }
           }
         }
-        if (parsed.status === 'processing') {
-          return { status: 'processing' }
-        }
+        // A processing cache entry is only a hint. PostgreSQL owns the lease,
+        // so always continue to the authoritative path.
       }
     } catch {
       // Redis error: fall through to DB (Redis is not authoritative).
@@ -200,7 +198,7 @@ export async function acquireIdempotency(
 
     // A record exists. Read it to determine the correct response.
     const existing = await prisma.idempotencyRecord.findUnique({
-      where: { key: cleanKey },
+      where: { scope_key: { scope, key: cleanKey } },
     })
 
     if (!existing) {
@@ -217,16 +215,19 @@ export async function acquireIdempotency(
       return { status: 'conflict' }
     }
 
-    // Record exists with matching (or unknown) hash — evaluate status.
-    if (existing.expires_at > now) {
-      // Active lease.
-      if (existing.status === 'completed') {
-        return {
-          status: 'completed',
-          statusCode: existing.response_code || 200,
-          body: existing.response_body as any,
-        }
+    // Completed rows remain exact replays until a retention cleanup removes
+    // them. They must never become permanently stuck as "processing" merely
+    // because their cache expiry passed.
+    if (existing.status === 'completed') {
+      return {
+        status: 'completed',
+        statusCode: existing.response_code || 200,
+        body: existing.response_body as any,
       }
+    }
+
+    // Record exists with matching hash — evaluate the active lease.
+    if (existing.expires_at > now) {
       // Status is 'processing' (in-flight by another worker) or 'failed'.
       // Return 'processing' so the caller waits — do not allow concurrent execution.
       return { status: 'processing' }
@@ -245,6 +246,7 @@ export async function acquireIdempotency(
     const reclaim = await prisma.idempotencyRecord.updateMany({
       where: {
         key: cleanKey,
+        scope,
         status: { in: ['failed', 'processing'] },
         expires_at: { lt: now },
       },
@@ -314,11 +316,11 @@ export async function completeIdempotency(
   scope: string,
   statusCode: number,
   responseBody: any,
-  fencingToken?: string,
-  requestHash?: string,
+  fencingToken: string,
+  requestHash: string,
   ttlSeconds = 86400 // 24-hour retention for replay
 ): Promise<boolean> {
-  if (!key || typeof key !== 'string' || !key.trim()) return false
+  if (!key || typeof key !== 'string' || !key.trim() || !fencingToken || !requestHash) return false
   const cleanKey = key.trim()
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000)
 
@@ -330,14 +332,16 @@ export async function completeIdempotency(
       const result = await prisma.idempotencyRecord.updateMany({
         where: {
           key: cleanKey,
-          ...(fencingToken ? { fencing_token: fencingToken } : {}),
+          scope,
+          fencing_token: fencingToken,
           status: 'processing',
         },
         data: {
           status: 'completed',
           response_code: statusCode,
           response_body: responseBody ?? {},
-          fencing_token: fencingToken || null,
+          request_hash: requestHash,
+          fencing_token: fencingToken,
           expires_at: expiresAt,
           updated_at: new Date(),
         },
@@ -351,6 +355,7 @@ export async function completeIdempotency(
       }
     } catch (err) {
       console.error('[idempotency] Failed to record completed idempotency state:', err)
+      return false
     }
   }
 
@@ -366,7 +371,7 @@ export async function completeIdempotency(
           status: 'completed',
           statusCode,
           body: responseBody,
-          payloadHash: requestHash || null,
+          payloadHash: requestHash,
         }),
         'EX',
         ttlSeconds
@@ -396,6 +401,7 @@ export async function releaseIdempotency(
   fencingToken?: string
 ): Promise<boolean> {
   if (!key || typeof key !== 'string' || !key.trim()) return false
+  if (!fencingToken) return false
   const cleanKey = key.trim()
 
   if (prisma) {
@@ -407,7 +413,8 @@ export async function releaseIdempotency(
       const result = await prisma.idempotencyRecord.deleteMany({
         where: {
           key: cleanKey,
-          ...(fencingToken ? { fencing_token: fencingToken } : {}),
+          scope,
+          fencing_token: fencingToken,
           status: 'processing',
         },
       })

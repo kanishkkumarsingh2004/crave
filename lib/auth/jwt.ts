@@ -5,6 +5,11 @@ import { redis, isRedisAvailable } from '@/lib/redis'
 const inMemoryBlacklist = new Set<string>()
 const inMemoryUserInvalidBefore = new Map<string, number>()
 let redisAuthWarnLogged = false
+const REDIS_AUTH_TIMEOUT_MS = 500
+
+function redisRevocationIsRequired(): boolean {
+  return Boolean(process.env.REDIS_URL && process.env.REDIS_DISABLED !== 'true')
+}
 
 function getJwtSecretKey(): Uint8Array {
   const secret = process.env.JWT_SECRET
@@ -123,20 +128,27 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
           return false
         }
 
-        const isRevoked = await Promise.race([
+        const revocationResult = await Promise.race<boolean | 'timeout'>([
           checkRedisRevocation(),
-          new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 500)),
+          new Promise<'timeout'>((resolve) =>
+            setTimeout(() => resolve('timeout'), REDIS_AUTH_TIMEOUT_MS)
+          ),
         ])
 
-        if (isRevoked) {
+        if (revocationResult === 'timeout') {
+          if (redisRevocationIsRequired()) return null
+        } else if (revocationResult) {
           return null
         }
       } catch (redisErr) {
-        // Redis error: rely safely on in-memory blacklist
+        if (redisRevocationIsRequired()) return null
       }
     } else {
       // Redis is unavailable or unconfigured: Check in-memory fallback blacklist
-      if (!redisAuthWarnLogged && process.env.REDIS_URL && process.env.REDIS_DISABLED !== 'true') {
+      if (redisRevocationIsRequired()) {
+        if (process.env.NODE_ENV === 'production') return null
+      }
+      if (!redisAuthWarnLogged && redisRevocationIsRequired()) {
         redisAuthWarnLogged = true
         console.warn(
           '[jwt] NOTICE: Redis endpoint unreachable. Operating with in-memory revocation fallback.'
@@ -171,14 +183,19 @@ export async function blacklistToken(token: string): Promise<boolean> {
 
     if (isRedisAvailable() && redis) {
       try {
-        await Promise.race([
+        const result = await Promise.race<string | null | 'timeout'>([
           redis.set(`crave:jwt:blacklist:${payload.jti}`, '1', 'EX', ttlSeconds),
-          new Promise((resolve) => setTimeout(resolve, 500)),
+          new Promise<'timeout'>((resolve) =>
+            setTimeout(() => resolve('timeout'), REDIS_AUTH_TIMEOUT_MS)
+          ),
         ])
-      } catch {}
+        if (result === 'timeout') return false
+      } catch {
+        return false
+      }
       return true
     }
-    return true
+    return !redisRevocationIsRequired()
   } catch (error) {
     return false
   }
@@ -198,16 +215,23 @@ export async function blacklistAllUserTokens(userId: string): Promise<boolean> {
 
   if (isRedisAvailable() && redis) {
     try {
-      await Promise.race([
+      const result = await Promise.race<string | null | 'timeout'>([
         redis.set(
           `crave:jwt:blacklist:user:${userId}`,
           String(invalidBefore),
           'EX',
           7 * 24 * 60 * 60
         ),
-        new Promise((resolve) => setTimeout(resolve, 500)),
+        new Promise<'timeout'>((resolve) =>
+          setTimeout(() => resolve('timeout'), REDIS_AUTH_TIMEOUT_MS)
+        ),
       ])
-    } catch {}
+      if (result === 'timeout') return false
+    } catch {
+      return false
+    }
+  } else if (redisRevocationIsRequired()) {
+    return false
   }
   return true
 }

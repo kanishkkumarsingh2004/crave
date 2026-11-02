@@ -461,10 +461,17 @@ async function verifyWSToken(token) {
 }
 
 function extractTokenFromRequest(req) {
-  // Check query parameter
-  const url = new URL(req.url, `http://${req.headers.host}`)
-  const queryToken = url.searchParams.get('token')
-  if (queryToken) return queryToken
+  // Native WebSocket clients cannot set Authorization headers. Carry the JWT
+  // as a WebSocket subprotocol value so it never appears in URLs, proxy logs,
+  // analytics, or referrer-like diagnostics.
+  const protocolHeader = req.headers['sec-websocket-protocol']
+  if (typeof protocolHeader === 'string') {
+    const protocolToken = protocolHeader
+      .split(',')
+      .map((value) => value.trim())
+      .find((value) => value.split('.').length === 3)
+    if (protocolToken) return protocolToken
+  }
 
   // Check cookie
   const cookie = req.headers.cookie

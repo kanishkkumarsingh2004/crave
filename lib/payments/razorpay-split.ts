@@ -47,6 +47,18 @@ type Allocation = {
   amountPaise: number
 }
 
+export function mapRazorpayTransferStatus(status: unknown): string {
+  const statusMap: Record<string, string> = {
+    created: 'pending',
+    pending: 'pending',
+    processed: 'processed',
+    failed: 'failed',
+    reversed: 'reversed',
+    partially_reversed: 'partially_reversed',
+  }
+  return statusMap[String(status ?? '').toLowerCase()] ?? 'unknown'
+}
+
 export interface SplitOrderParams {
   orderId: string
   actorId?: string
@@ -197,6 +209,17 @@ export async function createRouteSplits(params: SplitOrderParams) {
     throw new Error('Transfers exceed captured amount')
   }
 
+  // Resolve the captured payment before creating intents. Every durable intent
+  // must be reconcilable even if the provider call or worker crashes later.
+  const paymentTx = await prisma.paymentTransaction.findFirst({
+    where: { order_id: orderId, gateway: 'RAZORPAY', status: 'verified' },
+    orderBy: { verified_at: 'desc' },
+  })
+  if (!paymentTx || !paymentTx.gateway_payment_id) {
+    throw new Error(`No verified Razorpay payment for order ${orderId}`)
+  }
+  const razorpayPaymentId = paymentTx.gateway_payment_id
+
   // Resolve linked accounts for each recipient
   const transfers = await Promise.all(
     allocations.map(async (alloc) => {
@@ -217,14 +240,14 @@ export async function createRouteSplits(params: SplitOrderParams) {
 
       // Already settled at the provider — idempotent no-op.
       if (existing && existing.razorpay_transfer_id && existing.status === 'processed') {
-        return { transfer: existing, linked, alloc, idempotencyKey }
+        return { transfer: existing, linked, alloc, idempotencyKey, acquired: false }
       }
 
       // A prior attempt already reached the provider (it has a transfer id) but
       // isn't confirmed processed. Do NOT create another transfer — that would
       // double-pay. Leave it for the transfer webhook / reconcile to resolve.
       if (existing && existing.razorpay_transfer_id) {
-        return { transfer: existing, linked, alloc, idempotencyKey }
+        return { transfer: existing, linked, alloc, idempotencyKey, acquired: false }
       }
 
       // CR-03-A: An 'unknown' status means a previous API call timed out and
@@ -232,21 +255,23 @@ export async function createRouteSplits(params: SplitOrderParams) {
       // risks creating a duplicate payment if the provider did process it.
       // Leave for reconcileStaleTransfers() to resolve.
       if (existing && existing.status === 'unknown') {
-        return { transfer: existing, linked, alloc, idempotencyKey }
+        return { transfer: existing, linked, alloc, idempotencyKey, acquired: false }
       }
 
-      // Atomic single-flight settlement lock: only transition pending → processing.
+      // Atomic single-flight settlement lock. A provider-confirmed failure is
+      // safe to retry; ambiguous and in-flight states are never reclaimed.
       // If another worker already set this row to processing, updateMany matches
       // zero rows and we skip — the row is in-flight and must not be re-submitted
       // just because its provider ID hasn't been persisted yet.
       let transfer: any
       if (existing) {
         const updated = await prisma.razorpayTransfer.updateMany({
-          where: { id: existing.id, status: 'pending' },
+          where: { id: existing.id, status: { in: ['pending', 'failed'] } },
           data: {
             status: 'processing',
             failure_reason: null,
             linked_account_id: linked.razorpay_account_id,
+            razorpay_payment_id: razorpayPaymentId,
             updated_at: new Date(),
           },
         })
@@ -256,7 +281,7 @@ export async function createRouteSplits(params: SplitOrderParams) {
           const current = await prisma.razorpayTransfer.findUnique({
             where: { id: existing.id },
           })
-          return { transfer: current, linked, alloc, idempotencyKey }
+          return { transfer: current, linked, alloc, idempotencyKey, acquired: false }
         }
         transfer = await prisma.razorpayTransfer.findUnique({
           where: { id: existing.id },
@@ -269,7 +294,7 @@ export async function createRouteSplits(params: SplitOrderParams) {
               recipient_type: alloc.type,
               recipient_id: alloc.recipientId,
               linked_account_id: linked.razorpay_account_id,
-              razorpay_payment_id: '', // filled below after payment lookup
+              razorpay_payment_id: razorpayPaymentId,
               idempotency_key: idempotencyKey,
               amount_paise: alloc.amountPaise,
               currency: 'INR',
@@ -285,35 +310,24 @@ export async function createRouteSplits(params: SplitOrderParams) {
               where: { idempotency_key: idempotencyKey },
             })
             if (current) {
-              return { transfer: current, linked, alloc, idempotencyKey }
+              return { transfer: current, linked, alloc, idempotencyKey, acquired: false }
             }
           }
           throw err
         }
       }
 
-      return { transfer, linked, alloc, idempotencyKey }
+      return { transfer, linked, alloc, idempotencyKey, acquired: true }
     })
   )
-
-  // Find the Razorpay payment for this order to attach to transfers
-  const paymentTx = await prisma.paymentTransaction.findFirst({
-    where: { order_id: orderId, gateway: 'RAZORPAY', status: 'verified' },
-    orderBy: { verified_at: 'desc' },
-  })
-  if (!paymentTx || !paymentTx.gateway_payment_id) {
-    throw new Error(`No verified Razorpay payment for order ${orderId}`)
-  }
-
-  const razorpayPaymentId = paymentTx.gateway_payment_id
 
   // Ensure cumulative transfers for one captured payment never exceed captured amount
   const existingTransfers = await prisma.razorpayTransfer.findMany({
     where: { order_id: orderId, razorpay_payment_id: razorpayPaymentId },
   })
   const cumulativePaise = existingTransfers.reduce((sum, t) => sum + t.amount_paise, 0)
-  if (cumulativePaise + totalTransfers > customerPayablePaise) {
-    throw new Error('Cumulative transfers would exceed captured amount')
+  if (cumulativePaise > customerPayablePaise) {
+    throw new Error('Cumulative transfer intents exceed captured amount')
   }
 
   // Call Route API for each allocation
@@ -334,11 +348,12 @@ export async function createRouteSplits(params: SplitOrderParams) {
   // payment, which is the intended settlement source.
   const pending: typeof transfers = []
   for (const item of transfers) {
-    const { transfer, linked, alloc, idempotencyKey } = item as {
+    const { transfer, linked, alloc, idempotencyKey, acquired } = item as {
       transfer: any
       linked: any
       alloc: Allocation
       idempotencyKey: string
+      acquired: boolean
     }
 
     // Skip recipients whose transfer already reached the provider (settled,
@@ -347,9 +362,10 @@ export async function createRouteSplits(params: SplitOrderParams) {
     // A processing row means another worker owns this settlement — it must
     // not be submitted again just because its provider ID isn't persisted yet.
     if (
+      !acquired ||
       transfer.razorpay_transfer_id ||
       transfer.status === 'unknown' ||
-      transfer.status === 'processing'
+      transfer.status !== 'processing'
     ) {
       results.push({
         transferId: transfer.id,
@@ -362,13 +378,6 @@ export async function createRouteSplits(params: SplitOrderParams) {
       })
       continue
     }
-
-    // Attach the payment ID to the transfer record before the batch call so
-    // reconcileStaleTransfers() can later query payment-linked transfers.
-    await prisma.razorpayTransfer.update({
-      where: { id: transfer.id },
-      data: { razorpay_payment_id: razorpayPaymentId },
-    })
 
     pending.push(item)
   }
@@ -450,12 +459,17 @@ export async function createRouteSplits(params: SplitOrderParams) {
       }
 
       const providerStatus = String(match.status ?? '')
+      const localStatus = mapRazorpayTransferStatus(providerStatus)
       await prisma.razorpayTransfer.update({
         where: { id: transfer.id },
         data: {
           razorpay_transfer_id: match.id,
-          status: providerStatus === 'processed' ? 'processed' : 'pending',
-          ...(providerStatus === 'processed' ? { processed_at: new Date() } : {}),
+          status: localStatus,
+          provider_status: providerStatus,
+          settlement_status: match.settlement_status ? String(match.settlement_status) : null,
+          amount_reversed_paise: Number(match.amount_reversed ?? 0),
+          razorpay_settlement_id: match.settlement_id ? String(match.settlement_id) : null,
+          ...(localStatus === 'processed' ? { processed_at: new Date() } : {}),
           updated_at: new Date(),
         },
       })
@@ -504,20 +518,22 @@ export async function handleRouteTransferWebhook(event: any) {
     throw new Error(`Transfer amount mismatch: webhook ${amount} vs local ${transfer.amount_paise}`)
   }
 
-  const statusMap: Record<string, string> = {
-    created: 'pending',
-    pending: 'pending',
-    processed: 'processed',
-    failed: 'failed',
-    reversed: 'reversed',
-    partially_reversed: 'reversed',
-  }
-  const newStatus = statusMap[status] ?? transfer.status
+  const mappedStatus = mapRazorpayTransferStatus(status)
+  const newStatus = mappedStatus === 'unknown' ? transfer.status : mappedStatus
 
   await prisma.razorpayTransfer.update({
     where: { id: transfer.id },
     data: {
       status: newStatus,
+      provider_status: status,
+      settlement_status: transferEntity.settlement_status
+        ? String(transferEntity.settlement_status)
+        : null,
+      amount_reversed_paise: Number(transferEntity.amount_reversed ?? 0),
+      razorpay_settlement_id: transferEntity.settlement_id
+        ? String(transferEntity.settlement_id)
+        : null,
+      last_webhook_at: new Date(),
       ...(newStatus === 'processed' ? { processed_at: new Date() } : {}),
       ...(newStatus === 'failed'
         ? { failure_reason: String(transferEntity?.failure_reason ?? '') }
@@ -561,11 +577,8 @@ export async function reconcileStaleTransfers() {
 
   const stale = await prisma.razorpayTransfer.findMany({
     where: {
-      // CR-03-A: include 'unknown' alongside 'processing' — both lack a
-      // razorpay_transfer_id and require provider-side reconciliation.
-      status: { in: ['processing', 'unknown'] },
-      created_at: { lt: staleCutoff },
-      razorpay_transfer_id: null,
+      status: { in: ['processing', 'unknown', 'pending', 'partially_reversed'] },
+      updated_at: { lt: staleCutoff },
     },
     take: 50,
   })
@@ -574,7 +587,7 @@ export async function reconcileStaleTransfers() {
   const client = getRazorpayClient()
 
   for (const t of stale) {
-    if (!t.razorpay_payment_id) {
+    if (!t.razorpay_payment_id && !t.razorpay_transfer_id) {
       // CR-11: Cannot reconcile a payment-linked transfer without its payment ID.
       // CR-15: Do NOT mark as failed — an ambiguous outcome must stay in
       // reconciliation. Marking failed here would authorize a retry that
@@ -601,8 +614,11 @@ export async function reconcileStaleTransfers() {
     })
 
     try {
-      // CR-11: Query payment-linked transfers for this specific payment.
-      const transfers: any = await client.payments.fetchTransfer(t.razorpay_payment_id)
+      // Fetch a known provider transfer directly. Rows without an ID use the
+      // payment-linked listing and strict metadata matching below.
+      const transfers: any = t.razorpay_transfer_id
+        ? { items: [await client.transfers.fetch(t.razorpay_transfer_id)], count: 1 }
+        : await client.payments.fetchTransfer(t.razorpay_payment_id)
       const items: any[] = transfers.items ?? []
 
       // CR-15: A match requires amount, recipient account, order reference,
@@ -611,6 +627,7 @@ export async function reconcileStaleTransfers() {
       // is the authoritative destination.
       const match = items.find(
         (item: any) =>
+          (!t.razorpay_transfer_id || item.id === t.razorpay_transfer_id) &&
           Number(item.amount) === t.amount_paise &&
           item.recipient === linked?.razorpay_account_id &&
           item.notes?.crave_order_id === t.order_id &&
@@ -624,24 +641,24 @@ export async function reconcileStaleTransfers() {
         // be 'created' or 'pending', and 'reversed'/'partially_reversed' are not
         // simple failures).
         const providerStatus = String(match.status ?? '').toLowerCase()
-        const statusMap: Record<string, string> = {
-          created: 'pending',
-          pending: 'pending',
-          processed: 'processed',
-          failed: 'failed',
-          reversed: 'reversed',
-          partially_reversed: 'reversed',
-        }
-        const resolvedStatus = statusMap[providerStatus] ?? 'unknown'
+        const resolvedStatus = mapRazorpayTransferStatus(providerStatus)
         await prisma.razorpayTransfer.update({
           where: { id: t.id },
           data: {
             razorpay_transfer_id: match.id,
             status: resolvedStatus,
+            provider_status: providerStatus,
+            settlement_status: match.settlement_status ? String(match.settlement_status) : null,
+            amount_reversed_paise: Number(match.amount_reversed ?? 0),
+            razorpay_settlement_id: match.settlement_id ? String(match.settlement_id) : null,
+            last_reconciled_at: new Date(),
             ...(resolvedStatus === 'processed' ? { processed_at: new Date() } : {}),
             failure_reason:
               resolvedStatus === 'failed' || resolvedStatus === 'reversed'
-                ? String(match.failure_reason ?? `Provider reported ${providerStatus} during reconciliation`)
+                ? String(
+                    match.failure_reason ??
+                      `Provider reported ${providerStatus} during reconciliation`
+                  )
                 : null,
             updated_at: new Date(),
           },

@@ -75,7 +75,8 @@ async function processLogout(request: Request) {
   const allTokens = Array.from(new Set([...cookieTokens, bearerToken, bodyToken].filter(Boolean)))
 
   for (const token of allTokens) {
-    await blacklistToken(token).catch(() => {})
+    const revoked = await blacklistToken(token)
+    if (!revoked) throw new Error('Token revocation could not be persisted')
   }
 }
 
@@ -88,7 +89,10 @@ export async function POST(request: Request) {
     return response
   } catch (error: any) {
     console.error('[POST /api/auth/logout]', error)
-    const response = NextResponse.json({ error: 'Logout failed' }, { status: 500 })
+    const response = NextResponse.json(
+      { error: 'Logout could not be safely completed' },
+      { status: 503 }
+    )
     const isSecure = getIsSecure()
     clearAllAuthCookies(response, isSecure)
     return response

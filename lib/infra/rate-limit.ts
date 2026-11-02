@@ -27,6 +27,16 @@ export type RateLimitTierKey = keyof typeof RateLimitTier
 
 // ─── Distributed Rate Limiter with Redis ──────────────────────
 const memoryStore = new Map<string, { count: number; resetTime: number }>()
+const DISTRIBUTED_REQUIRED_TIERS = new Set<RateLimitTierKey>([
+  'AUTH_LOGIN',
+  'AUTH_SIGNUP',
+  'AUTH_OTP',
+  'ORDER_CREATE',
+  'PAYMENT_VERIFY',
+  'DISPATCH_ACCEPT',
+  'DISPATCH_REQUEST',
+  'GPS_UPDATE',
+])
 
 // Clean up expired records every 60 seconds
 if (typeof window === 'undefined') {
@@ -93,8 +103,7 @@ export async function checkRateLimit(
         redisErr instanceof Error ? redisErr.message : redisErr
       )
       // For security-critical tiers, fail closed
-      const criticalTiers: RateLimitTierKey[] = ['AUTH_LOGIN', 'AUTH_SIGNUP', 'ORDER_CREATE']
-      if (criticalTiers.includes(tier)) {
+      if (DISTRIBUTED_REQUIRED_TIERS.has(tier)) {
         return {
           allowed: false,
           remaining: 0,
@@ -103,6 +112,19 @@ export async function checkRateLimit(
         }
       }
       // For non-critical tiers, fall through to memory store
+    }
+  }
+
+  if (
+    DISTRIBUTED_REQUIRED_TIERS.has(tier) &&
+    process.env.NODE_ENV === 'production' &&
+    process.env.REDIS_DISABLED !== 'true'
+  ) {
+    return {
+      allowed: false,
+      remaining: 0,
+      resetTime: now + windowMs,
+      retryAfter: Math.ceil(windowMs / 1000),
     }
   }
 

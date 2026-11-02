@@ -26,8 +26,26 @@ export async function acquireDriverOfferLock(
   // Try Redis first for distributed atomicity
   if (isRedisAvailable() && redis) {
     try {
-      const result = await redis.set(`crave:lock:driver:${driverId}`, requestId, 'PX', ttlMs, 'NX')
-      if (result === 'OK') {
+      const key = `crave:lock:driver:${driverId}`
+      const result = await redis.eval(
+        `
+          local current = redis.call('GET', KEYS[1])
+          if not current then
+            redis.call('SET', KEYS[1], ARGV[1], 'PX', ARGV[2])
+            return 1
+          end
+          if current == ARGV[1] then
+            redis.call('PEXPIRE', KEYS[1], ARGV[2])
+            return 1
+          end
+          return 0
+        `,
+        1,
+        key,
+        requestId,
+        String(ttlMs)
+      )
+      if (result === 1) {
         // Also update local cache for fast isDriverLocked checks
         offerLocks.set(driverId, {
           driverId,

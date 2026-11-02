@@ -2,6 +2,9 @@ import { findGeofencedCandidateDrivers } from '@/lib/dispatch/h3-dispatch'
 import { verifyToken } from '@/lib/jwt'
 import { getTestUser, isTestRequest, MOCK_TEST_VENDOR } from '@/lib/test-auth'
 import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/infra/rate-limit'
+import { sendDriverPushToUsers } from '@/lib/notifications/driver-push'
+import { prisma } from '@/lib/prisma'
+import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -54,13 +57,34 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const {
-      pickupLat,
-      pickupLng,
-      vehicleType,
-      batchSize = 3,
-      offerTtlSeconds = 15,
-    } = body
+    const { pickupLat, pickupLng, orderId, vehicleType, batchSize = 3, offerTtlSeconds = 15 } = body
+
+    if (typeof orderId !== 'string' || !orderId.trim()) {
+      return NextResponse.json({ error: 'orderId is required' }, { status: 400 })
+    }
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId.trim() },
+      select: {
+        id: true,
+        restaurant_id: true,
+        restaurant_name: true,
+        status: true,
+        payment_status: true,
+        rider_id: true,
+        restaurant: { select: { owner_id: true } },
+      },
+    })
+    if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+    if (actor.role !== 'admin' && order.restaurant?.owner_id !== actor.id) {
+      return NextResponse.json(
+        { error: 'Forbidden: order does not belong to this vendor' },
+        { status: 403 }
+      )
+    }
+    if (order.payment_status !== 'verified' || order.rider_id) {
+      return NextResponse.json({ error: 'Order is not eligible for dispatch' }, { status: 409 })
+    }
 
     // Validate required coordinates and their ranges.
     if (typeof pickupLat !== 'number' || typeof pickupLng !== 'number') {
@@ -87,10 +111,13 @@ export async function POST(request: Request) {
     const parsedBatchSize = Number.isInteger(batchSize) && batchSize > 0 ? batchSize : 3
     const clampedBatchSize = Math.min(parsedBatchSize, MAX_BATCH_SIZE)
 
-    const parsedTtl = Number.isInteger(offerTtlSeconds) && offerTtlSeconds > 0 ? offerTtlSeconds : 15
+    const parsedTtl =
+      Number.isInteger(offerTtlSeconds) && offerTtlSeconds > 0 ? offerTtlSeconds : 15
     const clampedTtl = Math.min(parsedTtl, MAX_OFFER_TTL_SECONDS)
 
-    const requestId = `dsp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+    // The offer identifier is the canonical order ID consumed by the accept
+    // endpoint. A synthetic dispatch ID cannot be claimed as an order.
+    const requestId = order.id
 
     // 1. Perform H3 Geofenced Candidate Selection.
     //
@@ -145,6 +172,23 @@ export async function POST(request: Request) {
       })
     }
 
+    const candidateIds = alertedCandidates.map((candidate) => candidate.driverId)
+    const safeOffer = {
+      id: order.id,
+      orderId: order.id,
+      restaurantName: order.restaurant_name,
+      status: order.status,
+      offerExpiresAt: Date.now() + clampedTtl * 1000,
+    }
+    await broadcast('driver_offers', { type: 'dispatch_offer', offer: safeOffer }).catch(() => {})
+    await sendDriverPushToUsers(candidateIds, {
+      title: 'New delivery offer',
+      body: `Pickup available from ${order.restaurant_name}`,
+      orderId: order.id,
+      type: 'dispatch_offer',
+      route: 'offers',
+    }).catch((error) => console.warn('[dispatch/request] Driver push failed:', error))
+
     return NextResponse.json({
       success: true,
       message: `Pickup dispatch alert routed to ${alertedCandidates.length} H3 candidates`,
@@ -152,7 +196,7 @@ export async function POST(request: Request) {
       pickupH3Cell: searchResult.pickupH3Cell,
       stageFound: searchResult.stageFound,
       alertsSentCount: alertedCandidates.length,
-      alertedCandidates,
+      candidateDriverIds: candidateIds,
     })
   } catch (err: any) {
     console.error('[POST /api/dispatch/request]', err)

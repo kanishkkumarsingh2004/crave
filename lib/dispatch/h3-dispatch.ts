@@ -24,6 +24,7 @@ export interface DispatchRequest {
    * same value — the two layers must agree on the TTL.
    */
   offerTtlSeconds?: number
+  acquireOfferLocks?: boolean
 }
 
 export interface CandidateDriverResult {
@@ -112,6 +113,7 @@ export async function findGeofencedCandidateDrivers(
     // CR-12: H3 owns lock acquisition — use the caller-supplied TTL so the
     // lock expiry matches what the API route reports as offerExpiresAt.
     offerTtlSeconds = 15,
+    acquireOfferLocks = true,
   } = request
 
   // 1. Convert pickup coordinates to H3 Cell
@@ -151,7 +153,13 @@ export async function findGeofencedCandidateDrivers(
         }
 
         // Eligibility Check 1: Online & Available
-        if (driver.status !== 'ONLINE' || !driver.available) {
+        if (
+          driver.status !== 'ONLINE' ||
+          !driver.available ||
+          driver.isStale ||
+          (driver.reportedAt != null &&
+            Date.now() - driver.reportedAt > DEFAULT_MAX_LOCATION_AGE_MS)
+        ) {
           continue
         }
 
@@ -189,15 +197,17 @@ export async function findGeofencedCandidateDrivers(
         // Redis SET NX would reject the second call and the API would return
         // zero alerted candidates. The TTL is taken from the request so the
         // lock expiry matches what the API route reports as offerExpiresAt.
-        const lockAcquired = await acquireDriverOfferLock(
-          driver.driverId,
-          requestId,
-          offerTtlSeconds * 1000
-        )
-        if (!lockAcquired) {
-          // Another pod just claimed this driver between the isDriverLockedAsync check
-          // and now — skip to avoid duplicate offers.
-          continue
+        if (acquireOfferLocks) {
+          const lockAcquired = await acquireDriverOfferLock(
+            driver.driverId,
+            requestId,
+            offerTtlSeconds * 1000
+          )
+          if (!lockAcquired) {
+            // Another pod just claimed this driver between the lock check and
+            // acquisition — skip to avoid duplicate offers.
+            continue
+          }
         }
 
         const ageSeconds = Math.floor((Date.now() - driver.lastUpdated) / 1000)

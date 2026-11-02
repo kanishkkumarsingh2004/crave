@@ -62,7 +62,12 @@ export async function POST(request: Request) {
     const amountPaise = Number(payment?.amount)
 
     if (!paymentId || !rzpOrderId || !Number.isSafeInteger(amountPaise)) {
-      await markWebhookEventFailed('RAZORPAY', eventId, 'Invalid payment payload')
+      await markWebhookEventFailed(
+        'RAZORPAY',
+        eventId,
+        receipt.leaseToken,
+        'Invalid payment payload'
+      )
       return NextResponse.json({ error: 'Invalid payment payload' }, { status: 400 })
     }
 
@@ -71,7 +76,12 @@ export async function POST(request: Request) {
       include: { order: true },
     })
     if (!attempt) {
-      await markWebhookEventFailed('RAZORPAY', eventId, 'Unknown Razorpay order')
+      await markWebhookEventFailed(
+        'RAZORPAY',
+        eventId,
+        receipt.leaseToken,
+        'Unknown Razorpay order'
+      )
       return NextResponse.json({ error: 'Unknown Razorpay order' }, { status: 500 })
     }
 
@@ -85,7 +95,12 @@ export async function POST(request: Request) {
       payment.currency !== 'INR' ||
       (payment.status && payment.status !== 'captured')
     ) {
-      await markWebhookEventFailed('RAZORPAY', eventId, 'Payment does not match order')
+      await markWebhookEventFailed(
+        'RAZORPAY',
+        eventId,
+        receipt.leaseToken,
+        'Payment does not match order'
+      )
       return NextResponse.json({ error: 'Payment does not match order' }, { status: 409 })
     }
 
@@ -100,11 +115,16 @@ export async function POST(request: Request) {
         rawPayload: event,
       } as any)
     } catch (err: any) {
-      await markWebhookEventFailed('RAZORPAY', eventId, err?.message ?? 'verification error')
+      await markWebhookEventFailed(
+        'RAZORPAY',
+        eventId,
+        receipt.leaseToken,
+        err?.message ?? 'verification error'
+      )
       return NextResponse.json({ error: 'Payment verification failed' }, { status: 500 })
     }
 
-    await markWebhookEventProcessed('RAZORPAY', eventId)
+    await markWebhookEventProcessed('RAZORPAY', eventId, receipt.leaseToken)
     return NextResponse.json({ received: true })
   } else if (type === 'payment.failed') {
     const rzpOrderId = String(payment?.order_id ?? '')
@@ -122,25 +142,31 @@ export async function POST(request: Request) {
         } as any,
       })
     }
-    await markWebhookEventProcessed('RAZORPAY', eventId)
+    await markWebhookEventProcessed('RAZORPAY', eventId, receipt.leaseToken)
     return NextResponse.json({ received: true })
   } else if (
     type === 'transfer.processed' ||
     type === 'transfer.failed' ||
-    type === 'transfer.reversed'
+    type === 'transfer.reversed' ||
+    type === 'transfer.partially_reversed'
   ) {
     // Route transfer webhooks — delegate to the split service
     const { handleRouteTransferWebhook } = await import('@/lib/payments/razorpay-split')
     try {
       await handleRouteTransferWebhook(event)
     } catch (err: any) {
-      await markWebhookEventFailed('RAZORPAY', eventId, err?.message ?? 'transfer webhook error')
+      await markWebhookEventFailed(
+        'RAZORPAY',
+        eventId,
+        receipt.leaseToken,
+        err?.message ?? 'transfer webhook error'
+      )
       return NextResponse.json({ error: 'Transfer webhook failed' }, { status: 500 })
     }
-    await markWebhookEventProcessed('RAZORPAY', eventId)
+    await markWebhookEventProcessed('RAZORPAY', eventId, receipt.leaseToken)
     return NextResponse.json({ received: true })
   } else {
-    await markWebhookEventProcessed('RAZORPAY', eventId)
+    await markWebhookEventProcessed('RAZORPAY', eventId, receipt.leaseToken)
     return NextResponse.json({ received: true })
   }
 }
@@ -149,6 +175,7 @@ export async function POST(request: Request) {
 
 interface BeginResult {
   status: 'new' | 'processing' | 'completed'
+  leaseToken?: string
 }
 
 /**
@@ -187,6 +214,7 @@ async function beginWebhookEvent(
   type: string,
   payload: unknown
 ): Promise<BeginResult> {
+  const leaseToken = crypto.randomUUID()
   // ── Fast path: insert a brand-new event record ──
   try {
     await prisma.webhookEvent.create({
@@ -198,9 +226,10 @@ async function beginWebhookEvent(
         payload: payload as any,
         attempts: 1,
         received_at: new Date(),
+        lease_token: leaseToken,
       },
     })
-    return { status: 'new' }
+    return { status: 'new', leaseToken }
   } catch (err: any) {
     if (err?.code !== 'P2002') throw err
   }
@@ -234,10 +263,11 @@ async function beginWebhookEvent(
         data: {
           attempts: { increment: 1 },
           received_at: new Date(),
+          lease_token: leaseToken,
         },
       })
       if (reclaimed.count > 0) {
-        return { status: 'new' }
+        return { status: 'new', leaseToken }
       }
       // Another worker reclaimed it first — fall through to 'processing'.
     }
@@ -259,6 +289,7 @@ async function beginWebhookEvent(
       attempts: { increment: 1 },
       last_error: null,
       received_at: new Date(),
+      lease_token: leaseToken,
     },
   })
 
@@ -272,26 +303,35 @@ async function beginWebhookEvent(
     return { status: 'processing' }
   }
 
-  return { status: 'new' }
+  return { status: 'new', leaseToken }
 }
 
-async function markWebhookEventProcessed(provider: string, eventId: string) {
-  await prisma.webhookEvent.updateMany({
-    where: { provider, provider_event_id: eventId },
+async function markWebhookEventProcessed(provider: string, eventId: string, leaseToken?: string) {
+  if (!leaseToken) throw new Error('Webhook lease token missing')
+  const result = await prisma.webhookEvent.updateMany({
+    where: { provider, provider_event_id: eventId, status: 'processing', lease_token: leaseToken },
     data: {
       status: 'processed',
       processed_at: new Date(),
     },
   })
+  if (result.count !== 1) throw new Error('Webhook lease completion rejected')
 }
 
-async function markWebhookEventFailed(provider: string, eventId: string, lastError: string) {
-  await prisma.webhookEvent.updateMany({
-    where: { provider, provider_event_id: eventId },
+async function markWebhookEventFailed(
+  provider: string,
+  eventId: string,
+  leaseToken: string | undefined,
+  lastError: string
+) {
+  if (!leaseToken) throw new Error('Webhook lease token missing')
+  const result = await prisma.webhookEvent.updateMany({
+    where: { provider, provider_event_id: eventId, status: 'processing', lease_token: leaseToken },
     data: {
       status: 'failed',
       last_error: lastError,
       processed_at: new Date(),
     },
   })
+  if (result.count !== 1) throw new Error('Webhook lease failure update rejected')
 }

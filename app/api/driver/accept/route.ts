@@ -2,7 +2,7 @@ import { handleApiAuthError, requireAuthApi } from '@/lib/api-auth'
 import { sanitizeOrderForActor, stripOrderSecrets } from '@/lib/auth/order-access'
 import { claimOrderForDriverAtomic, dispatchPendingOutboxEvents } from '@/lib/dal'
 import { acquireDriverOfferLock, releaseDriverLock } from '@/lib/dispatch/atomic-lock'
-import { getDriverLocation, updateDriverLocation } from '@/lib/dispatch/driver-tracker'
+import { getDriverLocationDistributed, updateDriverLocation } from '@/lib/dispatch/driver-tracker'
 import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     }
 
     try {
-      const currentLocation = getDriverLocation(driverId)
+      const currentLocation = await getDriverLocationDistributed(driverId)
 
       // CR-13: Verify the driver is currently available before claiming.
       // A driver who is already ON_TRIP must not accept a second order,

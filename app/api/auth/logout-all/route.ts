@@ -5,7 +5,10 @@ import { NextResponse } from 'next/server'
 export async function POST(request: Request) {
   try {
     const actor = await requireAuth(request)
-    await blacklistAllUserTokens(actor.id)
+    const revoked = await blacklistAllUserTokens(actor.id)
+    if (!revoked) {
+      return NextResponse.json({ error: 'Logout could not be safely completed' }, { status: 503 })
+    }
 
     const response = NextResponse.json({
       success: true,

@@ -13,6 +13,7 @@
     "build": "turbo run //#build:next @crave/admin-app#build @crave/customer-app#build @crave/driver-app#build @crave/restaurant-app#build",
     "build:android": "bash scripts/build-apps.sh",
     "build:android:release": "bash scripts/build-apps-release.sh",
+    "publish:android:release": "bash scripts/publish-android-release.sh",
     "build:ios": "bash scripts/build-ios.sh",
     "build:next": "prisma generate && next build --webpack",
     "rebuild": "turbo run //#build:next @crave/admin-app#build @crave/customer-app#build @crave/driver-app#build @crave/restaurant-app#build --force",

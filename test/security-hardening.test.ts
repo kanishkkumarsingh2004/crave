@@ -285,14 +285,23 @@ test('CR-03-A: timeout outcome is unknown, not failed — re-submission is block
   function isBlockedFromResubmission(status: TransferStatus): boolean {
     // Mirrors the guard in createRouteSplits:
     //   if (existing && existing.status === 'unknown') return { transfer: existing, ... }
-    return status === 'unknown' || status === 'processed' || status === 'reversed'
+    return (
+      status === 'unknown' ||
+      status === 'processing' ||
+      status === 'processed' ||
+      status === 'reversed'
+    )
   }
 
   const status = statusAfterTimeout()
   assert.equal(status, 'unknown', 'timeout must produce unknown, not failed')
   assert.equal(isBlockedFromResubmission(status), true, 'unknown status must block re-submission')
   assert.equal(isBlockedFromResubmission('failed'), false, 'failed status must allow retry')
-  assert.equal(isBlockedFromResubmission('processing'), false, 'processing status must allow retry')
+  assert.equal(
+    isBlockedFromResubmission('processing'),
+    true,
+    'processing status must remain single-flight'
+  )
 })
 
 test('CR-03-A: reconciler queries both processing and unknown rows', () => {

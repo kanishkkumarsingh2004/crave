@@ -47,11 +47,7 @@ export function getAuthToken() {
 export function getWebSocketUrl() {
   const base =
     import.meta.env.VITE_WS_BASE_URL?.trim() || `${API_ORIGIN.replace(/^http/, 'ws')}/api/ws`
-  const url = new URL(base)
-  if (currentToken && currentToken !== COOKIE_SESSION_TOKEN) {
-    url.searchParams.set('token', currentToken)
-  }
-  return url.toString()
+  return new URL(base).toString()
 }
 export async function apiRequest<T>(
   path: string,

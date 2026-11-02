@@ -302,13 +302,17 @@ const customerScenarios = [
     name: 'orderSocket',
     auth: true,
     run(ctx) {
-      const res = ws.connect(`${WS_URL}?token=${ctx.token}`, {}, (socket) => {
-        socket.on('open', () => {
-          socket.send(JSON.stringify({ type: 'subscribe', channels: ['order_update'] }))
-        })
-        socket.on('message', () => {})
-        socket.setTimeout(() => socket.close(), 5000)
-      })
+      const res = ws.connect(
+        WS_URL,
+        { headers: { 'Sec-WebSocket-Protocol': `crave.jwt, ${ctx.token}` } },
+        (socket) => {
+          socket.on('open', () => {
+            socket.send(JSON.stringify({ type: 'subscribe', channels: ['order_update'] }))
+          })
+          socket.on('message', () => {})
+          socket.setTimeout(() => socket.close(), 5000)
+        }
+      )
       check(res, { 'customer socket connected': (r) => r && r.status === 101 })
     },
   },
@@ -411,13 +415,17 @@ const driverScenarios = [
     name: 'locationSocket',
     auth: true,
     run(ctx) {
-      const res = ws.connect(`${WS_URL}?token=${ctx.token}`, {}, (socket) => {
-        socket.on('open', () => {
-          socket.send(JSON.stringify({ type: 'subscribe', channels: ['driver_location'] }))
-        })
-        socket.on('message', () => {})
-        socket.setTimeout(() => socket.close(), 5000)
-      })
+      const res = ws.connect(
+        WS_URL,
+        { headers: { 'Sec-WebSocket-Protocol': `crave.jwt, ${ctx.token}` } },
+        (socket) => {
+          socket.on('open', () => {
+            socket.send(JSON.stringify({ type: 'subscribe', channels: ['driver_location'] }))
+          })
+          socket.on('message', () => {})
+          socket.setTimeout(() => socket.close(), 5000)
+        }
+      )
       check(res, { 'driver socket connected': (r) => r && r.status === 101 })
     },
   },
@@ -493,13 +501,17 @@ const restaurantScenarios = [
     name: 'orderSocket',
     auth: true,
     run(ctx) {
-      const res = ws.connect(`${WS_URL}?token=${ctx.token}`, {}, (socket) => {
-        socket.on('open', () => {
-          socket.send(JSON.stringify({ type: 'subscribe', channels: ['vendor_orders'] }))
-        })
-        socket.on('message', () => {})
-        socket.setTimeout(() => socket.close(), 5000)
-      })
+      const res = ws.connect(
+        WS_URL,
+        { headers: { 'Sec-WebSocket-Protocol': `crave.jwt, ${ctx.token}` } },
+        (socket) => {
+          socket.on('open', () => {
+            socket.send(JSON.stringify({ type: 'subscribe', channels: ['vendor_orders'] }))
+          })
+          socket.on('message', () => {})
+          socket.setTimeout(() => socket.close(), 5000)
+        }
+      )
       check(res, { 'vendor socket connected': (r) => r && r.status === 101 })
     },
   },

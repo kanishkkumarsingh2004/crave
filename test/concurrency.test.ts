@@ -3,6 +3,7 @@ import crypto from 'node:crypto'
 import test, { after } from 'node:test'
 import { prisma } from '../lib/prisma'
 import { checkAndIncrementCouponUsage } from '../lib/dal/coupons'
+import { acquireIdempotency, releaseIdempotency } from '../lib/idempotency'
 import { hashPassword } from '../lib/password'
 
 /**
@@ -174,6 +175,31 @@ test('the same idempotency key can only create one order', { skip: !dbEnabled },
     await clearFixture(fixture)
   }
 })
+
+test(
+  'idempotency isolates scopes and rejects mismatched payloads',
+  { skip: !dbEnabled },
+  async () => {
+    const key = `scope_idem_${crypto.randomUUID()}`
+    try {
+      const checkout = await acquireIdempotency(key, 'order_checkout', { totalPaise: 5000 })
+      assert.equal(checkout.status, 'new')
+      assert.ok(checkout.fencingToken)
+
+      const mismatch = await acquireIdempotency(key, 'order_checkout', { totalPaise: 100 })
+      assert.equal(mismatch.status, 'conflict')
+
+      const webhook = await acquireIdempotency(key, 'payment_webhook', { amountPaise: 5000 })
+      assert.equal(webhook.status, 'new')
+      assert.ok(webhook.fencingToken)
+
+      await releaseIdempotency(key, 'order_checkout', checkout.fencingToken)
+      await releaseIdempotency(key, 'payment_webhook', webhook.fencingToken)
+    } finally {
+      await prisma.idempotencyRecord.deleteMany({ where: { key } })
+    }
+  }
+)
 
 test('only one rider can claim an order', { skip: !dbEnabled }, async () => {
   const suffix = crypto.randomUUID()

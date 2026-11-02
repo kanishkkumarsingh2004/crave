@@ -14,7 +14,11 @@ export function connectRestaurantEvents(options: LiveConnectionOptions): () => v
 
   const connect = () => {
     if (stopped) return
-    socket = new WebSocket(getWebSocketUrl(options.token))
+    const protocols =
+      options.token.split('.').length === 3 ? ['crave.jwt', options.token] : undefined
+    socket = protocols
+      ? new WebSocket(getWebSocketUrl(), protocols)
+      : new WebSocket(getWebSocketUrl())
 
     socket.onopen = () => {
       attempts = 0

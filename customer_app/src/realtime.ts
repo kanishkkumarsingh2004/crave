@@ -1,4 +1,4 @@
-import { getWebSocketUrl } from './api'
+import { getAuthToken, getWebSocketUrl } from './api'
 
 export function connectCustomerOrders(orderIds: string[], onEvent: () => void): () => void {
   let socket: WebSocket | null = null
@@ -7,7 +7,11 @@ export function connectCustomerOrders(orderIds: string[], onEvent: () => void): 
   let attempts = 0
   const connect = () => {
     if (stopped || !orderIds.length) return
-    socket = new WebSocket(getWebSocketUrl())
+    const token = getAuthToken()
+    const protocols = token.split('.').length === 3 ? ['crave.jwt', token] : undefined
+    socket = protocols
+      ? new WebSocket(getWebSocketUrl(), protocols)
+      : new WebSocket(getWebSocketUrl())
     socket.onopen = () => {
       attempts = 0
       for (const orderId of orderIds)

@@ -4,6 +4,7 @@ import { broadcast } from '@/lib/ws-server'
 import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { prisma } from '@/lib/prisma'
 
 export async function POST(request: Request) {
   try {
@@ -21,7 +22,13 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { driverId, orderId, lat, lng, status, available, vehicleType, resolution } = body
 
-    if (!driverId || typeof lat !== 'number' || typeof lng !== 'number') {
+    if (
+      !driverId ||
+      typeof lat !== 'number' ||
+      typeof lng !== 'number' ||
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng)
+    ) {
       return NextResponse.json(
         { error: 'Missing required parameters: driverId, lat, lng' },
         { status: 400 }
@@ -42,6 +49,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized driver location update' }, { status: 403 })
     }
 
+    if (available !== undefined && typeof available !== 'boolean') {
+      return NextResponse.json({ error: 'available must be a boolean' }, { status: 400 })
+    }
+    if (status !== undefined && !['ONLINE', 'OFFLINE', 'ON_TRIP'].includes(status)) {
+      return NextResponse.json({ error: 'Invalid driver status' }, { status: 400 })
+    }
+    if (
+      resolution !== undefined &&
+      (!Number.isInteger(resolution) || resolution < 7 || resolution > 10)
+    ) {
+      return NextResponse.json(
+        { error: 'resolution must be an integer from 7 to 10' },
+        { status: 400 }
+      )
+    }
+    const suppliedTimestamp = body.timestamp ?? body.ts
+    if (suppliedTimestamp !== undefined) {
+      const parsedTimestamp =
+        typeof suppliedTimestamp === 'number'
+          ? suppliedTimestamp
+          : new Date(suppliedTimestamp).getTime()
+      if (!Number.isFinite(parsedTimestamp) || parsedTimestamp <= 0) {
+        return NextResponse.json({ error: 'Invalid GPS timestamp' }, { status: 400 })
+      }
+    }
+
     // Step 4: rate-limit on the authenticated actor identity (never on the
     // body-supplied driverId which is untrusted at this point).
     const rlResult = await checkRateLimit(`gps_${actor.id}`, 'GPS_UPDATE')
@@ -58,16 +91,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Coordinates out of valid range' }, { status: 400 })
     }
 
+    const activeOrder = await prisma.order.findFirst({
+      where: {
+        rider_id: driverId,
+        status: { in: ['rider_assigned', 'picked_up', 'out_for_delivery'] },
+      },
+      select: { id: true },
+    })
+    if (orderId && activeOrder && orderId !== activeOrder.id) {
+      return NextResponse.json(
+        { error: 'orderId does not match the active assignment' },
+        { status: 409 }
+      )
+    }
+
+    const effectiveStatus = activeOrder ? 'ON_TRIP' : status === 'OFFLINE' ? 'OFFLINE' : 'ONLINE'
+    const effectiveAvailable = activeOrder ? false : (available ?? effectiveStatus === 'ONLINE')
+
     const result = await updateDriverLocation({
       driverId,
       lat,
       lng,
-      timestamp: body.timestamp || body.ts,
-      orderId: orderId || body.orderId,
-      status: status || 'ONLINE',
-      available: available !== undefined ? Boolean(available) : true,
+      timestamp: suppliedTimestamp,
+      orderId: activeOrder?.id,
+      status: effectiveStatus,
+      available: effectiveAvailable,
       vehicleType: vehicleType || 'EV_SCOOTER',
-      resolution: resolution || 8,
+      resolution: resolution ?? 8,
     })
 
     // Broadcast driver location update to WebSocket clients (e.g. Admin Map Analytics & Customer Track Map)
@@ -97,6 +147,9 @@ export async function POST(request: Request) {
     })
   } catch (err: any) {
     console.error('[POST /api/driver/location]', err)
+    if (err?.code === 'STALE_GPS_UPDATE') {
+      return NextResponse.json({ error: err.message }, { status: 409 })
+    }
     return NextResponse.json(
       { error: err?.message || 'Failed to update location' },
       { status: 500 }

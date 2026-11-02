@@ -5,18 +5,35 @@ set -Eeuo pipefail
 repository_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 output_directory="${repository_root}/android-builds"
 
+if [[ -z "${ANDROID_RELEASE_BASE_URL:-}" ]]; then
+  echo "ANDROID_RELEASE_BASE_URL is required for a publishable release manifest" >&2
+  exit 1
+fi
+
 # shellcheck source=scripts/app-version.sh
 source "${repository_root}/scripts/app-version.sh"
 
 app_directories=(admin_app driver_app restaurant_app customer_app)
 apk_names=(crave-admin-release.apk crave-driver-release.apk crave-restaurant-release.apk crave-customer-release.apk)
 
-keystore="${repository_root}/crave-release.keystore"
+keystore="${CRAVE_KEYSTORE:-${repository_root}/crave-release.keystore}"
 if [[ ! -f "${keystore}" ]]; then
   echo "Release keystore not found: ${keystore}" >&2
   echo "The release workflow requires a signing keystore at the repository root." >&2
   exit 1
 fi
+
+for required_variable in CRAVE_KEYSTORE_PASS CRAVE_KEY_ALIAS CRAVE_KEY_PASS; do
+  if [[ -z "${!required_variable:-}" ]]; then
+    echo "Required signing variable is missing: ${required_variable}" >&2
+    exit 1
+  fi
+done
+if ! command -v apksigner >/dev/null 2>&1; then
+  echo "apksigner is required to verify release artifacts" >&2
+  exit 1
+fi
+export CRAVE_KEYSTORE="${keystore}"
 
 mkdir -p "${output_directory}"
 
@@ -51,12 +68,8 @@ for index in "${!app_directories[@]}"; do
     exit 1
   fi
 
-  if command -v apksigner >/dev/null 2>&1; then
-    echo "==> Verifying release signature: ${apk_name}"
-    apksigner verify --verbose "${generated_apk}"
-  else
-    echo "==> apksigner not found on PATH; skipping signature verification" >&2
-  fi
+  echo "==> Verifying release signature: ${apk_name}"
+  apksigner verify --verbose --print-certs "${generated_apk}"
 
   cp -- "${generated_apk}" "${published_apk}"
   echo "==> Saved ${published_apk}"

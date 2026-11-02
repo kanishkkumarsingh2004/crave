@@ -4,7 +4,12 @@ import {
   processPaymentRejectionTx,
   processRefundTx,
 } from '@/lib/finance/payment-service'
-import { acquireIdempotency, completeIdempotency, releaseIdempotency } from '@/lib/idempotency'
+import {
+  acquireIdempotency,
+  completeIdempotency,
+  hashPayload,
+  releaseIdempotency,
+} from '@/lib/idempotency'
 import { broadcast } from '@/lib/ws-server'
 import crypto from 'crypto'
 
@@ -24,6 +29,7 @@ import crypto from 'crypto'
 export async function POST(request: Request) {
   let idempotencyKey = ''
   let webhookFencingToken: string | undefined
+  let webhookRequestHash = ''
 
   try {
     const rawBody = await request.text()
@@ -66,7 +72,25 @@ export async function POST(request: Request) {
     }
 
     // 2. Extract Event Data
-    const eventType = (payload.event || payload.type || 'payment.captured').toLowerCase()
+    const eventType = String(payload.event || payload.type || '')
+      .trim()
+      .toLowerCase()
+    if (!eventType) {
+      return NextResponse.json({ error: 'Webhook event type is required' }, { status: 400 })
+    }
+
+    const gateway = String(payload.gateway || '')
+      .trim()
+      .toUpperCase()
+    if (!gateway) {
+      return NextResponse.json({ error: 'Webhook gateway is required' }, { status: 400 })
+    }
+    if (gateway === 'RAZORPAY') {
+      return NextResponse.json(
+        { error: 'Razorpay events must use /api/webhooks/razorpay' },
+        { status: 400 }
+      )
+    }
     const eventId =
       payload.event_id ||
       payload.id ||
@@ -75,6 +99,10 @@ export async function POST(request: Request) {
       crypto.createHash('sha256').update(rawBody).digest('hex').slice(0, 32)
 
     idempotencyKey = `webhook_${eventId}`
+    webhookRequestHash = hashPayload(payload)
+    if (!webhookRequestHash) {
+      return NextResponse.json({ error: 'Webhook payload cannot be hashed' }, { status: 400 })
+    }
 
     // 3. Idempotency Lock Check
     const lock = await acquireIdempotency(idempotencyKey, 'payment_webhook', payload, 300)
@@ -111,29 +139,34 @@ export async function POST(request: Request) {
     }
 
     const gatewayPaymentId = data.id || data.payment_id || data.transaction_id || eventId
-    // Convert paise to rupees if amount is large (typical gateway convention: 100 paise = 1 INR)
-    const rawAmount = data.amount != null ? Number(data.amount) : undefined
-    const amountInRupees =
-      rawAmount != null
-        ? rawAmount > 10000 && rawAmount % 100 === 0
-          ? rawAmount / 100
-          : rawAmount
-        : undefined
+    const amountPaise = Number(data.amount_paise ?? data.amountPaise)
+    const currency = String(data.currency ?? payload.currency ?? '').toUpperCase()
 
     let resultResponse: any = {}
 
     // 4. Dispatch Event Types
-    if (
-      eventType.includes('captured') ||
-      eventType.includes('succeeded') ||
-      eventType.includes('verified') ||
-      eventType.includes('successful')
-    ) {
+    const capturedEvents = new Set([
+      'payment.captured',
+      'payment.succeeded',
+      'payment.verified',
+      'payment.successful',
+    ])
+    const failedEvents = new Set(['payment.failed', 'payment.cancelled'])
+    const refundEvents = new Set(['refund.processed', 'refund.succeeded', 'payment.refunded'])
+
+    if (capturedEvents.has(eventType)) {
+      if (!Number.isSafeInteger(amountPaise) || amountPaise <= 0 || currency !== 'INR') {
+        await releaseIdempotency(idempotencyKey, 'payment_webhook', webhookFencingToken)
+        return NextResponse.json(
+          { error: 'Captured payment requires a positive integer amount_paise and INR currency' },
+          { status: 400 }
+        )
+      }
       const outcome = await processPaymentVerificationTx({
         orderId,
         gatewayPaymentId,
-        gateway: payload.gateway || 'PAYMENT_GATEWAY_WEBHOOK',
-        amount: amountInRupees,
+        gateway,
+        amountPaise,
         actorId: 'GATEWAY_WEBHOOK',
         idempotencyKey,
         rawPayload: payload,
@@ -150,7 +183,7 @@ export async function POST(request: Request) {
       // Real-time broadcasts
       await broadcast('approval_update', { status: 'verified', orderId })
       await broadcast('order_update', { order: outcome.order, orderId })
-    } else if (eventType.includes('failed') || eventType.includes('cancelled')) {
+    } else if (failedEvents.has(eventType)) {
       const outcome = await processPaymentRejectionTx({
         orderId,
         reason: data.error_description || data.failure_reason || 'Gateway payment declined',
@@ -166,10 +199,17 @@ export async function POST(request: Request) {
       }
 
       await broadcast('order_update', { order: outcome.order, orderId })
-    } else if (eventType.includes('refund')) {
+    } else if (refundEvents.has(eventType)) {
+      if (!Number.isSafeInteger(amountPaise) || amountPaise <= 0 || currency !== 'INR') {
+        await releaseIdempotency(idempotencyKey, 'payment_webhook', webhookFencingToken)
+        return NextResponse.json(
+          { error: 'Refund requires a positive integer amount_paise and INR currency' },
+          { status: 400 }
+        )
+      }
       const refundOutcome = await processRefundTx({
         orderId,
-        amount: amountInRupees || 0,
+        amountPaise,
         reason: data.refund_reason || 'Gateway refund event',
         idempotencyKey: `webhook_refund_${eventId}`,
         gatewayRefundId: data.refund_id || eventId,
@@ -192,7 +232,16 @@ export async function POST(request: Request) {
     }
 
     // 5. Complete Idempotency Record
-    await completeIdempotency(idempotencyKey, 'payment_webhook', 200, resultResponse, webhookFencingToken)
+    if (!webhookFencingToken) throw new Error('Webhook idempotency lease ownership was lost')
+    const completed = await completeIdempotency(
+      idempotencyKey,
+      'payment_webhook',
+      200,
+      resultResponse,
+      webhookFencingToken,
+      webhookRequestHash
+    )
+    if (!completed) throw new Error('Webhook idempotency completion was rejected')
 
     return NextResponse.json(resultResponse)
   } catch (err: any) {

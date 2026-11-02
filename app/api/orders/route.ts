@@ -29,7 +29,12 @@ import {
   type OrderPriceInput,
 } from '@/lib/finance/pricing-engine'
 import type { PriceTaxMode } from '@/lib/finance/tax-engine'
-import { acquireIdempotency, completeIdempotency, releaseIdempotency } from '@/lib/idempotency'
+import {
+  acquireIdempotency,
+  completeIdempotency,
+  hashPayload,
+  releaseIdempotency,
+} from '@/lib/idempotency'
 import { withTiming } from '@/lib/instrumentation'
 import { calculateMenuAppPrice } from '@/lib/menu-pricing'
 import { sendDriverPushToAll, sendDriverPushToUsers } from '@/lib/notifications/driver-push'
@@ -373,6 +378,7 @@ export async function POST(request: Request) {
 
       // P0-A: Distributed, transaction-safe idempotency acquisition
       let idempotencyFencingToken: string | undefined
+      const idempotencyRequestHash = idempotencyKey ? hashPayload(body) : ''
       if (idempotencyKey) {
         const idemCheck = await acquireIdempotency(idempotencyKey, 'order_checkout', body)
         idempotencyFencingToken = idemCheck.fencingToken
@@ -610,7 +616,8 @@ export async function POST(request: Request) {
           ? typeof menuItem.stock_count !== 'number' || menuItem.stock_count < quantity
           : hasStockTracking && menuItem.stock_count < quantity
         if (menuItem.in_stock === false || hasInsufficientStock) {
-          if (idempotencyKey) await releaseIdempotency(idempotencyKey, 'order_checkout', idempotencyFencingToken)
+          if (idempotencyKey)
+            await releaseIdempotency(idempotencyKey, 'order_checkout', idempotencyFencingToken)
           return NextResponse.json(
             { error: `Item ${menuItem.name} is out of stock` },
             { status: 400 }
@@ -1424,7 +1431,18 @@ export async function POST(request: Request) {
 
       // Mark idempotency key as completed and cache response for exact replays
       if (idempotencyKey) {
-        await completeIdempotency(idempotencyKey, 'order_checkout', 201, responseData, idempotencyFencingToken)
+        if (!idempotencyFencingToken || !idempotencyRequestHash) {
+          throw new Error('Checkout idempotency lease ownership was lost')
+        }
+        const completed = await completeIdempotency(
+          idempotencyKey,
+          'order_checkout',
+          201,
+          responseData,
+          idempotencyFencingToken,
+          idempotencyRequestHash
+        )
+        if (!completed) throw new Error('Checkout idempotency completion was rejected')
       }
 
       return NextResponse.json(responseData, { status: 201 })

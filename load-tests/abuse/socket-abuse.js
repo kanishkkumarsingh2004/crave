@@ -49,13 +49,16 @@ export function setup() {
 export default function (data) {
   const findings = []
   const expectations = []
+  const wsParams = data.token
+    ? { headers: { 'Sec-WebSocket-Protocol': `crave.jwt, ${data.token}` } }
+    : {}
 
   // ── Case 1: many connections from one client. A server that accepts an
   //    unbounded number of sockets from one host is one bad client away from
   //    an outage.
   let connected = 0
   for (let i = 0; i < CONNECTIONS; i += 1) {
-    const res = ws.connect(`${WS_URL}${data.token ? `?token=${data.token}` : ''}`, {}, (socket) => {
+    const res = ws.connect(WS_URL, wsParams, (socket) => {
       socket.setTimeout(() => socket.close(), 300)
     })
     if (res && res.status === 101) connected += 1
@@ -74,7 +77,7 @@ export default function (data) {
 
   // ── Case 2: a message flood on one connection.
   let sent = 0
-  const flood = ws.connect(`${WS_URL}${data.token ? `?token=${data.token}` : ''}`, {}, (socket) => {
+  const flood = ws.connect(WS_URL, wsParams, (socket) => {
     socket.on('open', () => {
       for (let i = 0; i < MESSAGES; i += 1) {
         socket.send(JSON.stringify({ type: 'ping', i }))
@@ -92,18 +95,14 @@ export default function (data) {
   })
 
   // ── Case 3: garbage. It must not take the server down.
-  const garbage = ws.connect(
-    `${WS_URL}${data.token ? `?token=${data.token}` : ''}`,
-    {},
-    (socket) => {
-      socket.on('open', () => {
-        socket.send('this is not json')
-        socket.send(JSON.stringify({ type: 'subscribe', channels: 'not-an-array' }))
-        socket.send(JSON.stringify({ type: 'unknown_type', payload: 'x'.repeat(60000) }))
-        socket.setTimeout(() => socket.close(), 1200)
-      })
-    }
-  )
+  const garbage = ws.connect(WS_URL, wsParams, (socket) => {
+    socket.on('open', () => {
+      socket.send('this is not json')
+      socket.send(JSON.stringify({ type: 'subscribe', channels: 'not-an-array' }))
+      socket.send(JSON.stringify({ type: 'unknown_type', payload: 'x'.repeat(60000) }))
+      socket.setTimeout(() => socket.close(), 1200)
+    })
+  })
   findings.push(`malformed messages sent (handshake ${garbage?.status})`)
   expectations.push({
     name: 'malformed messages do not break the server',
@@ -113,7 +112,7 @@ export default function (data) {
 
   // ── Case 4: a subscribe with a huge channel list. Each channel can trigger
   //    a database lookup, so this is a cheap way to hammer the database.
-  const wide = ws.connect(`${WS_URL}${data.token ? `?token=${data.token}` : ''}`, {}, (socket) => {
+  const wide = ws.connect(WS_URL, wsParams, (socket) => {
     socket.on('open', () => {
       const channels = []
       for (let i = 0; i < CHANNELS; i += 1) channels.push(`order_update:${i}`)

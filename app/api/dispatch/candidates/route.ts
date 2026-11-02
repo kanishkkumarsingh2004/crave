@@ -3,6 +3,7 @@ import { findGeofencedCandidateDrivers } from '@/lib/dispatch/h3-dispatch'
 import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 import { getTestUser, isTestRequest, MOCK_TEST_VENDOR } from '@/lib/test-auth'
+import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/infra/rate-limit'
 
 export async function GET(request: Request) {
   try {
@@ -37,6 +38,13 @@ export async function GET(request: Request) {
         { status: 403 }
       )
     }
+    const rateLimitResult = await checkRateLimit(
+      getRateLimitKey(request, actor.id, 'dispatch_candidates'),
+      'DISPATCH_REQUEST'
+    )
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse(rateLimitResult.resetTime, rateLimitResult.retryAfter)
+    }
     const { searchParams } = new URL(request.url)
     const lat = parseFloat(searchParams.get('lat') || '')
     const lng = parseFloat(searchParams.get('lng') || '')
@@ -45,7 +53,20 @@ export async function GET(request: Request) {
     const maxRadiusKm = parseFloat(searchParams.get('maxRadiusKm') || '15')
     const minCandidates = parseInt(searchParams.get('minCandidates') || '3', 10)
 
-    if (isNaN(lat) || isNaN(lng)) {
+    if (
+      !Number.isFinite(lat) ||
+      lat < -90 ||
+      lat > 90 ||
+      !Number.isFinite(lng) ||
+      lng < -180 ||
+      lng > 180 ||
+      !Number.isFinite(maxRadiusKm) ||
+      maxRadiusKm <= 0 ||
+      maxRadiusKm > 50 ||
+      !Number.isInteger(minCandidates) ||
+      minCandidates <= 0 ||
+      minCandidates > 20
+    ) {
       return NextResponse.json(
         { error: 'Invalid or missing query parameters: lat, lng required' },
         { status: 400 }
@@ -59,11 +80,17 @@ export async function GET(request: Request) {
       requiredVehicleType: vehicleType,
       maxSearchRadiusKm: maxRadiusKm,
       minCandidatesRequired: minCandidates,
+      acquireOfferLocks: false,
     })
 
     return NextResponse.json({
       success: true,
-      data: searchResult,
+      data: {
+        ...searchResult,
+        eligibleCandidates: searchResult.eligibleCandidates.map(
+          ({ name: _name, phone: _phone, ...candidate }) => candidate
+        ),
+      },
     })
   } catch (err: any) {
     console.error('[GET /api/dispatch/candidates]', err)

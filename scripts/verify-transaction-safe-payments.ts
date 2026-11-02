@@ -16,7 +16,7 @@ import {
   reconcilePendingOrders,
 } from '../lib/finance/payment-service'
 import { calculateOrderPrice } from '../lib/finance/pricing-engine'
-import { acquireIdempotency, completeIdempotency } from '../lib/idempotency'
+import { acquireIdempotency, completeIdempotency, hashPayload } from '../lib/idempotency'
 import { prisma } from '../lib/prisma'
 
 async function runVerification() {
@@ -57,7 +57,15 @@ async function runVerification() {
       grandTotal: 500,
       status: 'payment_submitted',
     }
-    await completeIdempotency(testKey1, 'order_checkout', 201, mockOrderPayload)
+    if (!acquire1.fencingToken) throw new Error('Fresh acquisition did not return a fencing token')
+    await completeIdempotency(
+      testKey1,
+      'order_checkout',
+      201,
+      mockOrderPayload,
+      acquire1.fencingToken,
+      hashPayload({ cartTotal: 500 })
+    )
     console.log('  ✓ 1.3 Completed idempotency record saved with response payload')
 
     // 1.4 Subsequent request with identical key returns cached completed response
