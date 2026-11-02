@@ -2,8 +2,8 @@ FROM node:20-alpine AS base
 RUN apk add --no-cache libc6-compat openssl
 # CR-09 FIX: Create a dedicated non-root runtime user with a fixed UID.
 # The app should never run as root inside the container.
-RUN addgroup --system --gid 1001 cravegroup && \
-    adduser --system --uid 1001 --gid 1001 --shell /bin/sh --disabled-password craveuser
+RUN addgroup -S -g 1001 cravegroup && \
+    adduser -S -u 1001 -G cravegroup -H -D -s /bin/sh craveuser
 WORKDIR /app
 ENV NODE_ENV=production
 
