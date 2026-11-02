@@ -26,6 +26,8 @@
 	},
 	"packageClassList": [
 		"AppPlugin",
+		"DevicePlugin",
+		"GeolocationPlugin",
 		"HapticsPlugin",
 		"LocalNotificationsPlugin",
 		"CAPNetworkPlugin",

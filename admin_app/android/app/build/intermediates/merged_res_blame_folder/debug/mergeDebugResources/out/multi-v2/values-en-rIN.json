@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.crave.admin.app-mergeDebugResources-34:/values-en-rIN/values-en-rIN.xml",
+            "outputFile": "com.crave.admin.app-mergeDebugResources-38:/values-en-rIN/values-en-rIN.xml",
             "map": [
                 {
                     "source": "/home/kanishk/.gradle/caches/8.14.3/transforms/11094a199bb7945826b161d8a9c17beb/transformed/core-1.17.0/res/values-en-rIN/values-en-rIN.xml",
