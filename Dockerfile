@@ -10,6 +10,10 @@ ENV NODE_ENV=production
 FROM base AS builder
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY admin_app/package.json ./admin_app/package.json
+COPY customer_app/package.json ./customer_app/package.json
+COPY driver_app/package.json ./driver_app/package.json
+COPY restaurant_app/package.json ./restaurant_app/package.json
 RUN corepack enable pnpm && corepack prepare pnpm@12.8.1 --activate
 RUN pnpm install --frozen-lockfile
 COPY . .
