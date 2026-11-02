@@ -24,11 +24,16 @@
  *   failed      – provider confirmed rejection (terminal)
  *   reversed    – provider reversed the transfer (terminal)
  *
- * CR-11: This service uses PAYMENT-LINKED transfers, not direct transfers.
+ * CR-11: This service uses PAYMENT-LINKED batch transfers, not direct transfers.
  * The customer's captured payment is the source of funds. Each transfer is
- * anchored to the payment via client.payments.transfers.create(paymentId, ...).
+ * anchored to the payment via client.payments.transfer(paymentId, { transfers: [...] }).
  * Direct transfers (client.transfers.create) are NOT used — they pull from
  * the merchant account balance, not from the captured payment.
+ *
+ * The batch endpoint creates all transfers for a payment in one call and
+ * returns { entity, count, items: RazorpayTransfer[] }. Razorpay deduplicates
+ * on the payment ID, so re-submitting the same payment never creates
+ * duplicate transfers. No per-transfer idempotency header is needed.
  */
 
 import { prisma } from '@/lib/prisma'
@@ -272,6 +277,18 @@ export async function createRouteSplits(params: SplitOrderParams) {
   const client = getRazorpayClient()
   const results: any[] = []
 
+  // Separate allocations into "already settled" (skip) and "needs creation".
+  // The batch transfer endpoint creates all transfers for a payment in one
+  // call and returns { entity, count, items: RazorpayTransfer[] }. Razorpay
+  // deduplicates on the payment ID, so re-submitting the same payment never
+  // creates duplicate transfers.
+  //
+  // CR-11: Use PAYMENT-LINKED batch transfers (client.payments.transfer),
+  // not direct transfers (client.transfers.create). Direct transfers pull
+  // from the merchant account balance — the wrong source of funds. The
+  // batch endpoint anchors every transfer to the customer's captured
+  // payment, which is the intended settlement source.
+  const pending: typeof transfers = []
   for (const item of transfers) {
     const { transfer, linked, alloc, idempotencyKey } = item as {
       transfer: any
@@ -296,85 +313,113 @@ export async function createRouteSplits(params: SplitOrderParams) {
       continue
     }
 
-    // Attach the payment ID to the transfer record
+    // Attach the payment ID to the transfer record before the batch call so
+    // reconcileStaleTransfers() can later query payment-linked transfers.
     await prisma.razorpayTransfer.update({
       where: { id: transfer.id },
       data: { razorpay_payment_id: razorpayPaymentId },
     })
 
-    // CR-11: Use PAYMENT-LINKED transfers, not direct transfers.
-    // client.payments.transfers.create(paymentId, params) anchors the transfer
-    // to the customer's captured payment. Direct transfers (client.transfers.create)
-    // pull from the merchant account balance — the wrong source of funds.
-    //
-    // CR-11: Use the documented idempotency contract for this endpoint.
-    // Razorpay's payment-linked transfer idempotency header is
-    // X-Transfer-Idempotency, not the generic X-Idempotency-Key. The generic
-    // header is not honored by the transfers endpoint, so provider-side
-    // deduplication was never actually enabled.
-    let providerTransferId: string | undefined
-    let providerStatus: string | undefined
+    pending.push(item)
+  }
+
+  if (pending.length > 0) {
+    let batchResp: any
 
     try {
-      const routeResp: any = await client.payments.transfers.create(
+      batchResp = await client.payments.transfer(
         razorpayPaymentId,
         {
-          account: linked.razorpay_account_id,
-          amount: alloc.amountPaise,
-          currency: 'INR',
-          notes: { crave_order_id: orderId, recipient_type: alloc.type },
-        },
-        // Razorpay Node SDK passes extra options (including custom headers) as
-        // the second argument to resource methods.
-        { headers: { 'X-Transfer-Idempotency': idempotencyKey } } as any
+          transfers: pending.map(({ alloc, linked }) => ({
+            account: linked.razorpay_account_id,
+            amount: alloc.amountPaise,
+            currency: 'INR',
+            notes: { crave_order_id: orderId, recipient_type: alloc.type },
+          })),
+        }
       )
-
-      providerTransferId = routeResp.id
-      providerStatus = routeResp.status
     } catch (err: any) {
-      // CR-03-A: A caught error does NOT prove Razorpay rejected the transfer.
+      // CR-03-A: A caught error does NOT prove Razorpay rejected the transfers.
       // Timeouts and network failures frequently occur *after* the provider has
       // processed the request but before the response arrives.
       //
-      // Setting status='failed' here and retrying would re-submit the transfer,
-      // potentially causing a duplicate payment.
+      // Setting status='failed' here and retrying would re-submit the batch,
+      // potentially causing duplicate payments.
       //
-      // Use status='unknown' instead: no razorpay_transfer_id is set, so the
-      // guard above blocks any future re-submission. reconcileStaleTransfers()
-      // will query Razorpay and transition to 'processed' or 'failed' once the
-      // true outcome is confirmed.
-      await prisma.razorpayTransfer.update({
-        where: { id: transfer.id },
-        data: {
-          status: 'unknown',
-          failure_reason:
-            `Ambiguous provider outcome — pending reconciliation: ` +
-            String(err?.message ?? 'Route transfer API error'),
-          updated_at: new Date(),
-        },
-      })
+      // Use status='unknown' for every pending row: no razorpay_transfer_id is
+      // set, so the guard above blocks any future re-submission.
+      // reconcileStaleTransfers() will query Razorpay and transition rows to
+      // 'processed' or 'failed' once the true outcome is confirmed.
+      for (const item of pending) {
+        const { transfer } = item as { transfer: any }
+        await prisma.razorpayTransfer.update({
+          where: { id: transfer.id },
+          data: {
+            status: 'unknown',
+            failure_reason:
+              `Ambiguous provider outcome — pending reconciliation: ` +
+              String(err?.message ?? 'Route transfer API error'),
+            updated_at: new Date(),
+          },
+        })
+      }
       throw err
     }
 
-    // Persist provider transfer ID and actual provider status
-    await prisma.razorpayTransfer.update({
-      where: { id: transfer.id },
-      data: {
-        razorpay_transfer_id: providerTransferId,
-        status: providerStatus === 'processed' ? 'processed' : 'pending',
-        ...(providerStatus === 'processed' ? { processed_at: new Date() } : {}),
-        updated_at: new Date(),
-      },
-    })
+    // Match batch response items back to local transfer records by recipient
+    // and amount. The batch response returns provider transfer IDs and
+    // statuses; we persist each one on the matching local row.
+    const batchItems: any[] = batchResp.items ?? []
+    for (const item of pending) {
+      const { transfer, alloc } = item as { transfer: any; alloc: Allocation }
+      const match = batchItems.find(
+        (b: any) =>
+          b.recipient === alloc.recipientId ||
+          (b.notes?.crave_order_id === orderId && b.notes?.recipient_type === alloc.type && b.amount === alloc.amountPaise)
+      )
 
-    results.push({
-      transferId: transfer.id,
-      recipientType: alloc.type,
-      recipientId: alloc.recipientId,
-      amountPaise: alloc.amountPaise,
-      providerTransferId,
-      status: providerStatus,
-    })
+      if (!match) {
+        // Provider did not return a matching transfer — leave the row in
+        // 'unknown' so reconcileStaleTransfers() can resolve it.
+        await prisma.razorpayTransfer.update({
+          where: { id: transfer.id },
+          data: {
+            status: 'unknown',
+            failure_reason: 'No matching transfer in batch response — pending reconciliation',
+            updated_at: new Date(),
+          },
+        })
+        results.push({
+          transferId: transfer.id,
+          recipientType: alloc.type,
+          recipientId: alloc.recipientId,
+          amountPaise: alloc.amountPaise,
+          providerTransferId: null,
+          status: 'unknown',
+        })
+        continue
+      }
+
+      const providerStatus = String(match.status ?? '')
+      await prisma.razorpayTransfer.update({
+        where: { id: transfer.id },
+        data: {
+          razorpay_transfer_id: match.id,
+          status: providerStatus === 'processed' ? 'processed' : 'pending',
+          ...(providerStatus === 'processed' ? { processed_at: new Date() } : {}),
+          updated_at: new Date(),
+        },
+      })
+
+      results.push({
+        transferId: transfer.id,
+        recipientType: alloc.type,
+        recipientId: alloc.recipientId,
+        amountPaise: alloc.amountPaise,
+        providerTransferId: match.id,
+        status: providerStatus,
+      })
+    }
   }
 
   return { orderId, results }
@@ -441,8 +486,9 @@ export async function handleRouteTransferWebhook(event: any) {
  * provider outcome is known, this job transitions rows to the correct status
  * ('processed' or 'failed'), unblocking any subsequent retry if needed.
  *
- * CR-11: Queries payment-linked transfers via client.payments.transfers.all(paymentId),
- * not the direct transfers endpoint. Each stale row carries its
+ * CR-11: Queries payment-linked transfers via client.payments.fetchTransfer(paymentId),
+ * which returns { entity, count, items: RazorpayTransfer[] } for transfers
+ * attached to a specific captured payment. Each stale row carries its
  * razorpay_payment_id, so we look up transfers attached to that specific
  * payment rather than scanning the merchant's transfer history.
  */
@@ -480,9 +526,7 @@ export async function reconcileStaleTransfers() {
 
     try {
       // CR-11: Query payment-linked transfers for this specific payment.
-      const transfers: any = await client.payments.transfers.all(t.razorpay_payment_id, {
-        count: 100,
-      })
+      const transfers: any = await client.payments.fetchTransfer(t.razorpay_payment_id)
 
       const match = transfers.items?.find(
         (item: any) =>
