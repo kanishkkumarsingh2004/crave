@@ -16,6 +16,10 @@ COPY driver_app/package.json ./driver_app/package.json
 COPY restaurant_app/package.json ./restaurant_app/package.json
 COPY packages/design-tokens/package.json ./packages/design-tokens/package.json
 COPY packages/mobile-core/package.json ./packages/mobile-core/package.json
+# The root postinstall runs `prisma generate`, so the schema and config must be
+# present before the dependency install lifecycle scripts execute.
+COPY prisma.config.ts ./prisma.config.ts
+COPY prisma/schema.prisma ./prisma/schema.prisma
 RUN corepack enable pnpm && corepack prepare pnpm@12.8.1 --activate
 RUN pnpm install --frozen-lockfile
 COPY . .
@@ -36,6 +40,7 @@ COPY --from=builder --chown=craveuser:cravegroup /app/prisma ./prisma
 COPY --from=builder --chown=craveuser:cravegroup /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=craveuser:cravegroup /app/server.js ./server.js
 COPY --from=builder --chown=craveuser:cravegroup /app/ws-server.js ./ws-server.js
+COPY --from=builder --chown=craveuser:cravegroup /app/lib/realtime/channel-scope.js ./lib/realtime/channel-scope.js
 COPY --from=builder --chown=craveuser:cravegroup /app/next.config.mjs ./next.config.mjs
 COPY --from=builder --chown=craveuser:cravegroup /app/next-env.d.ts ./next-env.d.ts
 COPY --from=builder --chown=craveuser:cravegroup /app/package.json ./package.json
