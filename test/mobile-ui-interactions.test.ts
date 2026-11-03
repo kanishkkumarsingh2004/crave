@@ -58,3 +58,17 @@ test('web viewport permits zoom and admin/customer use one vertical scroll owner
   assert.match(customerCss, /\.ptr-scroll\s*\{[\s\S]*?height: 100%;[\s\S]*?overflow-y: auto;/)
   assert.doesNotMatch(read('customer_app/src/App.tsx'), /overflowY: 'auto'/)
 })
+
+test('customer discovery does not steal focus and restaurant menus follow the commerce hierarchy', () => {
+  const app = read('customer_app/src/App.tsx')
+  const styles = read('customer_app/src/styles.css')
+
+  assert.doesNotMatch(app, /autoFocus/)
+  assert.match(app, /className="detail-summary"/)
+  assert.match(app, /className="detail-hero-actions"/)
+  assert.match(app, /className="menu-group-heading"/)
+  assert.match(app, /groupedItems\.map/)
+  assert.match(app, /<DishImage src=\{image\} name=\{item\.name\} \/>/)
+  assert.match(styles, /\.detail-summary\s*\{[\s\S]*?margin-top: -72px;/)
+  assert.match(styles, /\.menu-item\s*\{[\s\S]*?grid-template-columns: 94px minmax\(0, 1fr\) 76px;/)
+})

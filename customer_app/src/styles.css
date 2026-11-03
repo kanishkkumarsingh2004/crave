@@ -1123,50 +1123,82 @@ textarea {
 }
 /* ============ Restaurant detail / menu screen ============ */
 .detail-screen {
-  --gutter: 18px;
+  --gutter: clamp(18px, 5vw, 28px);
+  width: 100%;
+  max-width: 760px;
   min-height: 100dvh;
+  margin: 0 auto;
   background: var(--app-bg);
-  padding-bottom: 95px;
+  padding-bottom: 104px;
 }
 .detail-hero {
-  height: 300px;
+  height: clamp(270px, 40dvh, 350px);
   position: relative;
-  padding: calc(var(--safe-top-float) + 6px) var(--gutter) 22px;
+  overflow: hidden;
+  padding: calc(var(--safe-top-float) + 18px) var(--gutter) 22px;
+  color: var(--ink);
+  background-color: var(--hero-fallback);
+  border-radius: 0 0 28px 28px;
+}
+.detail-hero-nav {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.detail-hero-actions {
+  display: flex;
+  gap: 10px;
+}
+.detail-hero .round {
+  border: 0;
+  background: rgb(255 255 255 / 94%);
+  color: #111814;
+  box-shadow: 0 8px 24px rgb(4 16 9 / 18%);
+  backdrop-filter: blur(10px);
+}
+.detail-hero .round.is-favorite {
+  color: var(--danger);
+}
+.detail-hero .round.is-favorite svg {
+  fill: currentColor;
+}
+.detail-summary {
+  position: relative;
+  z-index: 4;
+  margin-top: -72px;
+  padding: 22px 22px 18px;
+  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: 0 16px 36px rgb(20 38 27 / 14%);
+}
+.detail-summary-heading {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  color: var(--ink);
+  gap: 14px;
 }
-.detail-hero > .round {
-  position: relative;
-  z-index: 3;
-  flex: 0 0 auto;
-}
-.detail-hero-copy {
-  position: absolute;
-  left: var(--gutter);
-  right: var(--gutter);
-  bottom: 32px;
-  z-index: 2;
-}
-.detail-hero h1 {
-  margin: 10px 0 4px;
+.detail-summary h1 {
+  margin: 7px 0 0;
   font:
-    800 30px/1.1 'Inter',
+    800 clamp(24px, 6vw, 32px) / 1.08 var(--font-display),
     sans-serif;
-  letter-spacing: -1.4px;
+  letter-spacing: -1.2px;
   text-wrap: balance;
 }
-.detail-hero p {
-  margin: 0;
+.detail-summary > p {
+  margin: 14px 0 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
 }
 .open-pill {
   display: inline-block;
   background: transparent;
-  color: var(--lime);
+  color: var(--accent-strong);
   border: none;
   border-radius: 0;
   padding: 0;
@@ -1174,6 +1206,24 @@ textarea {
   font-weight: 800;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+}
+.rating-pill {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #fff6e7;
+  color: #d97800;
+  font-size: 12px;
+  font-weight: 800;
+}
+.rating-pill svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
 }
 .open-pill::before {
   display: none;
@@ -1188,70 +1238,42 @@ textarea {
 .detail-body {
   padding: 0 var(--gutter);
 }
-/* The card overlaps the hero, so it needs its own stacking context: the hero is
-   positioned and would otherwise paint on top of the overlapping edge. */
 .detail-facts {
-  position: relative;
-  z-index: 4;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(124px, 1fr));
-  gap: 14px 10px;
-  margin: -16px 0 18px;
-  padding: 15px 14px 16px;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  background: var(--surface);
-  box-shadow: 0 12px 28px var(--shadow-color);
-}
-.fact {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 0;
+  gap: 0;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
 }
-.fact-icon {
-  flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
-  border-radius: 11px;
-  display: grid;
-  place-content: center;
-  background: var(--accent-soft);
+.fact {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.fact + .fact {
+  border-left: 1px solid var(--line);
+}
+.fact svg {
+  width: 16px;
+  height: 16px;
   color: var(--accent-strong);
 }
-.fact-icon svg {
-  width: 17px;
-  height: 17px;
-}
-.fact-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  gap: 1px;
-}
-.fact b {
-  font:
-    800 14px/1.2 'Inter',
-    sans-serif;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.fact small {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  color: var(--muted);
+.fact span {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 /* ---- search ---- */
 .detail-search {
-  height: 50px;
+  height: 48px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1296,8 +1318,9 @@ textarea {
 .detail-chips {
   display: flex;
   gap: 8px;
-  margin: 14px calc(var(--gutter) * -1) 0;
-  padding: 2px var(--gutter) 0;
+  margin: 22px calc(var(--gutter) * -1) 0;
+  padding: 0 var(--gutter) 18px;
+  border-bottom: 1px solid var(--line);
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -1307,9 +1330,9 @@ textarea {
 }
 .detail-chips button {
   flex: 0 0 auto;
-  height: 34px;
-  padding: 0 15px;
-  border: 1px solid var(--line);
+  height: 40px;
+  padding: 0 20px;
+  border: 0;
   border-radius: 999px;
   background: var(--chip-bg);
   color: var(--chip-text);
@@ -1326,14 +1349,35 @@ textarea {
   border-color: var(--chip-active-bg);
   color: var(--chip-active-text);
 }
-.detail-body .section-title {
-  margin: 22px 0 2px;
+.detail-search {
+  margin-top: 18px;
 }
-.detail-body .section-title span {
+.menu-groups {
+  display: grid;
+  gap: 8px;
+}
+.menu-group {
+  padding-top: 24px;
+}
+.menu-group-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.menu-group-heading h2 {
+  margin: 0;
   font:
-    600 12px 'Inter',
+    800 clamp(20px, 5vw, 25px) / 1.15 var(--font-display),
     sans-serif;
-  color: var(--muted);
+  letter-spacing: -0.7px;
+}
+.menu-group-heading span {
+  color: var(--accent-strong);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 .menu-list {
   display: grid;
@@ -1341,11 +1385,11 @@ textarea {
 }
 .menu-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 104px;
-  gap: 16px;
+  grid-template-columns: 94px minmax(0, 1fr) 76px;
+  gap: 14px;
   position: relative;
-  padding: 18px 0;
-  align-items: start;
+  padding: 18px 0 20px;
+  align-items: center;
   border-bottom: 1px solid var(--line);
 }
 .menu-item:last-child {
@@ -1414,7 +1458,7 @@ textarea {
   width: 100%;
   margin: 7px 0 3px;
   font:
-    800 15.5px/1.28 'Inter',
+    800 17px/1.25 var(--font-display),
     sans-serif;
   letter-spacing: -0.25px;
   color: var(--ink);
@@ -1422,7 +1466,7 @@ textarea {
 }
 .menu-price {
   font:
-    800 13px 'Inter',
+    800 12px var(--font-ui),
     sans-serif;
   letter-spacing: -0.1px;
   color: var(--accent-strong);
@@ -1438,18 +1482,21 @@ textarea {
   font-size: 11.5px;
   line-height: 1.5;
 }
-.menu-action {
-  width: 104px;
+.menu-item-controls {
+  width: 76px;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 14px;
+  align-self: stretch;
   align-items: stretch;
+  justify-content: space-between;
+  text-align: right;
 }
 .dish-image {
-  width: 104px;
-  height: 104px;
-  border-radius: 18px;
+  width: 94px;
+  height: 94px;
+  border-radius: 17px;
   display: grid;
   place-content: center;
   overflow: hidden;
@@ -1468,7 +1515,7 @@ textarea {
   opacity: 0.6;
 }
 /* Sits directly under the dish artwork: same width, so both edges line up. */
-.menu-action button {
+.menu-item-controls button {
   width: 100%;
   height: 34px;
   flex: 0 0 auto;
@@ -1491,15 +1538,15 @@ textarea {
     background 160ms ease,
     color 160ms ease;
 }
-.menu-action button svg {
+.menu-item-controls button svg {
   width: 12px;
   height: 12px;
   flex: 0 0 auto;
 }
-.menu-action button:active {
+.menu-item-controls button:active {
   transform: scale(0.96);
 }
-.menu-action button:disabled {
+.menu-item-controls button:disabled {
   filter: grayscale(1);
   opacity: 0.55;
   cursor: default;
@@ -4268,15 +4315,45 @@ html[data-theme='dark'] .address-map-fallback {
 .dish-image-placeholder {
   background: var(--media-placeholder-bg);
 }
-.menu-action button {
+.menu-item-controls button {
   border-color: var(--accent-strong);
   background: var(--surface);
   color: var(--accent-strong);
 }
-.menu-action button.added {
+.menu-item-controls button.added {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--on-accent);
+}
+@media (max-width: 370px) {
+  .detail-summary {
+    padding-right: 17px;
+    padding-left: 17px;
+  }
+  .detail-facts {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+  .fact {
+    min-width: 50%;
+  }
+  .fact:nth-child(odd) {
+    border-left: 0;
+  }
+  .menu-item {
+    grid-template-columns: 82px minmax(0, 1fr) 68px;
+    gap: 10px;
+  }
+  .dish-image {
+    width: 82px;
+    height: 82px;
+  }
+  .menu-item-controls {
+    width: 68px;
+  }
+  .menu-copy p {
+    -webkit-line-clamp: 1;
+  }
 }
 .dish-image-placeholder {
   background: var(--media-placeholder-bg);
