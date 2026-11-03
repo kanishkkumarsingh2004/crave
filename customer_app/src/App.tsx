@@ -689,27 +689,80 @@ function MenuScreen({
 function CartPage({
   cart,
   restaurant,
+  addresses,
   onQuantity,
   onBrowse,
+  onAddresses,
   onCheckout,
   onRefresh,
   refreshing,
 }: {
   cart: CartItem[]
   restaurant?: Restaurant
+  addresses: Address[]
   onQuantity: (k: string, d: number) => void
   onBrowse: () => void
+  onAddresses: () => void
   onCheckout: () => void
   onRefresh: () => void
   refreshing: boolean
 }) {
   const subtotal = cart.reduce((n, x) => n + x.price * x.quantity, 0)
+  const selectedAddress = addresses.find((entry) => entry.is_default) || addresses[0]
+  const [billing, setBilling] = useState<any>(null)
+  const [pricingError, setPricingError] = useState('')
+
+  useEffect(() => {
+    if (!restaurant || cart.length === 0) {
+      setBilling(null)
+      setPricingError('')
+      return
+    }
+    let cancelled = false
+    setBilling(null)
+    setPricingError('')
+    apiRequest<any>('/api/calculator', {
+      method: 'POST',
+      body: {
+        subtotal,
+        restaurantId: restaurant.id,
+        distanceKm: checkoutDistanceKm(restaurant, selectedAddress),
+        itemsAreCustomerPrices: true,
+        items: cart.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      },
+    })
+      .then((response) => {
+        if (!cancelled) setBilling(response.breakdown?.customerBilling || null)
+      })
+      .catch((quoteError) => {
+        if (!cancelled)
+          setPricingError(
+            quoteError instanceof Error ? quoteError.message : 'Could not calculate this order.'
+          )
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [cart, restaurant, selectedAddress, subtotal])
+
+  const payableTax = billing?.taxSplit
+    ? Number(billing?.platformServiceGst || 0)
+    : Number(billing?.gstAmount || 0)
+  const totalToPay = billing?.grandTotal ?? subtotal
+
   return (
-    <section className="page">
+    <section className="page bag-review-page">
       <PullToRefresh onRefresh={onRefresh} refreshing={refreshing}>
-        <header className="bag-header">
-          <h1>Bag</h1>
-          <Logo compact />
+        <header className="bag-review-header">
+          <button className="round pale" onClick={onBrowse} aria-label="Back to restaurants">
+            <Icon name="back" />
+          </button>
+          <h1>Order review</h1>
+          <span aria-hidden="true" />
         </header>
         {!cart.length ? (
           <>
@@ -723,55 +776,138 @@ function CartPage({
             </button>
           </>
         ) : (
-          <div className="cart-scroll-content">
-            <div className="cart-restaurant">
-              <div className="mini-logo">{restaurant?.name?.[0] || 'C'}</div>
-              <span>
-                <small>ORDERING FROM</small>
-                <b>{restaurant?.name || 'Restaurant'}</b>
-              </span>
-            </div>
-            <div className="cart-items">
-              {cart.map((x) => (
-                <article key={x.key}>
-                  <div className="veg-dot">
-                    <i className="veg" />
+          <div className="cart-scroll-content bag-review-content">
+            <section className="bag-review-section">
+              <div className="bag-review-section-head">
+                <h2>Delivery address</h2>
+                <button onClick={onAddresses}>{selectedAddress ? 'Edit' : 'Add'}</button>
+              </div>
+              {selectedAddress ? (
+                <button className="bag-address" onClick={onAddresses}>
+                  <span className="bag-address-icon">
+                    <Icon name="pin" />
+                  </span>
+                  <span>
+                    <b>
+                      {selectedAddress.label}
+                      {selectedAddress.is_default && <small>Primary</small>}
+                    </b>
+                    <em>{selectedAddress.address}</em>
+                  </span>
+                </button>
+              ) : (
+                <button className="bag-address bag-address-empty" onClick={onAddresses}>
+                  <span className="bag-address-icon">
+                    <Icon name="pin" />
+                  </span>
+                  <span>
+                    <b>Add a delivery address</b>
+                    <em>An address is required before placing your order.</em>
+                  </span>
+                </button>
+              )}
+              <div className="bag-eta">
+                <span>
+                  <Icon name="clock" />
+                </span>
+                <div>
+                  <small>Estimated time</small>
+                  <b>{restaurant?.eta || '25–35 min'}</b>
+                </div>
+              </div>
+            </section>
+
+            <section className="bag-review-section">
+              <div className="bag-review-section-head">
+                <h2>Your selection</h2>
+                <button onClick={onBrowse}>Add items</button>
+              </div>
+              <div className="bag-review-items">
+                {cart.map((x) => (
+                  <article key={x.key}>
+                    <div className="bag-item-image">
+                      {x.image ? (
+                        <img src={x.image} alt={`${x.name} dish`} />
+                      ) : (
+                        <span>{x.name.slice(0, 1)}</span>
+                      )}
+                    </div>
+                    <div className="bag-item-copy">
+                      <h3>{x.name}</h3>
+                      <p>{x.variant || 'Freshly prepared'}</p>
+                      <div className="stepper">
+                        <button
+                          onClick={() => onQuantity(x.key, -1)}
+                          aria-label={`Remove one ${x.name}`}
+                        >
+                          <Icon name="minus" />
+                        </button>
+                        <b>{x.quantity}</b>
+                        <button
+                          onClick={() => onQuantity(x.key, 1)}
+                          aria-label={`Add one ${x.name}`}
+                        >
+                          <Icon name="plus" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="bag-item-price">
+                      <strong>{money(x.price * x.quantity)}</strong>
+                      <button onClick={() => onQuantity(x.key, -x.quantity)}>Remove</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="bag-review-section bag-summary" aria-label="Order summary">
+              <div className="bag-summary-row">
+                <span>Item subtotal</span>
+                <b>{money(billing?.customerFoodSubtotal || subtotal)}</b>
+              </div>
+              {billing ? (
+                <>
+                  {Number(billing.packagingFee || 0) > 0 && (
+                    <div className="bag-summary-row">
+                      <span>Packaging</span>
+                      <b>{money(billing.packagingFee)}</b>
+                    </div>
+                  )}
+                  <div className="bag-summary-row">
+                    <span>Delivery fee</span>
+                    <b>{billing.isFreeDelivery ? 'FREE' : money(billing.netDeliveryFee || 0)}</b>
                   </div>
-                  <div>
-                    <h3>{x.name}</h3>
-                    {x.variant && <p>{x.variant}</p>}
-                    <strong>{money(x.price)}</strong>
-                  </div>
-                  <div className="stepper">
-                    <button onClick={() => onQuantity(x.key, -1)}>
-                      <Icon name="minus" />
-                    </button>
-                    <b>{x.quantity}</b>
-                    <button onClick={() => onQuantity(x.key, 1)}>
-                      <Icon name="plus" />
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
+                  {Number(billing.platformFee || 0) + Number(billing.handlingFee || 0) > 0 && (
+                    <div className="bag-summary-row">
+                      <span>Platform &amp; handling</span>
+                      <b>
+                        {money(Number(billing.platformFee || 0) + Number(billing.handlingFee || 0))}
+                      </b>
+                    </div>
+                  )}
+                  {payableTax > 0 && (
+                    <div className="bag-summary-row">
+                      <span>GST &amp; other charges</span>
+                      <b>{money(payableTax)}</b>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="bag-summary-row bag-summary-pending">
+                  <span>{pricingError || 'Calculating delivery and fees…'}</span>
+                </div>
+              )}
+            </section>
           </div>
         )}
       </PullToRefresh>
       {cart.length > 0 && (
-        <div className="fixed z-[100] bottom-[var(--nav-height)] left-0 right-0 w-full max-w-[740px] mx-auto box-border min-h-[76px] px-[18px] py-[10px] bg-chrome-bg border-t border-line backdrop-blur-[14px] flex items-center justify-between gap-3">
-          <div className="flex flex-col justify-center min-w-[90px] shrink-0">
-            <small className="text-[9px] text-[#6f776f] font-black">ITEM TOTAL</small>
-
-            <strong className="text-[19px] leading-[1.3] mt-[2]">{money(subtotal)}</strong>
-          </div>
-
-          <button
-            className="primary flex-1 min-h-[46px] flex items-center justify-center gap-2 min-w-0 m-0"
-            onClick={onCheckout}
-          >
-            Continue
-            <Icon name="chevron" className="w-[17px]" />
+        <div className="bag-review-bar">
+          <button className="bag-place-order" disabled={!selectedAddress} onClick={onCheckout}>
+            <span>Place order</span>
+            <strong>{money(totalToPay)}</strong>
           </button>
+          <small>Final order details are confirmed on the next step.</small>
         </div>
       )}
     </section>
@@ -3233,8 +3369,10 @@ export default function App() {
         <CartPage
           cart={cart}
           restaurant={cartRestaurant || undefined}
+          addresses={addresses}
           onQuantity={quantity}
           onBrowse={() => selectTab('home')}
+          onAddresses={() => setAddressPage(true)}
           onCheckout={() => setCheckout(true)}
           onRefresh={refreshCart}
           refreshing={refreshingTab === 'cart'}
@@ -3297,33 +3435,35 @@ export default function App() {
           renderTabPage(tab, 'active', null)
         )}
       </main>
-      <nav className="bottom-nav">
-        {(
-          [
-            ['home', t.nav.home],
-            ['xp', t.nav.xp],
-            ['orders', t.nav.orders],
-            ['cart', t.nav.bag],
-            ['account', t.nav.you],
-          ] as [Tab, string][]
-        ).map(([id, label]) => (
-          <button
-            type="button"
-            key={id}
-            className={tab === id ? 'active' : ''}
-            aria-current={tab === id ? 'page' : undefined}
-            onClick={() => selectTab(id)}
-          >
-            <span>
-              <Icon name={id === 'account' ? 'user' : id === 'xp' ? 'store' : id} />
-              {id === 'cart' && cart.length > 0 ? (
-                <i>{cart.reduce((n, x) => n + x.quantity, 0)}</i>
-              ) : null}
-            </span>
-            <small>{label}</small>
-          </button>
-        ))}
-      </nav>
+      {tab !== 'cart' && (
+        <nav className="bottom-nav">
+          {(
+            [
+              ['home', t.nav.home],
+              ['xp', t.nav.xp],
+              ['orders', t.nav.orders],
+              ['cart', t.nav.bag],
+              ['account', t.nav.you],
+            ] as [Tab, string][]
+          ).map(([id, label]) => (
+            <button
+              type="button"
+              key={id}
+              className={tab === id ? 'active' : ''}
+              aria-current={tab === id ? 'page' : undefined}
+              onClick={() => selectTab(id)}
+            >
+              <span>
+                <Icon name={id === 'account' ? 'user' : id === 'xp' ? 'store' : id} />
+                {id === 'cart' && cart.length > 0 ? (
+                  <i>{cart.reduce((n, x) => n + x.quantity, 0)}</i>
+                ) : null}
+              </span>
+              <small>{label}</small>
+            </button>
+          ))}
+        </nav>
+      )}
       {toast && <div className="toast">{toast}</div>}
       {permissionSheet && (
         <PermissionSheet

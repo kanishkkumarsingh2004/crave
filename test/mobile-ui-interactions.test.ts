@@ -73,3 +73,20 @@ test('customer discovery does not steal focus and restaurant menus follow the co
   assert.match(styles, /\.detail-summary\s*\{[\s\S]*?margin-top: -76px;/)
   assert.match(styles, /\.menu-item\s*\{[\s\S]*?grid-template-columns: 94px minmax\(0, 1fr\) 76px;/)
 })
+
+test('customer bag presents an address-led order review without a payment-method block', () => {
+  const app = read('customer_app/src/App.tsx')
+  const styles = read('customer_app/src/styles.css')
+  const cartPage = app.slice(app.indexOf('function CartPage'), app.indexOf('function Checkout'))
+
+  assert.match(cartPage, /Delivery address/)
+  assert.match(cartPage, /Estimated time/)
+  assert.match(cartPage, /Your selection/)
+  assert.match(cartPage, /Item subtotal/)
+  assert.match(cartPage, /Place order/)
+  assert.match(cartPage, /apiRequest<any>\('\/api\/calculator'/)
+  assert.doesNotMatch(cartPage, /Payment method|payment-method/i)
+  assert.match(app, /tab !== 'cart' && \(/)
+  assert.match(styles, /\.bag-review-page\s*\{/)
+  assert.match(styles, /\.bag-place-order\s*\{/)
+})
