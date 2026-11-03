@@ -115,6 +115,7 @@ jobs:
         env:
           ALLOW_DATABASE_TESTS: 'true'
           DATABASE_URL: postgresql://test:test@localhost:5432/crave_test
+          DATABASE_URL_UNPOOLED: postgresql://test:test@localhost:5432/crave_test
           REDIS_URL: redis://localhost:6379
           JWT_SECRET: test-secret-for-ci
           WS_INTERNAL_SECRET: test-internal-secret
@@ -339,9 +340,95 @@ jobs:
 
       - name: Generate Prisma Client
         run: pnpm db:generate
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/crave_test
+          DATABASE_URL_UNPOOLED: postgresql://test:test@localhost:5432/crave_test
 
       - name: Build Next.js application
         run: pnpm build
+
+  docker-build:
+    name: Docker Build & Smoke Test
+    runs-on: ubuntu-latest
+    needs: [build]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: crave_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U test -d crave_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Build Docker image
+        run: docker build --tag crave:ci --build-arg DATABASE_URL=postgresql://test:test@localhost:5432/crave_test .
+
+      - name: Apply database migrations to service Postgres
+        run: pnpm db:migrate:deploy
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/crave_test
+          DATABASE_URL_UNPOOLED: postgresql://test:test@localhost:5432/crave_test
+
+      - name: Run Docker container
+        run: |
+          docker run -d --name crave-ci \
+            -e NODE_ENV=production \
+            -e DATABASE_URL=postgresql://test:test@localhost:5432/crave_test \
+            -e DATABASE_URL_UNPOOLED=postgresql://test:test@localhost:5432/crave_test \
+            -e REDIS_URL=redis://localhost:6379 \
+            -e JWT_SECRET=test-secret-for-ci \
+            -e WS_INTERNAL_SECRET=test-internal-secret \
+            -e WS_PORT=8000 \
+            -p 3000:3000 \
+            --network host \
+            crave:ci
+
+      - name: Wait for container readiness
+        run: |
+          ready=false
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/api/health > /dev/null 2>&1; then
+              echo "Container is ready"
+              ready=true
+              break
+            fi
+            echo "Waiting for container... ($i/30)"
+            sleep 2
+          done
+          if [ "$ready" != "true" ]; then
+            echo "❌ Container did not become ready"
+            docker logs --tail=50 crave-ci || true
+            exit 1
+          fi
+
+      - name: Smoke test health endpoint
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health)
+          if [ "$code" != "200" ]; then
+            echo "❌ Health endpoint returned $code, expected 200"
+            exit 1
+          fi
+          echo "✅ Health endpoint returned 200"
+
+      - name: Stop container
+        if: always()
+        run: |
+          docker stop crave-ci 2>/dev/null || true
+          docker rm crave-ci 2>/dev/null || true
 
   security-scan:
     # A4: Hard gate — fails the pipeline on any high/critical vulnerability in
@@ -465,7 +552,7 @@ jobs:
     # of the Render service (Service → Deploys → Deploy Hook). Without it this
     # job leaves production untouched and only reports the missing secret.
     runs-on: ubuntu-latest
-    needs: [build, load-test]
+    needs: [build, docker-build, load-test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Deploy production
@@ -482,7 +569,7 @@ jobs:
   summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [lint-and-format, typecheck, test, build, security-scan, dependency-scan, load-test]
+    needs: [lint-and-format, typecheck, test, build, docker-build, security-scan, dependency-scan, load-test]
     if: always()
     steps:
       - name: Print CI status
@@ -492,6 +579,7 @@ jobs:
           echo "  TypeCheck: ${{ needs.typecheck.result }}"
           echo "  Tests: ${{ needs.test.result }}"
           echo "  Build: ${{ needs.build.result }}"
+          echo "  Docker Build: ${{ needs.docker-build.result }}"
           echo "  Security Scan: ${{ needs.security-scan.result }}"
           echo "  Dependency Scan (advisory): ${{ needs.dependency-scan.result }}"
           echo "  Load & Concurrency Test: ${{ needs.load-test.result }}"
@@ -499,6 +587,7 @@ jobs:
              [[ "${{ needs.typecheck.result }}" != "success" ]] ||
              [[ "${{ needs.test.result }}" != "success" ]] ||
              [[ "${{ needs.build.result }}" != "success" ]] ||
+             [[ "${{ needs.docker-build.result }}" != "success" ]] ||
              [[ "${{ needs.security-scan.result }}" != "success" ]] ||
              [[ "${{ needs.load-test.result }}" != "success" ]]; then
             echo "❌ CI FAILED"
