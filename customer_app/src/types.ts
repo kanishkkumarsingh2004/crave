@@ -89,4 +89,13 @@ export interface Order {
   delivery_otp?: string | null
   otp_consumed_at?: string | null
   customer_address?: string
+  refunds?: Array<{
+    id: string
+    status: 'pending' | 'processing' | 'completed' | 'failed'
+    amount: number
+    amount_paise?: number | null
+    created_at: string
+    processed_at?: string | null
+    provider_confirmed_at?: string | null
+  }>
 }

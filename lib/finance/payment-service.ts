@@ -49,7 +49,80 @@ export interface RefundInput {
   reason: string
   idempotencyKey?: string
   gatewayRefundId?: string
+  /** Set only after a signed provider event or an authoritative provider API lookup. */
+  providerConfirmed?: boolean
   actorId?: string
+}
+
+export async function approveRefundRequestTx(params: {
+  refundId: string
+  actorId: string
+  reason?: string
+}) {
+  const refund = await prisma.$transaction(async (tx) => {
+    const existing = await tx.refund.findUnique({ where: { id: params.refundId } })
+    if (!existing) throw new Error('Refund request not found')
+    if (existing.status === 'completed' || existing.status === 'processing') return existing
+    if (existing.status === 'failed') throw new Error('A failed refund request cannot be approved')
+
+    const updated = await tx.refund.update({
+      where: { id: existing.id },
+      data: {
+        status: 'processing',
+        reason: params.reason || existing.reason,
+      },
+    })
+    await tx.adminOverrideLog.create({
+      data: {
+        admin_id: params.actorId,
+        order_id: existing.order_id,
+        action: 'REFUND_APPROVED_FOR_PROVIDER',
+        reason: params.reason || 'Approved for manual provider processing',
+      },
+    })
+    return updated
+  })
+
+  invalidateOrdersCache()
+  return refund
+}
+
+export async function failRefundFromProviderTx(params: {
+  orderId: string
+  amountPaise: number
+  gatewayRefundId: string
+  reason: string
+}) {
+  return prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`
+      SELECT pg_advisory_xact_lock(hashtextextended(${params.orderId}, 0)) IS NULL AS acquired
+    `
+    const existing =
+      (await tx.refund.findUnique({
+        where: { gateway_refund_id: params.gatewayRefundId },
+      })) ||
+      (await tx.refund.findFirst({
+        where: {
+          order_id: params.orderId,
+          amount_paise: params.amountPaise,
+          status: { in: ['processing', 'pending', 'failed'] },
+        },
+        orderBy: { created_at: 'asc' },
+      }))
+    if (!existing) throw new Error('No matching refund request exists for provider failure')
+    if (existing.status === 'completed') return { refund: existing, alreadyCompleted: true }
+
+    const refund = await tx.refund.update({
+      where: { id: existing.id },
+      data: {
+        status: 'failed',
+        gateway_refund_id: params.gatewayRefundId,
+        processed_at: new Date(),
+        reason: `${existing.reason} | Provider failure: ${params.reason}`,
+      },
+    })
+    return { refund, alreadyCompleted: false }
+  })
 }
 
 /**
@@ -382,6 +455,12 @@ export async function processPaymentRejectionTx(input: PaymentRejectionInput) {
       throw new Error(`Order not found: ${orderId}`)
     }
 
+    // A delayed/out-of-order failure event must never downgrade a payment that
+    // the provider already confirmed as captured.
+    if (order.payment_status === 'verified') {
+      return { success: true, order, alreadyRejected: false, ignoredAfterVerification: true }
+    }
+
     // Anti-replay: cannot reject an already delivered/completed order
     if (order.status === 'delivered' || order.status === 'completed') {
       throw new Error(`Cannot reject payment for an already completed order: ${orderId}`)
@@ -459,7 +538,7 @@ export async function processPaymentRejectionTx(input: PaymentRejectionInput) {
 
   invalidateOrdersCache()
 
-  if (!result.alreadyRejected && result.order) {
+  if (!result.alreadyRejected && !result.ignoredAfterVerification && result.order) {
     const safeOrder = stripOrderSecrets(result.order as any)
     await broadcast('approval_update', {
       status: 'rejected',
@@ -500,8 +579,19 @@ export async function processPaymentRejectionTx(input: PaymentRejectionInput) {
  * - Vendor settlements are adjusted or cancelled accordingly.
  */
 export async function processRefundTx(input: RefundInput) {
-  const { orderId, amount, amountPaise, reason, idempotencyKey, gatewayRefundId } = input
-  const providerConfirmed = Boolean(gatewayRefundId)
+  const {
+    orderId,
+    amount,
+    amountPaise,
+    reason,
+    idempotencyKey,
+    gatewayRefundId,
+    providerConfirmed: confirmationVerified = false,
+  } = input
+  if (gatewayRefundId && !confirmationVerified) {
+    throw new Error('Provider refund ID must be verified before completing a refund')
+  }
+  const providerConfirmed = confirmationVerified && Boolean(gatewayRefundId)
   const refundPaise =
     amountPaise != null
       ? amountPaise
@@ -515,7 +605,7 @@ export async function processRefundTx(input: RefundInput) {
 
   const cleanIdempotencyKey = idempotencyKey || `refund_${orderId}_${refundPaise}_${Date.now()}`
 
-  return await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     // Serialize every refund calculation for this order. A normal transaction
     // alone does not prevent two different idempotency keys from both reading
     // the same refundable balance before either inserts its refund.
@@ -527,14 +617,34 @@ export async function processRefundTx(input: RefundInput) {
     let refund = await tx.refund.findUnique({
       where: { idempotency_key: cleanIdempotencyKey },
     })
-    if (refund?.status === 'completed' || (refund && !providerConfirmed)) {
+    if (!refund && gatewayRefundId) {
+      refund = await tx.refund.findUnique({
+        where: { gateway_refund_id: gatewayRefundId },
+      })
+    }
+    if (refund?.status === 'completed') {
+      if (
+        gatewayRefundId &&
+        refund.gateway_refund_id &&
+        refund.gateway_refund_id !== gatewayRefundId
+      ) {
+        throw new Error('Refund was already completed by a different provider transaction')
+      }
+      return {
+        success: true,
+        refund,
+        alreadyProcessed: true,
+        message: 'Refund was already processed (idempotent)',
+      }
+    }
+    if (refund && !providerConfirmed) {
       return {
         success: true,
         refund,
         alreadyProcessed: true,
         message:
-          refund.status === 'completed'
-            ? 'Refund was already processed (idempotent)'
+          refund.status === 'failed'
+            ? 'Refund request failed and requires a new reviewed request'
             : 'Refund request is awaiting provider confirmation',
       }
     }
@@ -547,7 +657,7 @@ export async function processRefundTx(input: RefundInput) {
         where: {
           order_id: orderId,
           amount_paise: refundPaise,
-          status: 'pending',
+          status: { in: ['processing', 'pending', 'failed'] },
           gateway_refund_id: null,
         },
         orderBy: { created_at: 'asc' },
@@ -666,6 +776,34 @@ export async function processRefundTx(input: RefundInput) {
       isFullRefund,
     }
   })
+
+  invalidateOrdersCache()
+  if (result.refund.status === 'completed' && !result.alreadyProcessed) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { customer_id: true },
+    })
+    await broadcast('order_update', {
+      type: 'refund_updated',
+      orderId,
+      refund: {
+        status: 'completed',
+        amountPaise: result.refund.amount_paise,
+        providerRefundId: result.refund.gateway_refund_id,
+        processedAt: result.refund.processed_at,
+      },
+    }).catch(() => {})
+    if (order?.customer_id) {
+      await sendWebPushToUsers([order.customer_id], {
+        title: 'Refund completed',
+        body: `Your refund for order #${orderId.slice(-8)} has been confirmed by the payment provider.`,
+        url: `/user/orders/${encodeURIComponent(orderId)}`,
+        tag: `refund-${result.refund.id}`,
+        orderId,
+      }).catch((pushError) => console.error('[payment-service] Refund Web Push failed:', pushError))
+    }
+  }
+  return result
 }
 
 /**

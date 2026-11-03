@@ -40,6 +40,7 @@ export interface CancelledOrder {
     createdAt: string
     processedAt?: string
     gatewayRefundId?: string
+    providerConfirmedAt?: string
   } | null
 }
 

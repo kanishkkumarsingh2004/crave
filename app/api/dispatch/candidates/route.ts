@@ -71,6 +71,7 @@ export async function GET(request: Request) {
       where: { id: orderId },
       select: {
         id: true,
+        status: true,
         payment_status: true,
         rider_id: true,
         restaurant: {
@@ -85,8 +86,15 @@ export async function GET(request: Request) {
         { status: 403 }
       )
     }
-    if (order.payment_status !== 'verified' || order.rider_id) {
-      return NextResponse.json({ error: 'Order is not eligible for dispatch' }, { status: 409 })
+    if (
+      order.payment_status !== 'verified' ||
+      order.status !== 'ready_for_pickup' ||
+      order.rider_id
+    ) {
+      return NextResponse.json(
+        { error: 'Dispatch requires a verified order that is ready for pickup and unassigned' },
+        { status: 409 }
+      )
     }
 
     const storedLatitude = order.restaurant?.latitude

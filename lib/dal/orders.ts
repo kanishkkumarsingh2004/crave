@@ -12,7 +12,23 @@ import { broadcast } from '@/lib/ws-server'
 export async function findOrderById(id: string) {
   return prisma.order.findUnique({
     where: { id },
-    include: { customer: true, restaurant: true },
+    include: {
+      customer: true,
+      restaurant: true,
+      refunds: {
+        orderBy: { created_at: 'desc' },
+        take: 5,
+        select: {
+          id: true,
+          status: true,
+          amount: true,
+          amount_paise: true,
+          created_at: true,
+          processed_at: true,
+          provider_confirmed_at: true,
+        },
+      },
+    },
   })
 }
 
@@ -157,7 +173,22 @@ export async function listOrders(filters?: {
 
   const orders = await prisma.order.findMany({
     where,
-    include: { restaurant: true },
+    include: {
+      restaurant: true,
+      refunds: {
+        orderBy: { created_at: 'desc' },
+        take: 5,
+        select: {
+          id: true,
+          status: true,
+          amount: true,
+          amount_paise: true,
+          created_at: true,
+          processed_at: true,
+          provider_confirmed_at: true,
+        },
+      },
+    },
     orderBy: { created_at: 'desc' },
     take: Math.min(filters?.limit ?? 50, 100), // Max 100, default 50
   })
@@ -370,13 +401,7 @@ export async function claimOrderForDriverAtomic(params: {
       }
 
       // Verify eligible status for assignment
-      const validStatusesForClaim: OrderStatus[] = [
-        'sent_to_vendor',
-        'preparing',
-        'packing',
-        'ready_for_pickup',
-        'rider_assigned',
-      ]
+      const validStatusesForClaim: OrderStatus[] = ['ready_for_pickup']
       if (!validStatusesForClaim.includes(existing.status as OrderStatus)) {
         return {
           success: false,
@@ -462,6 +487,13 @@ export async function claimOrderForDriverAtomic(params: {
     return result
   } catch (err: any) {
     console.error('[claimOrderForDriverAtomic] DB Transaction error:', err)
+    if (err?.code === 'P2002') {
+      return {
+        success: false,
+        error: 'Driver already has an active order',
+        conflict: true,
+      }
+    }
     return {
       success: false,
       error: err?.message || 'Database transaction failed during driver assignment',

@@ -65,6 +65,7 @@ export function CancellationTable({
               {orders.map((ord) => {
                 const refund = ord.refund
                 const isPendingRefund = refund?.status === 'pending'
+                const isProcessingRefund = refund?.status === 'processing'
                 const isApprovedRefund = refund?.status === 'completed'
                 const isRejectedRefund = refund?.status === 'failed'
 
@@ -119,10 +120,13 @@ export function CancellationTable({
 
                     {/* Refund Status */}
                     <td className="py-3.5 px-4">
-                      {isPendingRefund ? (
+                      {isPendingRefund || isProcessingRefund ? (
                         <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 text-[11px] font-black text-amber-700 dark:text-amber-300">
                           <Clock className="size-3 animate-spin" />
-                          <span>Pending Review (₹{refund?.amount})</span>
+                          <span>
+                            {isProcessingRefund ? 'Awaiting Razorpay' : 'Pending Review'} (₹
+                            {refund?.amount})
+                          </span>
                         </div>
                       ) : isApprovedRefund ? (
                         <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 text-[11px] font-black text-emerald-700 dark:text-emerald-300">
@@ -161,7 +165,7 @@ export function CancellationTable({
                               disabled={actionLoading}
                               onClick={() => onApproveRefund(ord)}
                               className="inline-flex items-center gap-1 rounded-xl bg-[#d9f447] hover:bg-[#c8e434] px-2.5 py-1.5 text-xs font-black text-[#18201c] transition shadow-xs disabled:opacity-50"
-                              title="Approve Refund for Customer"
+                              title="Approve refund for manual Razorpay processing"
                             >
                               <CheckCircle2 className="size-3.5" />
                               <span>Approve</span>

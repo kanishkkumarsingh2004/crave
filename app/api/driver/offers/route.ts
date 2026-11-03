@@ -48,7 +48,7 @@ export async function GET(request: Request) {
         order: {
           payment_status: 'verified',
           rider_id: null,
-          status: { in: ['sent_to_vendor', 'preparing', 'packing', 'ready_for_pickup'] },
+          status: 'ready_for_pickup',
         },
       },
       include: { order: true },

@@ -12,6 +12,38 @@ const dev = process.env.NODE_ENV !== 'production'
 const app = next({ dev })
 const handle = app.getRequestHandler()
 
+const SETTLEMENT_RECONCILIATION_INTERVAL_MS = 5 * 60 * 1000
+
+function startSettlementReconciliationSchedule(port) {
+  const schedulerSecret = (process.env.CRON_SECRET || process.env.WS_INTERNAL_SECRET || '').trim()
+  if (!schedulerSecret) {
+    console.warn(
+      '[server.js] Settlement reconciliation schedule disabled: CRON_SECRET or WS_INTERNAL_SECRET is required'
+    )
+    return
+  }
+
+  const run = async () => {
+    try {
+      const response = await fetch(`http://127.0.0.1:${port}/api/internal/reconcile-settlements`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${schedulerSecret}` },
+        signal: AbortSignal.timeout(120000),
+      })
+      if (!response.ok) {
+        console.error(`[server.js] Settlement reconciliation returned HTTP ${response.status}`)
+      }
+    } catch (error) {
+      console.error('[server.js] Settlement reconciliation request failed:', error.message)
+    }
+  }
+
+  const initialTimer = setTimeout(run, 30000)
+  const interval = setInterval(run, SETTLEMENT_RECONCILIATION_INTERVAL_MS)
+  initialTimer.unref?.()
+  interval.unref?.()
+}
+
 app.prepare().then(() => {
   const server = createServer((req, res) => {
     handle(req, res)
@@ -57,6 +89,7 @@ app.prepare().then(() => {
   })
   server.listen(PORT, () => {
     console.log(`> Ready on http://localhost:${PORT}`)
+    startSettlementReconciliationSchedule(PORT)
 
     // Auto-start WebSocket server if not already running
     const { fork } = require('child_process')

@@ -39,7 +39,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const eventId = String(event.id ?? '')
+  const eventId = String(
+    event.id ??
+      request.headers.get('x-razorpay-event-id') ??
+      crypto.createHash('sha256').update(raw).digest('hex')
+  )
   const type = String(event.event ?? '')
   if (!eventId || !type) {
     return NextResponse.json({ error: 'Missing event ID/type' }, { status: 400 })
@@ -141,6 +145,33 @@ export async function POST(request: Request) {
           failure_reason: String(payment?.error_description ?? 'Payment failed'),
         } as any,
       })
+    }
+    await markWebhookEventProcessed('RAZORPAY', eventId, receipt.leaseToken)
+    return NextResponse.json({ received: true })
+  } else if (type === 'refund.created' || type === 'refund.processed' || type === 'refund.failed') {
+    const refundEntity = event.payload?.refund?.entity
+    try {
+      const expectedStatus: Record<string, string> = {
+        'refund.created': 'pending',
+        'refund.processed': 'processed',
+        'refund.failed': 'failed',
+      }
+      if (String(refundEntity?.status ?? '').toLowerCase() !== expectedStatus[type]) {
+        throw new Error('Razorpay refund event type and entity status do not match')
+      }
+      const { applySignedRazorpayRefundEvent } = await import('@/lib/payments/razorpay-refunds')
+      await applySignedRazorpayRefundEvent({
+        entity: refundEntity,
+        actorId: 'RAZORPAY_WEBHOOK',
+      })
+    } catch (err: any) {
+      await markWebhookEventFailed(
+        'RAZORPAY',
+        eventId,
+        receipt.leaseToken,
+        err?.message ?? 'refund webhook error'
+      )
+      return NextResponse.json({ error: 'Refund webhook failed' }, { status: 500 })
     }
     await markWebhookEventProcessed('RAZORPAY', eventId, receipt.leaseToken)
     return NextResponse.json({ received: true })

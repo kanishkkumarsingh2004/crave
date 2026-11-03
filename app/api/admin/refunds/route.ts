@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireRole, handleAuthError } from '@/lib/auth-helpers'
 import { processRefundTx } from '@/lib/finance/payment-service'
 import { withTiming } from '@/lib/instrumentation'
+import { verifyManualRazorpayRefund } from '@/lib/payments/razorpay-refunds'
 
 export async function POST(request: Request) {
   return withTiming('POST /api/admin/refunds', async () => {
@@ -10,6 +11,7 @@ export async function POST(request: Request) {
       const body = await request.json()
       const {
         orderId,
+        refundId,
         amount,
         reason = 'Customer refund requested',
         idempotencyKey = request.headers.get('x-idempotency-key') || body.idempotencyKey || null,
@@ -18,6 +20,32 @@ export async function POST(request: Request) {
 
       if (!orderId || typeof orderId !== 'string') {
         return NextResponse.json({ error: 'Order ID is required' }, { status: 400 })
+      }
+
+      if (gatewayRefundId) {
+        if (typeof refundId !== 'string' || !refundId.trim()) {
+          return NextResponse.json(
+            { error: 'refundId is required to verify a provider refund' },
+            { status: 400 }
+          )
+        }
+        const result = await verifyManualRazorpayRefund({
+          refundId: refundId.trim(),
+          gatewayRefundId: String(gatewayRefundId).trim(),
+          actorId: actor.id,
+        })
+        return NextResponse.json({
+          success: true,
+          message:
+            result.providerStatus === 'processed'
+              ? 'Razorpay confirmed the refund and the ledger was completed.'
+              : result.providerStatus === 'failed'
+                ? 'Razorpay reports that this refund failed.'
+                : 'Razorpay confirms that this refund is still pending.',
+          refund: result.refund,
+          providerStatus: result.providerStatus,
+          alreadyProcessed: result.alreadyProcessed || false,
+        })
       }
 
       const numericAmount = Number(amount)
@@ -33,7 +61,6 @@ export async function POST(request: Request) {
         amount: Math.round(numericAmount),
         reason,
         idempotencyKey: idempotencyKey || `refund_${orderId}_${numericAmount}_${Date.now()}`,
-        gatewayRefundId,
         actorId: actor.id,
       })
 

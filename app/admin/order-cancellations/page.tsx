@@ -52,8 +52,9 @@ export default function OrderCancellationsPage() {
 
   const handleProcessRefund = async (
     order: CancelledOrder,
-    action: 'approve' | 'reject',
-    notes?: string
+    action: 'approve' | 'reject' | 'confirm',
+    notes?: string,
+    gatewayRefundId?: string
   ) => {
     setActionLoading(true)
     try {
@@ -64,6 +65,7 @@ export default function OrderCancellationsPage() {
           orderId: order.id,
           refundId: order.refund?.id,
           action,
+          gatewayRefundId,
           notes:
             notes ||
             (action === 'approve' ? 'Approved by Admin from Review Queue' : 'Rejected by Admin'),
@@ -223,6 +225,9 @@ export default function OrderCancellationsPage() {
         onClose={() => setSelectedOrder(null)}
         actionLoading={actionLoading}
         onApproveRefund={(ord) => handleProcessRefund(ord, 'approve')}
+        onConfirmRefund={(ord, providerRefundId) =>
+          handleProcessRefund(ord, 'confirm', undefined, providerRefundId)
+        }
         onOpenRejectModal={setRejectModalOrder}
       />
 

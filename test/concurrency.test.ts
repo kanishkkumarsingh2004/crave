@@ -326,6 +326,7 @@ test(
           reason: 'Concurrent refund A',
           idempotencyKey: `refund_a_${suffix}`,
           gatewayRefundId: `rfnd_a_${suffix}`,
+          providerConfirmed: true,
         }),
         processRefundTx({
           orderId,
@@ -333,6 +334,7 @@ test(
           reason: 'Concurrent refund B',
           idempotencyKey: `refund_b_${suffix}`,
           gatewayRefundId: `rfnd_b_${suffix}`,
+          providerConfirmed: true,
         }),
       ])
       assert.equal(attempts.filter((attempt) => attempt.status === 'fulfilled').length, 1)
@@ -389,6 +391,7 @@ test(
           reason: 'Forced rollback test',
           idempotencyKey: `refund_rollback_${suffix}`,
           gatewayRefundId: `rfnd_rollback_${suffix}`,
+          providerConfirmed: true,
         }),
         /forced refund ledger failure/
       )
@@ -441,6 +444,7 @@ test(
         reason: 'Provider confirmed refund',
         idempotencyKey: `refund_webhook_${suffix}`,
         gatewayRefundId: `rfnd_confirmed_${suffix}`,
+        providerConfirmed: true,
       })
       assert.equal(confirmed.refund.id, requested.refund.id)
       assert.equal(confirmed.refund.status, 'completed')
@@ -449,6 +453,67 @@ test(
       assert.ok(await prisma.ledgerEntry.count({ where: { order_id: orderId } }))
     } finally {
       await clearFixture(fixture)
+    }
+  }
+)
+
+test(
+  'one driver accepting two different offered orders concurrently gets exactly one assignment',
+  { skip: !dbEnabled },
+  async () => {
+    const suffix = crypto.randomUUID()
+    const fixture = await seedOrderFixture({ stock: 100, suffix })
+    const driverId = `race_double_driver_${suffix}`
+    const orderIds = [`race_double_a_${suffix}`, `race_double_b_${suffix}`]
+    try {
+      await prisma.user.create({
+        data: {
+          id: driverId,
+          name: 'Double Claim Driver',
+          email: `double-driver-${suffix}@example.invalid`,
+          role: 'rider',
+          phone: '+919999999998',
+          password_hash: hashPassword('RaceDriver@123'),
+        },
+      })
+      await prisma.order.createMany({
+        data: orderIds.map((id) => ({
+          ...orderData(fixture),
+          id,
+          status: 'ready_for_pickup' as const,
+          payment_status: 'verified' as const,
+        })),
+      })
+      await prisma.dispatchOffer.createMany({
+        data: orderIds.map((orderId) => ({
+          order_id: orderId,
+          driver_id: driverId,
+          dispatch_attempt_id: crypto.randomUUID(),
+          expires_at: new Date(Date.now() + 60_000),
+        })),
+      })
+
+      const results = await Promise.all(
+        orderIds.map((orderId) =>
+          claimOrderForDriverAtomic({
+            orderId,
+            driverId,
+            driverName: 'Double Claim Driver',
+            driverPhone: '+919999999998',
+          })
+        )
+      )
+      assert.equal(results.filter((result) => result.success).length, 1)
+      assert.equal(results.filter((result) => result.conflict).length, 1)
+      assert.equal(
+        await prisma.order.count({
+          where: { id: { in: orderIds }, rider_id: driverId, status: 'rider_assigned' },
+        }),
+        1
+      )
+    } finally {
+      await clearFixture(fixture)
+      await prisma.user.deleteMany({ where: { id: driverId } })
     }
   }
 )

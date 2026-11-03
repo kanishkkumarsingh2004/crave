@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireRole, handleAuthError } from '@/lib/auth/auth-helpers'
 import { broadcast } from '@/lib/ws-server'
-import { processRefundTx } from '@/lib/finance/payment-service'
+import { approveRefundRequestTx, processRefundTx } from '@/lib/finance/payment-service'
+import { verifyManualRazorpayRefund } from '@/lib/payments/razorpay-refunds'
 
 export async function GET(request: Request) {
   try {
@@ -128,6 +129,7 @@ export async function GET(request: Request) {
               createdAt: activeRefund.created_at,
               processedAt: activeRefund.processed_at,
               gatewayRefundId: activeRefund.gateway_refund_id,
+              providerConfirmedAt: activeRefund.provider_confirmed_at,
             }
           : null,
       }
@@ -154,14 +156,17 @@ export async function POST(request: Request) {
   try {
     const admin = await requireRole(request, 'admin')
     const body = await request.json()
-    const { orderId, refundId, action, notes } = body
+    const { orderId, refundId, action, notes, gatewayRefundId } = body
 
     if (!orderId || !action) {
       return NextResponse.json({ error: 'orderId and action are required' }, { status: 400 })
     }
 
-    if (action !== 'approve' && action !== 'reject') {
-      return NextResponse.json({ error: 'action must be approve or reject' }, { status: 400 })
+    if (!['approve', 'reject', 'confirm'].includes(action)) {
+      return NextResponse.json(
+        { error: 'action must be approve, reject, or confirm' },
+        { status: 400 }
+      )
     }
 
     const order = await prisma.order.findUnique({
@@ -183,15 +188,47 @@ export async function POST(request: Request) {
       (targetRefund?.amount != null ? targetRefund.amount * 100 : amountPaise)
     let updatedRefund
     if (action === 'approve') {
-      const outcome = await processRefundTx({
-        orderId,
-        amountPaise: requestedPaise,
-        reason: notes || targetRefund?.reason || 'Admin approved refund request',
-        idempotencyKey: targetRefund?.idempotency_key || `admin_refund_${orderId}_${Date.now()}`,
+      const request = targetRefund
+        ? targetRefund
+        : (
+            await processRefundTx({
+              orderId,
+              amountPaise: requestedPaise,
+              reason: notes || 'Admin approved refund request',
+              idempotencyKey: `admin_refund_${orderId}_${Date.now()}`,
+              actorId: admin.id,
+            })
+          ).refund
+      updatedRefund = await approveRefundRequestTx({
+        refundId: request.id,
+        actorId: admin.id,
+        reason: notes || request.reason,
+      })
+    } else if (action === 'confirm') {
+      if (!targetRefund || typeof gatewayRefundId !== 'string' || !gatewayRefundId.trim()) {
+        return NextResponse.json(
+          { error: 'A refund and Razorpay refund ID are required for confirmation' },
+          { status: 400 }
+        )
+      }
+      const outcome = await verifyManualRazorpayRefund({
+        refundId: targetRefund.id,
+        gatewayRefundId: gatewayRefundId.trim(),
         actorId: admin.id,
       })
       updatedRefund = outcome.refund
     } else {
+      if (targetRefund?.status === 'completed' || targetRefund?.status === 'processing') {
+        return NextResponse.json(
+          {
+            error:
+              targetRefund.status === 'processing'
+                ? 'A provider-submitted refund must be resolved from Razorpay status'
+                : 'A provider-confirmed refund cannot be rejected',
+          },
+          { status: 409 }
+        )
+      }
       updatedRefund = targetRefund
         ? await prisma.refund.update({
             where: { id: targetRefund.id },
@@ -214,16 +251,20 @@ export async function POST(request: Request) {
           })
     }
 
-    await prisma.adminOverrideLog.create({
-      data: {
-        admin_id: admin.id,
-        order_id: orderId,
-        action: action === 'approve' ? 'REFUND_APPROVED' : 'REFUND_REJECTED',
-        reason:
-          notes ||
-          (action === 'approve' ? 'Refund approved for provider processing' : 'Refund rejected'),
-      },
-    })
+    if (action !== 'approve') {
+      await prisma.adminOverrideLog.create({
+        data: {
+          admin_id: admin.id,
+          order_id: orderId,
+          action: action === 'confirm' ? 'REFUND_PROVIDER_VERIFIED' : 'REFUND_REJECTED',
+          reason:
+            notes ||
+            (action === 'confirm'
+              ? `Verified Razorpay refund ${gatewayRefundId}`
+              : 'Refund rejected'),
+        },
+      })
+    }
 
     // Broadcast live update
     await broadcast('admin_orders', {
@@ -236,8 +277,12 @@ export async function POST(request: Request) {
       success: true,
       message:
         action === 'approve'
-          ? 'Refund approved and queued for provider confirmation.'
-          : 'Refund has been rejected.',
+          ? 'Refund approved. Process it in Razorpay, then enter the provider refund ID.'
+          : action === 'confirm'
+            ? updatedRefund.status === 'completed'
+              ? 'Razorpay confirmed the refund and accounting is complete.'
+              : `Razorpay refund is ${updatedRefund.status}.`
+            : 'Refund has been rejected.',
       refund: updatedRefund,
     })
   } catch (error) {

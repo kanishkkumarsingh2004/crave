@@ -8,7 +8,15 @@ import {
 import VendorPricingModal from '@/components/admin/VendorPricingModal'
 import VendorSettlementsTable from '@/components/admin/VendorSettlementsTable'
 import { getLocalPaymentConfig } from '@/lib/payment-config'
-import { CheckCircle2, Clock3, DollarSign, Percent, Store, TrendingUp } from 'lucide-react'
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock3,
+  DollarSign,
+  Percent,
+  Store,
+  TrendingUp,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export type { VendorFinancialRecord }
@@ -29,6 +37,7 @@ export default function VendorSettlementsPage() {
 
   // Restaurants list with financial data
   const [vendors, setVendors] = useState<VendorFinancialRecord[]>([])
+  const [reconciliationIssues, setReconciliationIssues] = useState<any[]>([])
 
   useEffect(() => {
     async function loadLiveSettlements() {
@@ -46,6 +55,7 @@ export default function VendorSettlementsPage() {
 
         const restaurants: any[] = restJson?.restaurants ?? []
         const settlements: any[] = settsJson?.settlements ?? []
+        setReconciliationIssues(settsJson?.reconciliationIssues ?? [])
         const orders: any[] = ordersJson?.orders ?? []
 
         const restaurantMap: Record<
@@ -388,6 +398,37 @@ export default function VendorSettlementsPage() {
           </div>
         )}
       </div>
+
+      {reconciliationIssues.length > 0 && (
+        <section className="rounded-2xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+          <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200">
+            <AlertTriangle className="size-4" />
+            <h3 className="text-sm font-extrabold">
+              Settlement reconciliation needs attention ({reconciliationIssues.length})
+            </h3>
+          </div>
+          <div className="mt-3 max-h-64 overflow-auto rounded-xl border border-amber-200 dark:border-amber-900">
+            {reconciliationIssues.map((issue) => (
+              <div
+                key={issue.id}
+                className="grid gap-1 border-b border-amber-200 p-3 text-xs last:border-b-0 dark:border-amber-900 sm:grid-cols-[1fr_auto]"
+              >
+                <div>
+                  <p className="font-bold text-[#18201c] dark:text-white">
+                    Order #{String(issue.order_id).slice(-8)} · {issue.recipient_type}
+                  </p>
+                  <p className="mt-1 text-amber-800 dark:text-amber-300">
+                    {issue.failure_reason || issue.reconciliation_status || issue.status}
+                  </p>
+                </div>
+                <p className="font-mono font-bold text-[#18201c] dark:text-white">
+                  ₹{Math.round(Number(issue.amount_paise || 0) / 100).toLocaleString('en-IN')}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Network Financial Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

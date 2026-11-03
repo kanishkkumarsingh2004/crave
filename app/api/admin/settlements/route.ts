@@ -99,6 +99,8 @@ export async function GET(request: Request) {
             amount_paise: true,
             status: true,
             failure_reason: true,
+            reconciliation_status: true,
+            last_reconciled_at: true,
             processed_at: true,
             created_at: true,
           },
@@ -116,6 +118,8 @@ export async function GET(request: Request) {
         amount: Math.round(t.amount_paise / 100), // paise → rupees for display
         status: t.status,
         failure_reason: t.failure_reason,
+        reconciliation_status: t.reconciliation_status,
+        last_reconciled_at: t.last_reconciled_at,
         processed_at: t.processed_at,
         created_at: t.created_at,
       })
@@ -160,6 +164,43 @@ export async function GET(request: Request) {
       .map((r) => r.transaction_ref)
       .filter((x): x is string => !!x && !x.startsWith('UTR'))
 
+    const reconciliationIssues = await prisma.razorpayTransfer.findMany({
+      where: {
+        ...(payload?.role === 'admin' && !restaurantId ? {} : { order_id: { in: scopeOrderIds } }),
+        OR: [
+          { status: { in: ['unknown', 'failed'] } },
+          {
+            status: 'processing',
+            updated_at: { lt: new Date(Date.now() - 30 * 60 * 1000) },
+          },
+          {
+            reconciliation_status: {
+              in: [
+                'manual_review_missing_payment_id',
+                'manual_review_no_provider_match',
+                'reconciliation_error',
+              ],
+            },
+          },
+        ],
+      },
+      orderBy: { updated_at: 'desc' },
+      take: 100,
+      select: {
+        id: true,
+        order_id: true,
+        recipient_type: true,
+        recipient_id: true,
+        amount_paise: true,
+        status: true,
+        reconciliation_status: true,
+        failure_reason: true,
+        last_attempt_at: true,
+        last_reconciled_at: true,
+        updated_at: true,
+      },
+    })
+
     const routeAgg = scopeOrderIds.length
       ? await prisma.razorpayTransfer.groupBy({
           by: ['status'],
@@ -200,6 +241,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       settlements: settlementsWithRoute,
+      reconciliationIssues,
       pagination: {
         nextCursor,
         hasNextPage,

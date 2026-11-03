@@ -213,6 +213,7 @@ export async function POST(request: Request) {
         reason: data.refund_reason || 'Gateway refund event',
         idempotencyKey: `webhook_refund_${eventId}`,
         gatewayRefundId: data.refund_id || eventId,
+        providerConfirmed: true,
         actorId: 'GATEWAY_WEBHOOK',
       })
 

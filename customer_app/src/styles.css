@@ -2630,6 +2630,41 @@ html[data-theme='dark'] .meter-track {
   transform: scale(0.96);
   background: var(--accent-soft);
 }
+.refund-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+  color: var(--status-text);
+}
+.refund-status > svg {
+  width: 18px;
+  height: 18px;
+  color: var(--status-pending);
+}
+.refund-status.completed > svg {
+  color: var(--status-success);
+}
+.refund-status.failed > svg {
+  color: var(--status-danger);
+}
+.refund-status span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.refund-status b {
+  font-size: 12px;
+  text-transform: capitalize;
+}
+.refund-status small {
+  color: var(--muted);
+  font-size: 10px;
+}
 /* ---- Invoice: a printed till slip ---- */
 .invoice-sheet {
   max-width: 430px;

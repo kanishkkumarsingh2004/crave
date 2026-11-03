@@ -83,8 +83,15 @@ export async function POST(request: Request) {
         { status: 403 }
       )
     }
-    if (order.payment_status !== 'verified' || order.rider_id) {
-      return NextResponse.json({ error: 'Order is not eligible for dispatch' }, { status: 409 })
+    if (
+      order.payment_status !== 'verified' ||
+      order.status !== 'ready_for_pickup' ||
+      order.rider_id
+    ) {
+      return NextResponse.json(
+        { error: 'Dispatch requires a verified order that is ready for pickup and unassigned' },
+        { status: 409 }
+      )
     }
 
     // Dispatch always originates from the persisted restaurant coordinates;

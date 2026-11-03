@@ -48,6 +48,16 @@ type Allocation = {
   amountPaise: number
 }
 
+export function isOrderSettlementEligible(order: {
+  payment_status?: string | null
+  status?: string | null
+}) {
+  return (
+    order.payment_status === 'verified' &&
+    (order.status === 'delivered' || order.status === 'completed')
+  )
+}
+
 export function mapRazorpayTransferStatus(status: unknown): string {
   const statusMap: Record<string, string> = {
     created: 'pending',
@@ -851,7 +861,7 @@ export async function maybeTriggerRouteSettlement(orderId: string): Promise<{
     }
 
     // DELIVERY_COMPLETE: require delivered/completed before releasing.
-    if (order.status !== 'delivered' && order.status !== 'completed') {
+    if (!isOrderSettlementEligible(order)) {
       return { triggered: false, skipped: true, reason: 'release_condition_not_met' }
     }
 

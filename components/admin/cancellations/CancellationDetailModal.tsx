@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Store, User, UtensilsCrossed, X } from 'lucide-react'
 import { CancelledOrder } from './types'
 
@@ -9,6 +9,7 @@ interface CancellationDetailModalProps {
   onClose: () => void
   actionLoading: boolean
   onApproveRefund: (order: CancelledOrder) => void
+  onConfirmRefund: (order: CancelledOrder, gatewayRefundId: string) => void
   onOpenRejectModal: (order: CancelledOrder) => void
 }
 
@@ -17,8 +18,11 @@ export function CancellationDetailModal({
   onClose,
   actionLoading,
   onApproveRefund,
+  onConfirmRefund,
   onOpenRejectModal,
 }: CancellationDetailModalProps) {
+  const [gatewayRefundId, setGatewayRefundId] = useState('')
+  useEffect(() => setGatewayRefundId(''), [selectedOrder?.id])
   if (!selectedOrder) return null
 
   return (
@@ -163,7 +167,8 @@ export function CancellationDetailModal({
               {selectedOrder.refund ? (
                 <span
                   className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                    selectedOrder.refund.status === 'pending'
+                    selectedOrder.refund.status === 'pending' ||
+                    selectedOrder.refund.status === 'processing'
                       ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                       : selectedOrder.refund.status === 'completed'
                         ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
@@ -192,6 +197,14 @@ export function CancellationDetailModal({
                     {new Date(selectedOrder.refund.processedAt).toLocaleString('en-IN')}
                   </p>
                 )}
+                {selectedOrder.refund.gatewayRefundId && (
+                  <p className="text-[11px] text-gray-400">
+                    Razorpay refund:{' '}
+                    <span className="font-mono text-white">
+                      {selectedOrder.refund.gatewayRefundId}
+                    </span>
+                  </p>
+                )}
               </div>
             )}
 
@@ -214,8 +227,32 @@ export function CancellationDetailModal({
                 >
                   {actionLoading
                     ? 'Processing…'
-                    : `Approve & Refund ₹${selectedOrder.refund.amount}`}
+                    : `Approve ₹${selectedOrder.refund.amount} for Razorpay`}
                 </button>
+              </div>
+            )}
+            {selectedOrder.refund?.status === 'processing' && (
+              <div className="mt-4 border-t border-[#25332a] pt-4 space-y-3">
+                <p className="text-[11px] text-gray-400">
+                  Process the refund in Razorpay, then enter its refund ID. Crave will fetch and
+                  verify the provider amount, payment, currency, and status before completing it.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    value={gatewayRefundId}
+                    onChange={(event) => setGatewayRefundId(event.target.value.trim())}
+                    placeholder="rfnd_..."
+                    className="min-w-0 flex-1 rounded-xl border border-[#34443b] bg-[#0b100d] px-3 py-2 text-xs font-mono text-white outline-none focus:border-[#d9f447]"
+                  />
+                  <button
+                    type="button"
+                    disabled={actionLoading || !gatewayRefundId}
+                    onClick={() => onConfirmRefund(selectedOrder, gatewayRefundId)}
+                    className="rounded-xl bg-[#d9f447] px-4 py-2 text-xs font-extrabold text-[#18201c] disabled:opacity-50"
+                  >
+                    Verify with Razorpay
+                  </button>
+                </div>
               </div>
             )}
           </div>

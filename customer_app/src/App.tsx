@@ -1451,6 +1451,23 @@ function OrdersPage({
           </button>
         )}
       </div>
+      {o.refunds?.[0] && (
+        <div className={`refund-status ${o.refunds[0].status}`}>
+          <Icon name={o.refunds[0].status === 'completed' ? 'check' : 'refresh'} />
+          <span>
+            <b>
+              Refund{' '}
+              {o.refunds[0].status === 'processing' ? 'pending with Razorpay' : o.refunds[0].status}
+            </b>
+            <small>
+              {money((o.refunds[0].amount_paise ?? o.refunds[0].amount * 100) / 100)}
+              {o.refunds[0].status === 'completed'
+                ? ' confirmed by the payment provider'
+                : ' refund request'}
+            </small>
+          </span>
+        </div>
+      )}
       {showDeliveryCode(o) ? (
         <div className="otp">
           <span>
