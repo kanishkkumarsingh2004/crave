@@ -98,7 +98,7 @@ export async function POST(request: Request) {
       },
       select: { id: true },
     })
-    if (orderId && activeOrder && orderId !== activeOrder.id) {
+    if (orderId && (!activeOrder || orderId !== activeOrder.id)) {
       return NextResponse.json(
         { error: 'orderId does not match the active assignment' },
         { status: 409 }
@@ -123,7 +123,7 @@ export async function POST(request: Request) {
     // Broadcast driver location update to WebSocket clients (e.g. Admin Map Analytics & Customer Track Map)
     await broadcast('driver_location', {
       driverId,
-      orderId: orderId || body.orderId,
+      orderId: activeOrder?.id,
       lat: result.state.lat,
       lng: result.state.lng,
       status: result.state.status,

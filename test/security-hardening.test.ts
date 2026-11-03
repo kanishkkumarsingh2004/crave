@@ -46,6 +46,47 @@ test('unassigned orders are not readable by arbitrary riders', () => {
   )
 })
 
+test('unassigned driver offers omit customer identity and destination details', () => {
+  const offered = sanitizeOrderForActor(actor('driver', 'rider-1'), {
+    id: 'order-1',
+    customer_id: 'customer-1',
+    customer_name: 'Private Customer',
+    customer_phone: '9999999999',
+    customer_address: 'Private destination',
+    delivery_latitude: 12.9,
+    delivery_longitude: 77.6,
+    rider_id: null,
+    restaurant_id: 'restaurant-1',
+    restaurant_name: 'Test Kitchen',
+  })
+
+  assert.equal('customer_id' in offered, false)
+  assert.equal('customer_name' in offered, false)
+  assert.equal('customer_phone' in offered, false)
+  assert.equal('customer_address' in offered, false)
+  assert.equal('delivery_latitude' in offered, false)
+  assert.equal('delivery_longitude' in offered, false)
+  assert.equal(offered.restaurant_name, 'Test Kitchen')
+})
+
+test('drivers and vendors never receive the nested customer profile relation', () => {
+  const order = {
+    id: 'order-1',
+    customer_id: 'customer-1',
+    rider_id: 'rider-1',
+    restaurant_id: 'restaurant-1',
+    customer: { id: 'customer-1', email: 'private@example.test' },
+  }
+
+  assert.equal('customer' in sanitizeOrderForActor(actor('driver', 'rider-1'), order), false)
+  assert.equal(
+    'customer' in
+      sanitizeOrderForActor(actor('restaurant_vendor', 'vendor-1', 'restaurant-1'), order),
+    false
+  )
+  assert.equal('customer' in sanitizeOrderForActor(actor('admin', 'admin-1'), order), true)
+})
+
 test('driver list visibility requires an active durable offer for unassigned orders', () => {
   const now = new Date('2026-11-03T10:00:00.000Z')
   const filter = buildDriverOrderVisibilityFilter('rider-1', now)
@@ -192,6 +233,19 @@ test('forwarded client IP headers are only trusted from configured proxies', () 
     resolveClientIp(proxiedRequest, { behindProxy: true, trustedProxyRanges: ['10.0.0.0/8'] }),
     '198.51.100.50'
   )
+})
+
+test('proxy mode resolves distinct clients when Next.js does not expose the peer socket', () => {
+  const first = new Request('http://localhost', {
+    headers: { 'x-forwarded-for': '198.51.100.10' },
+  })
+  const second = new Request('http://localhost', {
+    headers: { 'x-forwarded-for': '198.51.100.11' },
+  })
+  const options = { behindProxy: true, trustedProxyRanges: ['10.0.0.0/8'] }
+
+  assert.equal(resolveClientIp(first, options), '198.51.100.10')
+  assert.equal(resolveClientIp(second, options), '198.51.100.11')
 })
 
 test('password hashing rejects oversized inputs before scrypt work', () => {

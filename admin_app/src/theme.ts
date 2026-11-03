@@ -78,7 +78,7 @@ export async function loadTheme(): Promise<ThemeMode> {
   const stored = Capacitor.isNativePlatform()
     ? (await Preferences.get({ key: KEY })).value
     : localStorage.getItem(KEY)
-  const mode: ThemeMode = stored === 'dark' ? 'dark' : stored === 'system' ? 'system' : 'light'
+  const mode: ThemeMode = stored === 'light' ? 'light' : stored === 'system' ? 'system' : 'dark'
   applyTheme(mode)
   return mode
 }

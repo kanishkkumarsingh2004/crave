@@ -1,11 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
+@import '@crave/design-tokens/tokens.css';
 
 :root {
   color: #f5f7f5;
   background: #07100b;
-  font-family: 'Manrope', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-synthesis: none;
-  --lime: #d9f447;
+  --lime: var(--brand-primary);
   --lime-dark: #91aa20;
   --surface: #101914;
   --surface-2: #18231c;
@@ -2193,5 +2194,101 @@ html[data-theme='dark'] .address-map-fallback {
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Compact control-center alignment and explicit scroll ownership. */
+.app-shell {
+  min-height: 100dvh;
+}
+.app-header {
+  min-height: calc(var(--app-header-height) + var(--safe-top));
+  padding-top: max(var(--space-3), var(--safe-top));
+}
+.app-content {
+  min-height: 0;
+  flex: 1 1 auto;
+  width: min(100%, var(--content-max));
+  margin: 0 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: var(--space-5) var(--space-4)
+    calc(var(--app-nav-height) + var(--safe-bottom) + var(--space-6));
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+.hero-card h1,
+.page-heading h1 {
+  font-family: var(--font-display);
+  font-size: var(--type-page);
+}
+.section-heading h2 {
+  font-family: var(--font-display);
+  font-size: var(--type-section);
+}
+.hero-card p,
+.page-heading p,
+.order-card span,
+.order-card p,
+.partner-card p,
+.partner-card small {
+  font-size: var(--type-small);
+  line-height: 1.5;
+}
+.eyebrow,
+.connection-chip,
+.stats-grid span,
+.review-status,
+.bottom-nav small {
+  font-size: var(--type-label);
+}
+.primary-button,
+.secondary-button,
+.logout-button {
+  min-height: var(--control-height);
+}
+.icon-button,
+.bottom-nav button,
+.bottom-nav > div {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+}
+.hero-card,
+.stats-grid article,
+.order-card,
+.partner-card,
+.payment-card,
+.settings-card {
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+.review-status {
+  border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+  border-radius: var(--radius-pill);
+}
+.payment-card.pending .review-status {
+  color: var(--semantic-warning);
+  background: color-mix(in srgb, var(--semantic-warning) 12%, transparent);
+}
+.review-status.rejected {
+  color: var(--semantic-danger);
+  background: color-mix(in srgb, var(--semantic-danger) 12%, transparent);
+}
+.bottom-nav {
+  height: calc(var(--app-nav-height) + var(--safe-bottom));
+}
+@media (max-width: 639px) {
+  .hero-card,
+  .stats-grid article,
+  .order-card,
+  .partner-card,
+  .payment-card {
+    border-radius: var(--radius-lg);
+  }
+}
+@media (min-width: 1024px) {
+  .app-content {
+    padding-inline: var(--space-8);
   }
 }

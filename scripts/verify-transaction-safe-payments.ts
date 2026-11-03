@@ -268,6 +268,7 @@ async function runVerification() {
         orderId: testOrderId,
         amount: 800,
         reason: 'Overcharge test',
+        idempotencyKey: `ref_${testIdPrefix}_overcharge`,
       })
     } catch (e: any) {
       if (e.message.includes('Refund limit exceeded')) refundOverchargeBlocked = true

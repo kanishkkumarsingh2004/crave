@@ -1,9 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@600;700;800&display=swap');
+@import '@crave/design-tokens/tokens.css';
 @import 'tailwindcss';
 
 @theme {
-  --color-lime: #eaff3f;
-  --color-accent: #eaff3f;
+  --color-lime: var(--brand-primary);
+  --color-accent: var(--brand-primary);
   --color-accent-strong: #5f7400;
   --color-accent-soft: #f1f8cc;
   --color-muted: #6f776f;
@@ -21,11 +22,9 @@
   --color-background: #ffffff;
   --color-foreground: #101712;
   --radius: 15px;
-  --font-manrope:
-    'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-  --nav-height: 78px;
+  --font-manrope: var(--font-display);
+  --font-mono: var(--font-technical);
+  --nav-height: var(--app-nav-height);
   --safe-top: max(env(safe-area-inset-top), 18px);
   --safe-bottom: max(env(safe-area-inset-bottom), 10px);
   --safe-top-inset: 0px;
@@ -34,21 +33,13 @@
 }
 
 :root {
-  font-family:
-    'Inter',
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
+  font-family: var(--font-ui);
   color: var(--ink);
   background: var(--app-bg);
   font-synthesis: none;
   --ink: #101712;
   --muted: #6f776f;
-  --lime: #eaff3f;
+  --lime: var(--brand-primary);
   --green: #0b2e1c;
   --line: #dfe3dc;
   --line-strong: #cbd4c9;
@@ -63,7 +54,7 @@
   --app-bg: #f7f7f2;
   --chrome-bg: rgb(255 255 255 / 94%);
   --overlay-bg: rgb(6 16 9 / 60%);
-  --accent: #eaff3f;
+  --accent: var(--brand-primary);
   --accent-strong: #5f7400;
   --accent-soft: #f1f8cc;
   --on-accent: #172014;
@@ -3911,6 +3902,64 @@ textarea,
 .secure-note,
 .version {
   color: var(--muted);
+}
+
+/* Shared Crave visual alignment: commerce remains light-first while using the
+   same geometry, typography and interaction sizes as the operational apps. */
+h1,
+h2,
+h3,
+.page-header h1,
+.section-title,
+.title-row h2 {
+  font-family: var(--font-display);
+}
+.page {
+  padding-right: clamp(var(--space-4), 4vw, var(--space-6));
+  padding-left: clamp(var(--space-4), 4vw, var(--space-6));
+}
+.primary,
+.secondary,
+.search-launch,
+.search-field,
+.checkout-button,
+.place-order-button {
+  min-height: var(--control-height);
+}
+.round,
+.icon-button,
+.bottom-nav button {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+}
+.restaurant-card,
+.order-card,
+.cart-card,
+.profile-card,
+.settings-list {
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+.bottom-nav {
+  height: calc(var(--app-nav-height) + var(--safe-bottom));
+}
+.bottom-nav small {
+  font-size: var(--type-label);
+}
+@media (min-width: 640px) {
+  .content {
+    max-width: 820px;
+  }
+  .restaurant-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 639px) {
+  .restaurant-card,
+  .order-card,
+  .cart-card {
+    border-radius: var(--radius-lg);
+  }
 }
 .address-map-canvas {
   border: 1px solid var(--line);

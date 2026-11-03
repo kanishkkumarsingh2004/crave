@@ -55,12 +55,18 @@ export async function POST(request: Request) {
           { status: 400 }
         )
       }
+      if (typeof idempotencyKey !== 'string' || !idempotencyKey.trim()) {
+        return NextResponse.json(
+          { error: 'x-idempotency-key header is required for refund creation' },
+          { status: 400 }
+        )
+      }
 
       const result = await processRefundTx({
         orderId,
         amount: Math.round(numericAmount),
         reason,
-        idempotencyKey: idempotencyKey || `refund_${orderId}_${numericAmount}_${Date.now()}`,
+        idempotencyKey: idempotencyKey.trim(),
         actorId: actor.id,
       })
 

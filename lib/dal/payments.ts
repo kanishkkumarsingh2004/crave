@@ -320,6 +320,35 @@ export async function updateDriverPayoutStatus(
   status: 'pending' | 'paid' | 'failed',
   transaction_ref?: string
 ) {
+  const payout = await prisma.driverPayout.findUnique({ where: { id } })
+  if (!payout) {
+    throw Object.assign(new Error('Payout request not found'), { statusCode: 404 })
+  }
+
+  if (status === 'paid') {
+    if (!transaction_ref) {
+      throw Object.assign(new Error('A provider transfer ID is required to confirm payment'), {
+        statusCode: 400,
+      })
+    }
+    const providerTransfer = await prisma.razorpayTransfer.findUnique({
+      where: { razorpay_transfer_id: transaction_ref },
+      select: { recipient_type: true, recipient_id: true, amount_paise: true, status: true },
+    })
+    if (
+      !providerTransfer ||
+      providerTransfer.status !== 'processed' ||
+      providerTransfer.recipient_type !== 'DRIVER' ||
+      providerTransfer.recipient_id !== payout.driver_id ||
+      providerTransfer.amount_paise !== payout.amount * 100
+    ) {
+      throw Object.assign(
+        new Error('Provider transfer is not confirmed for this driver and payout amount'),
+        { statusCode: 409 }
+      )
+    }
+  }
+
   const settled = await prisma.driverPayout.updateMany({
     where: { id, status: 'pending' },
     data: {
@@ -329,14 +358,7 @@ export async function updateDriverPayoutStatus(
   })
 
   if (settled.count === 0) {
-    const existing = await prisma.driverPayout.findUnique({
-      where: { id },
-      select: { status: true },
-    })
-    if (!existing) {
-      throw Object.assign(new Error('Payout request not found'), { statusCode: 404 })
-    }
-    throw Object.assign(new Error(`Payout request is already ${existing.status}`), {
+    throw Object.assign(new Error(`Payout request is already ${payout.status}`), {
       statusCode: 409,
     })
   }

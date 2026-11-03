@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getDriverLocationDistributed } from '@/lib/dispatch/driver-tracker'
 import { handleAuthError, requireAuth } from '@/lib/auth-helpers'
 import { canReadOrder, getCustomerOrderScope, sanitizeOrderForActor } from '@/lib/auth/order-access'
+import { SAFE_ORDER_RESTAURANT_SELECT } from '@/lib/dal/orders'
 
 export async function GET(request: Request) {
   try {
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
     if (orderId) {
       const order = await prisma.order.findUnique({
         where: { id: orderId },
-        include: { restaurant: true },
+        include: { restaurant: { select: SAFE_ORDER_RESTAURANT_SELECT } },
       })
 
       if (!order) {

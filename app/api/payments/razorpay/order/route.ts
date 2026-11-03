@@ -177,25 +177,32 @@ export async function POST(request: Request) {
       console.error('[razorpay/order] Razorpay API error:', razorpayError)
     }
 
-    const razorpayOrderId = rzpOrder?.id ?? `local_${orderId}`
     const keyId = process.env.RAZORPAY_KEY_ID ?? null
-    const uniqueIdempotencyKey = `razorpay_order_${razorpayOrderId}_${Date.now()}`
+    const uniqueIdempotencyKey = `razorpay_order_${order.id}_${amountPaise}`
 
-    await prisma.paymentTransaction.create({
-      data: {
+    await prisma.paymentTransaction.upsert({
+      where: { idempotency_key: uniqueIdempotencyKey },
+      create: {
         idempotency_key: uniqueIdempotencyKey,
         order_id: order.id,
         gateway: 'RAZORPAY',
-        razorpay_order_id: razorpayOrderId,
+        razorpay_order_id: rzpOrder?.id ?? null,
         amount: Math.round(amountPaise / 100), // legacy compatibility only
         amount_paise: amountPaise,
         currency: 'INR',
         status: rzpOrder ? 'pending' : 'processing',
+        failure_reason: razorpayError,
         raw_payload: {
           razorpayError,
           rzpOrder: rzpOrder ?? null,
         },
       } as any,
+      update: {
+        razorpay_order_id: rzpOrder?.id ?? null,
+        status: rzpOrder ? 'pending' : 'processing',
+        failure_reason: razorpayError,
+        raw_payload: { razorpayError, rzpOrder: rzpOrder ?? null },
+      },
     })
 
     if (razorpayError) {
@@ -207,7 +214,7 @@ export async function POST(request: Request) {
           amount: amountPaise,
           currency: 'INR',
         },
-        { status: 200 }
+        { status: 502 }
       )
     }
 

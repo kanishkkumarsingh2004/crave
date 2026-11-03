@@ -100,6 +100,23 @@ export interface ApiCachePolicy {
   clear(): Promise<void>
 }
 
+export interface ApiCacheStorage {
+  read<T>(key: string): Promise<T | null>
+  write(key: string, value: unknown): Promise<void>
+  clear(): Promise<void>
+}
+
+export function createPathPrefixCachePolicy(
+  prefixes: readonly string[],
+  storage: ApiCacheStorage
+): ApiCachePolicy {
+  return {
+    shouldCache: ({ method, path, authenticated }) =>
+      method === 'GET' && authenticated && prefixes.some((prefix) => path.startsWith(prefix)),
+    ...storage,
+  }
+}
+
 export interface NativeHttpRequest {
   url: string
   method: HttpMethod
@@ -126,6 +143,12 @@ export interface ApiClientConfig {
     connectMs: number
     readMs: number
   }
+}
+
+export interface MobileApiClientConfig extends Omit<ApiClientConfig, 'tokenStore'> {
+  tokenKey: string
+  nativeStore: NativeKeyValueStore
+  browserStore: () => BrowserKeyValueStore
 }
 
 export interface ApiRequestOptions {
@@ -232,6 +255,19 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     getAuthToken: () => currentToken,
     getApiOrigin: () => apiOrigin,
   }
+}
+
+export function createMobileApiClient(config: MobileApiClientConfig): ApiClient {
+  const { tokenKey, nativeStore, browserStore, ...clientConfig } = config
+  return createApiClient({
+    ...clientConfig,
+    tokenStore: createPlatformTokenStore({
+      key: tokenKey,
+      isNative: config.isNative,
+      nativeStore,
+      browserStore,
+    }),
+  })
 }
 
 export function createWebSocketUrl(apiOrigin: string, configured?: string): string {

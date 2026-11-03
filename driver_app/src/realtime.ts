@@ -1,3 +1,4 @@
+import { createRealtimeClient } from '@crave/mobile-core'
 import { getWebSocketUrl } from './api'
 
 interface DriverConnectionOptions {
@@ -8,54 +9,18 @@ interface DriverConnectionOptions {
 }
 
 export function connectDriverEvents(options: DriverConnectionOptions): () => void {
-  let socket: WebSocket | null = null
-  let reconnectTimer: number | undefined
-  let stopped = false
-  let attempts = 0
-
-  const connect = () => {
-    if (stopped) return
-    const protocols =
-      options.token.split('.').length === 3 ? ['crave.jwt', options.token] : undefined
-    socket = protocols
-      ? new WebSocket(getWebSocketUrl(), protocols)
-      : new WebSocket(getWebSocketUrl())
-
-    socket.onopen = () => {
-      attempts = 0
-      options.onStatus(true)
-      socket?.send(
-        JSON.stringify({
-          type: 'subscribe',
-          channels: options.activeOrderId ? ['driver_offers', 'order_update'] : ['driver_offers'],
-          ...(options.activeOrderId ? { orderId: options.activeOrderId } : {}),
-        })
-      )
-    }
-
-    socket.onmessage = (event) => {
-      try {
-        const message = JSON.parse(String(event.data))
-        if (message?.channel && message.channel !== 'control') {
-          options.onEvent(message.channel, message.data)
-        }
-      } catch {}
-    }
-
-    socket.onerror = () => options.onStatus(false)
-    socket.onclose = () => {
-      options.onStatus(false)
-      socket = null
-      if (stopped) return
-      attempts += 1
-      reconnectTimer = window.setTimeout(connect, Math.min(30000, 1500 * 1.7 ** attempts))
-    }
-  }
-
-  connect()
-  return () => {
-    stopped = true
-    if (reconnectTimer) window.clearTimeout(reconnectTimer)
-    socket?.close()
-  }
+  const realtime = createRealtimeClient({
+    url: getWebSocketUrl,
+    token: options.token,
+    subscriptions: [
+      {
+        channels: options.activeOrderId ? ['driver_offers', 'order_update'] : ['driver_offers'],
+        ...(options.activeOrderId ? { orderId: options.activeOrderId } : {}),
+      },
+    ],
+    onStatus: options.onStatus,
+    onEvent: options.onEvent,
+  })
+  realtime.connect()
+  return realtime.disconnect
 }

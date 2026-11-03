@@ -73,10 +73,28 @@ export function sanitizeOrderForActor<T extends OrderOwnership>(actor: JWTPayloa
   const role = actor.role as string
   const isAdmin = role === 'admin'
   const isOrderCustomer = isCustomer(role) && order.customer_id === actor.id
+  const isUnassignedDriverOffer = isRider(role) && order.rider_id !== actor.id
+
+  if (isUnassignedDriverOffer) {
+    const {
+      customer: _customer,
+      customer_id: _customerId,
+      customer_name: _customerName,
+      customer_phone: _customerPhone,
+      customer_address: _customerAddress,
+      delivery_latitude: _deliveryLatitude,
+      delivery_longitude: _deliveryLongitude,
+      ...offerSafeOrder
+    } = stripOrderSecrets(order as unknown as Record<string, any>)
+    return offerSafeOrder as unknown as T
+  }
 
   // Drivers and vendors never see the customer's handover code.
   if (!isAdmin && !isOrderCustomer) {
-    return stripOrderSecrets(order as unknown as Record<string, any>) as unknown as T
+    const { customer: _customer, ...participantSafeOrder } = stripOrderSecrets(
+      order as unknown as Record<string, any>
+    )
+    return participantSafeOrder as unknown as T
   }
 
   // The customer only sees the code between pickup and delivery, and never

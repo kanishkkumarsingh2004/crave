@@ -25,7 +25,9 @@ export async function GET() {
 
   const redisConfig = resolveRedisConfig()
   const redisAvailable = isRedisAvailable()
-  const redisRequired = process.env.REDIS_REQUIRED === 'true'
+  const redisRequired =
+    process.env.REDIS_REQUIRED === 'true' ||
+    (process.env.NODE_ENV === 'production' && process.env.REDIS_DISABLED !== 'true')
 
   let redisCheckStatus: 'ok' | 'degraded' | 'disabled' = 'ok'
   if (redisConfig.mode === 'disabled' || redisConfig.mode === 'test') {

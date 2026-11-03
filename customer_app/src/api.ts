@@ -3,8 +3,7 @@ import { Preferences } from '@capacitor/preferences'
 import {
   ApiError,
   COOKIE_SESSION_TOKEN,
-  createApiClient,
-  createPlatformTokenStore,
+  createMobileApiClient,
   createWebSocketUrl,
 } from '@crave/mobile-core'
 
@@ -15,17 +14,14 @@ const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || 'https://crave.apexones
 
 const TOKEN_KEY = 'crave_customer_auth_token'
 
-const client = createApiClient({
+const client = createMobileApiClient({
   appId: 'customer',
   apiOrigin: API_ORIGIN,
   isNative: () => Capacitor.isNativePlatform(),
   nativeRequest: (request) => CapacitorHttp.request(request),
-  tokenStore: createPlatformTokenStore({
-    key: TOKEN_KEY,
-    isNative: () => Capacitor.isNativePlatform(),
-    nativeStore: Preferences,
-    browserStore: () => localStorage,
-  }),
+  tokenKey: TOKEN_KEY,
+  nativeStore: Preferences,
+  browserStore: () => localStorage,
   timeouts: { connectMs: 15_000, readMs: 25_000 },
 })
 

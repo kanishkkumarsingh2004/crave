@@ -58,6 +58,7 @@
     "db:reset": "tsx scripts/db-reset-and-seed.ts"
   },
   "dependencies": {
+    "@crave/design-tokens": "workspace:*",
     "@crave/mobile-core": "workspace:*",
     "@capacitor/app": "8.1.2",
     "@capacitor/core": "8.5.3",

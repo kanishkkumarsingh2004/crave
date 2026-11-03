@@ -4,6 +4,8 @@ import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { VendorSettlementStatus } from '@prisma/client'
+import { toSettlementRealtimeDto } from '@/lib/realtime/safe-dtos'
+import { createRouteSplits } from '@/lib/payments/razorpay-split'
 
 export async function GET(request: Request) {
   try {
@@ -32,7 +34,7 @@ export async function GET(request: Request) {
           payload.role === 'cravexp_store_vendor' ||
           (payload.role as string) === 'vendor'
         const vendorStoreId = payload.restaurantId || (payload as JWTPayload).restaurant_id
-        if (!isVendor || !restaurantId || (vendorStoreId && restaurantId !== vendorStoreId)) {
+        if (!isVendor || !vendorStoreId || !restaurantId || restaurantId !== vendorStoreId) {
           return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
         }
       }
@@ -286,7 +288,32 @@ export async function POST(request: Request) {
       commission_amount,
       net_payout,
       transaction_ref,
+      action,
+      orderId,
+      reason,
     } = body
+
+    if (action === 'approve_order_settlement') {
+      if (typeof orderId !== 'string' || !orderId.trim()) {
+        return NextResponse.json({ error: 'orderId is required' }, { status: 400 })
+      }
+      const existingApproval = await prisma.adminOverrideLog.findFirst({
+        where: { order_id: orderId.trim(), action: 'settlement_approved' },
+        select: { id: true },
+      })
+      if (!existingApproval) {
+        await prisma.adminOverrideLog.create({
+          data: {
+            admin_id: payload.id,
+            order_id: orderId.trim(),
+            action: 'settlement_approved',
+            reason: typeof reason === 'string' ? reason : null,
+          },
+        })
+      }
+      const result = await createRouteSplits({ orderId: orderId.trim() })
+      return NextResponse.json({ success: true, orderId: orderId.trim(), result })
+    }
 
     const numericValues = [commission_rate, gross_sales, commission_amount, net_payout]
       .filter((value) => value != null)
@@ -359,8 +386,8 @@ export async function POST(request: Request) {
       id,
       status,
       commission_rate,
-      restaurant_id,
-      settlement: settlementRecord,
+      restaurantId: settlementRecord?.restaurant_id || restaurant_id,
+      settlement: toSettlementRealtimeDto(settlementRecord),
       timestamp: new Date().toISOString(),
     })
 

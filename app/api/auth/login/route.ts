@@ -110,12 +110,7 @@ export async function POST(request: Request) {
       try {
         const { prisma } = await import('@/lib/prisma')
         const rest = await prisma.restaurant.findFirst({
-          where: {
-            OR: [
-              { owner_id: profile.id },
-              ...(profile.restaurant_name ? [{ name: profile.restaurant_name }] : []),
-            ],
-          },
+          where: { owner_id: profile.id },
         })
         if (rest) {
           restaurantId = rest.id

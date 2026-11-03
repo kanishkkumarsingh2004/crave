@@ -4,6 +4,12 @@ const { createServer } = require('http')
 const { WebSocketServer } = require('ws')
 const { v4: uuidv4 } = require('uuid')
 const { TextEncoder } = require('util')
+const {
+  USER_CHANNELS,
+  VENDOR_ROLES,
+  broadcastKeysForChannel,
+  subscriptionKeyForChannel,
+} = require('./lib/realtime/channel-scope')
 
 // ---------------------------------------------------------------------------
 // Prisma client for ownership verification
@@ -46,6 +52,8 @@ const PING_INTERVAL_MS = 30000 // 30 seconds
 const PONG_TIMEOUT_MS = 60000 // 60 seconds
 const SLOW_CONSUMER_BUFFER_THRESHOLD = 1024 * 1024 // 1 MB (1048576 bytes)
 const MAX_MESSAGE_SIZE = 64 * 1024 // 64 KB (65536 bytes)
+const MAX_CONNECTIONS = Number(process.env.WS_MAX_CONNECTIONS || 5000)
+const MAX_CONNECTIONS_PER_USER = Number(process.env.WS_MAX_CONNECTIONS_PER_USER || 5)
 
 // Server metrics tracking
 const metrics = {
@@ -141,12 +149,6 @@ const broadcastLocal = (channel, data, excludeSocket) => {
   const subscribers = channelSubscribers.get(channel)
   if (!subscribers || subscribers.size === 0) return
 
-  // For ownership channels, filter by orderId
-  const orderId = data?.orderId
-  const isOwnershipChannel = ['order_update', 'approval_update', 'driver_location'].includes(
-    channel
-  )
-  const isRestaurantChannel = channel === 'vendor_orders'
   const isDriverOfferChannel = channel === 'driver_offers'
   const recipientDriverIds = isDriverOfferChannel
     ? new Set(Array.isArray(data?.recipientDriverIds) ? data.recipientDriverIds : [])
@@ -165,33 +167,12 @@ const broadcastLocal = (channel, data, excludeSocket) => {
         ws.send(payload)
       }
     })
-  } else if (isRestaurantChannel) {
-    const restaurantId = data?.restaurantId || data?.order?.restaurant_id
-    const restaurantSubscribers = restaurantId ? subscribers.get(restaurantId) : undefined
-    restaurantSubscribers?.forEach((ws) => {
-      if (excludeSocket && ws === excludeSocket) return
-      if (ws.readyState === WS_OPEN) ws.send(payload)
-    })
-  } else if (isOwnershipChannel && orderId) {
-    // Send only to subscribers of this specific order
-    const orderSubscribers = subscribers.get(orderId)
-    if (orderSubscribers) {
-      orderSubscribers.forEach((ws) => {
-        if (excludeSocket && ws === excludeSocket) return
-        if (ws.readyState === WS_OPEN) {
-          ws.send(payload)
-        }
-      })
-    }
   } else {
-    // Non-ownership channel or no orderId: send to all 'global' subscribers
-    const globalSubscribers = subscribers.get('global')
-    if (globalSubscribers) {
-      globalSubscribers.forEach((ws) => {
+    for (const routingKey of broadcastKeysForChannel(channel, data)) {
+      const scopedSubscribers = subscribers.get(routingKey)
+      scopedSubscribers?.forEach((ws) => {
         if (excludeSocket && ws === excludeSocket) return
-        if (ws.readyState === WS_OPEN) {
-          ws.send(payload)
-        }
+        if (ws.readyState === WS_OPEN) ws.send(payload)
       })
     }
   }
@@ -719,6 +700,13 @@ async function authorizeChannelAsync(channel, clientInfo, subscriptionData = {})
   if (!checkRoleForChannel(channel, clientInfo)) return false
 
   const rules = CHANNEL_AUTH_RULES[channel]
+  if (USER_CHANNELS.has(channel)) return Boolean(clientInfo.userId)
+  if (channel === 'admin_settlements') {
+    return (
+      clientInfo.role === 'admin' ||
+      (VENDOR_ROLES.has(clientInfo.role) && Boolean(clientInfo.restaurantId))
+    )
+  }
   if (rules.requireRestaurant) return Boolean(clientInfo.restaurantId)
   if (!rules.requireOwnership) return true
 
@@ -948,11 +936,21 @@ function validateBroadcastPayload(channel, data) {
       return data.type && typeof data.type === 'string'
     case 'restaurants':
     case 'menu_items':
-    case 'user_profile':
-    case 'user_addresses':
-    case 'admin_settlements':
     case 'admin_coupons':
       return !data.type || typeof data.type === 'string'
+    case 'user_profile':
+    case 'user_addresses':
+      return (
+        typeof data.userId === 'string' &&
+        data.userId.length > 0 &&
+        (!data.type || typeof data.type === 'string')
+      )
+    case 'admin_settlements':
+      return (
+        typeof (data.restaurantId || data.restaurant_id || data.settlement?.restaurant_id) ===
+          'string' &&
+        (!data.type || typeof data.type === 'string')
+      )
     default:
       return false
   }
@@ -975,6 +973,21 @@ wss.on('connection', async (ws, req) => {
     authenticatedUserId = payload.id
     authenticatedRole = payload.role
     authenticatedRestaurantId = payload.restaurantId || null
+  }
+
+  if (connectedClients.size >= MAX_CONNECTIONS) {
+    ws.close(1013, 'Server connection limit reached')
+    return
+  }
+  if (authenticatedUserId) {
+    let userConnectionCount = 0
+    for (const client of connectedClients.values()) {
+      if (client.userId === authenticatedUserId) userConnectionCount++
+    }
+    if (userConnectionCount >= MAX_CONNECTIONS_PER_USER) {
+      ws.close(1008, 'User connection limit reached')
+      return
+    }
   }
 
   const clientInfo = {
@@ -1045,18 +1058,8 @@ wss.on('connection', async (ws, req) => {
                 }
                 const channelMap = channelSubscribers.get(ch)
 
-                // For ownership channels, track per-order; otherwise use 'global'
-                const isOwnershipChannel = [
-                  'order_update',
-                  'approval_update',
-                  'driver_location',
-                ].includes(ch)
-                const orderKey =
-                  ch === 'vendor_orders'
-                    ? info.restaurantId
-                    : isOwnershipChannel && subscriptionData.orderId
-                      ? subscriptionData.orderId
-                      : 'global'
+                const orderKey = subscriptionKeyForChannel(ch, info, subscriptionData)
+                if (!orderKey) continue
 
                 if (!channelMap.has(orderKey)) {
                   channelMap.set(orderKey, new Set())

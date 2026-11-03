@@ -189,38 +189,40 @@ model CraveXPProduct {
 }
 
 model Order {
-  id                    String        @id
-  customer_id           String?
-  customer_name         String
-  customer_phone        String?
-  customer_address      String?
-  restaurant_id         String?
-  restaurant_name       String
-  order_type            String        @default("restaurant_food")
-  destination_vendor_id String?
-  payment_status        PaymentStatus @default(pending)
-  payment_reviewed_by   String?
-  payment_reviewed_at   DateTime?     @db.Timestamptz(6)
-  rider_id              String?
-  items                 Json
-  subtotal              Int
-  packaging_fee         Int?          @default(20)
-  delivery_fee          Int?          @default(30)
-  platform_fee          Int?          @default(6)
-  handling_fee          Int?          @default(5)
-  gst                   Int?          @default(18)
-  total_amount          Int
-  status                OrderStatus
-  driver_name           String?
-  driver_phone          String?
-  payment_method        String?       @default("razorpay")
-  created_at            DateTime?     @default(now()) @db.Timestamptz(6)
-  delivery_otp          String?
-  otp_consumed_at       DateTime?     @db.Timestamptz(6) // Set atomically on delivery confirmation; prevents OTP reuse
-  picker_name           String?
-  tip                   Int           @default(0)
-  discount_amount       Int           @default(0)
-  coupon_code           String?
+  id                           String        @id
+  customer_id                  String?
+  customer_name                String
+  customer_phone               String?
+  customer_address             String?
+  restaurant_id                String?
+  restaurant_name              String
+  order_type                   String        @default("restaurant_food")
+  destination_vendor_id        String?
+  payment_status               PaymentStatus @default(pending)
+  payment_reviewed_by          String?
+  payment_reviewed_at          DateTime?     @db.Timestamptz(6)
+  rider_id                     String?
+  items                        Json
+  subtotal                     Int
+  packaging_fee                Int?          @default(20)
+  delivery_fee                 Int?          @default(30)
+  platform_fee                 Int?          @default(6)
+  handling_fee                 Int?          @default(5)
+  gst                          Int?          @default(18)
+  total_amount                 Int
+  status                       OrderStatus
+  driver_name                  String?
+  driver_phone                 String?
+  payment_method               String?       @default("razorpay")
+  created_at                   DateTime?     @default(now()) @db.Timestamptz(6)
+  delivery_otp                 String?
+  otp_consumed_at              DateTime?     @db.Timestamptz(6) // Set atomically on delivery confirmation; prevents OTP reuse
+  delivery_otp_failed_attempts Int           @default(0)
+  delivery_otp_locked_until    DateTime?     @db.Timestamptz(6)
+  picker_name                  String?
+  tip                          Int           @default(0)
+  discount_amount              Int           @default(0)
+  coupon_code                  String?
 
   // Financial Breakdowns Stored (Section 30)
   commission_amount Int? @default(0)
@@ -265,7 +267,7 @@ model Order {
   // express partial indexes via @@index, so it is maintained as raw SQL.
   // It indexes rider_id where status is in the active fulfillment states
   // (sent_to_vendor, preparing, packing, ready_for_pickup, rider_assigned,
-  // out_for_delivery). The app-level check in
+  // picked_up, out_for_delivery). The app-level check in
   // claimOrderForDriverAtomic remains for clear error messages, but this
   // index is the authoritative serialization mechanism.
   @@map("orders")

@@ -1531,6 +1531,14 @@ export async function PATCH(request: Request) {
             )
           }
 
+          const otpLockedUntil = (existing as any).delivery_otp_locked_until
+          if (otpLockedUntil && new Date(otpLockedUntil).getTime() > Date.now()) {
+            return NextResponse.json(
+              { error: 'Too many invalid delivery OTP attempts. Try again later.' },
+              { status: 429 }
+            )
+          }
+
           const providedOtp = String(body.otp || body.delivery_otp || '').trim()
           if (!providedOtp) {
             return NextResponse.json(
@@ -1544,9 +1552,32 @@ export async function PATCH(request: Request) {
             providedOtp.length === storedOtp.length &&
             crypto.timingSafeEqual(Buffer.from(providedOtp, 'utf8'), Buffer.from(storedOtp, 'utf8'))
           if (!otpMatch) {
+            const attempts = await prisma.$queryRaw<
+              Array<{
+                delivery_otp_failed_attempts: number
+                delivery_otp_locked_until: Date | null
+              }>
+            >(Prisma.sql`
+              UPDATE "orders"
+              SET
+                "delivery_otp_failed_attempts" = "delivery_otp_failed_attempts" + 1,
+                "delivery_otp_locked_until" = CASE
+                  WHEN "delivery_otp_failed_attempts" + 1 >= 5
+                  THEN NOW() + INTERVAL '15 minutes'
+                  ELSE "delivery_otp_locked_until"
+                END
+              WHERE "id" = ${orderId}
+                AND "otp_consumed_at" IS NULL
+              RETURNING "delivery_otp_failed_attempts", "delivery_otp_locked_until"
+            `)
+            const locked = attempts[0]?.delivery_otp_locked_until
             return NextResponse.json(
-              { error: 'Invalid delivery OTP. Valid delivery OTP is required' },
-              { status: 400 }
+              {
+                error: locked
+                  ? 'Too many invalid delivery OTP attempts. Try again in 15 minutes.'
+                  : 'Invalid delivery OTP. Valid delivery OTP is required',
+              },
+              { status: locked ? 429 : 400 }
             )
           }
         }
@@ -1697,6 +1728,11 @@ export async function PATCH(request: Request) {
         ...(items && { items }),
         ...(isDeliveryConfirmation && { delivered_at: new Date() }),
         ...(isDeliveryConfirmation && !isAdmin && { otp_consumed_at: new Date() }),
+        ...(isDeliveryConfirmation &&
+          !isAdmin && {
+            delivery_otp_failed_attempts: 0,
+            delivery_otp_locked_until: null,
+          }),
       }
 
       const updated = await prisma.$transaction(async (tx: any) => {
@@ -1759,6 +1795,21 @@ export async function PATCH(request: Request) {
               status: 'pending',
             },
           })
+          if (status === 'ready_for_pickup') {
+            await tx.orderOutbox.create({
+              data: {
+                order_id: orderId,
+                event_type: 'dispatch_requested',
+                payload: {
+                  orderId,
+                  actorId: actor.id,
+                  actorRole: actor.role,
+                  timestamp: new Date().toISOString(),
+                },
+                status: 'pending',
+              },
+            })
+          }
         }
 
         if (status === 'completed') {
@@ -1777,14 +1828,13 @@ export async function PATCH(request: Request) {
                 id: `payout_${orderId}`,
                 driver_id: targetDriverId,
                 amount: driverPayoutAmount,
-                status: 'paid',
-                transaction_ref: orderId,
+                status: 'pending',
               },
               update: {
                 driver_id: targetDriverId,
                 amount: driverPayoutAmount,
-                status: 'paid',
-                transaction_ref: orderId,
+                status: 'pending',
+                transaction_ref: null,
               },
             })
           }

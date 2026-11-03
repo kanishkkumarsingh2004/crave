@@ -1,7 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap');
+@import '@crave/design-tokens/tokens.css';
 
 :root {
-  font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-ui);
   color: #f7faf7;
   background: #0a0f0d;
   font-synthesis: none;
@@ -12,12 +13,12 @@
   --surface-2: #18221c;
   --surface-3: #202c25;
   --line: #29372f;
-  --lime: #d9f447;
+  --lime: var(--brand-primary);
   --lime-dark: #91aa20;
   --danger: #ff6b77;
   --input-bg: #0e1511;
   --input-text: #f7faf7;
-  --accent: #d9f447;
+  --accent: var(--brand-primary);
   --app-bg: #0a0f0d;
   --chrome-bg: rgb(10 15 13 / 94%);
   --overlay-bg: rgb(0 0 0 / 58%);
@@ -2270,5 +2271,84 @@ textarea,
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Kitchen queue alignment: readable at a glance and usable with gloved hands. */
+.app-shell {
+  padding-bottom: calc(var(--app-nav-height) + var(--safe-bottom) + var(--space-3));
+}
+.app-header {
+  min-height: calc(var(--app-header-height) + var(--safe-top));
+  height: auto;
+  padding-top: max(var(--space-3), var(--safe-top));
+}
+.app-content {
+  max-width: var(--content-max);
+}
+.page-title-row h1,
+.hero-card h1 {
+  font-size: var(--type-page);
+}
+.hero-card p,
+.page-title-row p,
+.order-card-head p,
+.order-meta,
+.order-card-foot > div span {
+  font-size: var(--type-small);
+  line-height: 1.45;
+}
+.eyebrow,
+.connection-chip,
+.bottom-nav button,
+.bottom-nav-item {
+  font-size: var(--type-label);
+}
+.primary-button,
+.secondary-button,
+.store-switch,
+.filter-tabs button,
+.compact-button {
+  min-height: var(--control-height);
+}
+.icon-button,
+.bottom-nav button,
+.bottom-nav-item {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+}
+.hero-card,
+.stat-card,
+.order-card,
+.menu-card,
+.settings-card {
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+.status-pill,
+.settlement-status {
+  padding: 6px 9px;
+  border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  font-size: var(--type-label);
+}
+.bottom-nav {
+  height: calc(var(--app-nav-height) + var(--safe-bottom));
+}
+@media (max-width: 639px) {
+  .app-content {
+    padding: var(--space-4) max(var(--space-4), var(--safe-right)) var(--space-6)
+      max(var(--space-4), var(--safe-left));
+  }
+  .order-card-head,
+  .order-card-foot,
+  .order-items {
+    padding: var(--space-4);
+  }
+}
+@media (min-width: 1024px) {
+  .order-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

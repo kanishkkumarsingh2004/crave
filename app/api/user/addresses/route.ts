@@ -7,6 +7,7 @@ import {
 } from '@/lib/dal'
 import { verifyToken } from '@/lib/jwt'
 import { broadcast } from '@/lib/ws-server'
+import { toAddressRealtimeDto } from '@/lib/realtime/safe-dtos'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
     broadcast('user_addresses', {
       type: 'create',
       userId,
-      address: created,
+      address: toAddressRealtimeDto(created),
       timestamp: new Date().toISOString(),
     })
 
@@ -142,7 +143,7 @@ export async function PUT(request: Request) {
     broadcast('user_addresses', {
       type: 'update',
       userId,
-      address: updated,
+      address: toAddressRealtimeDto(updated),
       timestamp: new Date().toISOString(),
     })
 

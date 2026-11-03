@@ -1,4 +1,5 @@
 import { updateUser } from '@/lib/dal'
+import { PUBLIC_USER_SELECT } from '@/lib/dal/users'
 import { resolveCoordinates } from '@/lib/dal/addresses'
 import { prisma } from '@/lib/prisma'
 import { verifyToken } from '@/lib/jwt'
@@ -68,7 +69,11 @@ export async function PATCH(request: Request) {
       const address = updates.address.trim()
       const coordinates = await resolveCoordinates(address)
       updated = await prisma.$transaction(async (tx) => {
-        const user = await tx.user.update({ where: { id: userId }, data: updates })
+        const user = await tx.user.update({
+          where: { id: userId },
+          data: updates,
+          select: PUBLIC_USER_SELECT,
+        })
         const currentDefault = await tx.customerAddress.findFirst({
           where: { customer_id: userId, is_default: true },
           select: { id: true },

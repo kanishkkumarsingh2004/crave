@@ -182,7 +182,7 @@ const TRUSTED_PROXY_RANGES = (process.env.TRUSTED_PROXY_RANGES || '')
   .filter(Boolean)
 
 /** Whether we are behind a reverse proxy (e.g. nginx, Caddy, Cloudflare). */
-const BEHIND_PROXY = process.env.BEHIND_PROXY === 'true' || process.env.NODE_ENV === 'production'
+const BEHIND_PROXY = process.env.BEHIND_PROXY === 'true'
 
 function ipInCidr(ip: string, cidr: string): boolean {
   // Simple IPv4 CIDR check. For production use a library like ip-regex;
@@ -257,6 +257,19 @@ export function resolveClientIp(
           .filter(Boolean)
         if (parts.length > 0) return sanitizeIp(parts[0])
       }
+    }
+
+    // Next.js Web Request objects do not always expose the peer socket. In that
+    // case, accept proxy headers only when the deployment explicitly enabled
+    // proxy mode and configured at least one trusted proxy range. Reverse
+    // proxies must overwrite (not append to) these headers at the edge.
+    if (behindProxy && !directIp && trustedProxyRanges.length > 0) {
+      const cfIp = headers.get('cf-connecting-ip')
+      if (cfIp) return sanitizeIp(cfIp)
+      const realIp = headers.get('x-real-ip')
+      if (realIp) return sanitizeIp(realIp)
+      const xff = headers.get('x-forwarded-for')
+      if (xff) return sanitizeIp(xff.split(',')[0]?.trim() || null)
     }
 
     if (directIp) return directIp

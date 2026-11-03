@@ -47,7 +47,7 @@ export interface RefundInput {
   amount?: number // in rupees (legacy/manual flows only)
   amountPaise?: number // exact provider amount
   reason: string
-  idempotencyKey?: string
+  idempotencyKey: string
   gatewayRefundId?: string
   /** Set only after a signed provider event or an authoritative provider API lookup. */
   providerConfirmed?: boolean
@@ -603,7 +603,10 @@ export async function processRefundTx(input: RefundInput) {
     throw new Error('Valid orderId and positive refund amount are required')
   }
 
-  const cleanIdempotencyKey = idempotencyKey || `refund_${orderId}_${refundPaise}_${Date.now()}`
+  const cleanIdempotencyKey = idempotencyKey?.trim()
+  if (!cleanIdempotencyKey) {
+    throw new Error('A stable refund idempotency key is required')
+  }
 
   const result = await prisma.$transaction(async (tx) => {
     // Serialize every refund calculation for this order. A normal transaction

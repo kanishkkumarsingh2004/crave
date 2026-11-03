@@ -11,7 +11,25 @@
  * unchanged in that respect.
  */
 import { prisma } from '@/lib/prisma'
-import type { User, UserRole } from '@prisma/client'
+import type { Prisma, User, UserRole } from '@prisma/client'
+
+export const PUBLIC_USER_SELECT = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  phone: true,
+  address: true,
+  avatar: true,
+  restaurant_name: true,
+  cuisine: true,
+  vehicle_type: true,
+  license_plate: true,
+  locale: true,
+  created_at: true,
+} satisfies Prisma.UserSelect
+
+export type PublicUser = Prisma.UserGetPayload<{ select: typeof PUBLIC_USER_SELECT }>
 
 // ─── Queries ─────────────────────────────────────────────
 
@@ -68,9 +86,13 @@ export async function createUser(data: {
   }
 }
 
-export async function updateUser(id: string, data: Partial<Omit<User, 'id'>>): Promise<User> {
+export async function updateUser(id: string, data: Partial<Omit<User, 'id'>>): Promise<PublicUser> {
   try {
-    return await prisma.user.update({ where: { id }, data: data as any })
+    return await prisma.user.update({
+      where: { id },
+      data: data as any,
+      select: PUBLIC_USER_SELECT,
+    })
   } catch (error) {
     const detail = error instanceof Error ? error.message : 'Unknown database error'
     throw new Error(`Unable to update user ${id}: ${detail}`)

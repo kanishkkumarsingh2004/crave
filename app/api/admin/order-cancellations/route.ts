@@ -195,7 +195,7 @@ export async function POST(request: Request) {
               orderId,
               amountPaise: requestedPaise,
               reason: notes || 'Admin approved refund request',
-              idempotencyKey: `admin_refund_${orderId}_${Date.now()}`,
+              idempotencyKey: `admin_refund_${orderId}_${requestedPaise}`,
               actorId: admin.id,
             })
           ).refund

@@ -9,12 +9,34 @@ import { broadcast } from '@/lib/ws-server'
 
 // ─── Queries ─────────────────────────────────────────────
 
+export const SAFE_ORDER_CUSTOMER_SELECT = {
+  id: true,
+  name: true,
+  email: true,
+  phone: true,
+} satisfies Prisma.UserSelect
+
+export const SAFE_ORDER_RESTAURANT_SELECT = {
+  id: true,
+  name: true,
+  cuisine: true,
+  rating: true,
+  address: true,
+  image: true,
+  is_open: true,
+  is_dark_store: true,
+  delivery_minutes: true,
+  latitude: true,
+  longitude: true,
+  phone: true,
+} satisfies Prisma.RestaurantSelect
+
 export async function findOrderById(id: string) {
   return prisma.order.findUnique({
     where: { id },
     include: {
-      customer: true,
-      restaurant: true,
+      customer: { select: SAFE_ORDER_CUSTOMER_SELECT },
+      restaurant: { select: SAFE_ORDER_RESTAURANT_SELECT },
       refunds: {
         orderBy: { created_at: 'desc' },
         take: 5,
@@ -178,7 +200,7 @@ export async function listOrders(filters?: {
   const orders = await prisma.order.findMany({
     where,
     include: {
-      restaurant: true,
+      restaurant: { select: SAFE_ORDER_RESTAURANT_SELECT },
       refunds: {
         orderBy: { created_at: 'desc' },
         take: 5,
@@ -326,7 +348,10 @@ export async function claimOrderForDriverAtomic(params: {
     const result = await prisma.$transaction(async (tx) => {
       const existing = await tx.order.findUnique({
         where: { id: orderId },
-        include: { customer: true, restaurant: true },
+        include: {
+          customer: { select: SAFE_ORDER_CUSTOMER_SELECT },
+          restaurant: { select: SAFE_ORDER_RESTAURANT_SELECT },
+        },
       })
 
       if (!existing) {
@@ -390,6 +415,7 @@ export async function claimOrderForDriverAtomic(params: {
               'packing',
               'ready_for_pickup',
               'rider_assigned',
+              'picked_up',
               'out_for_delivery',
             ],
           },
@@ -461,7 +487,10 @@ export async function claimOrderForDriverAtomic(params: {
 
       const assignedOrder = await tx.order.findUnique({
         where: { id: orderId },
-        include: { customer: true, restaurant: true },
+        include: {
+          customer: { select: SAFE_ORDER_CUSTOMER_SELECT },
+          restaurant: { select: SAFE_ORDER_RESTAURANT_SELECT },
+        },
       })
 
       // Transactional Outbox: Persist durable event in PostgreSQL
@@ -480,7 +509,6 @@ export async function claimOrderForDriverAtomic(params: {
           status: 'pending',
         },
       })
-
       return {
         success: true,
         order: assignedOrder,
@@ -599,7 +627,10 @@ export async function transitionOrderStatusAtomic(params: {
 
       const updatedOrder = await tx.order.findUnique({
         where: { id: orderId },
-        include: { customer: true, restaurant: true },
+        include: {
+          customer: { select: SAFE_ORDER_CUSTOMER_SELECT },
+          restaurant: { select: SAFE_ORDER_RESTAURANT_SELECT },
+        },
       })
 
       // Transactional outbox event
@@ -618,6 +649,21 @@ export async function transitionOrderStatusAtomic(params: {
           status: 'pending',
         },
       })
+      if (toStatus === 'ready_for_pickup') {
+        await tx.orderOutbox.create({
+          data: {
+            order_id: orderId,
+            event_type: 'dispatch_requested',
+            payload: {
+              orderId,
+              actorId: actorId || null,
+              actorRole: actorRole || null,
+              timestamp: new Date().toISOString(),
+            },
+            status: 'pending',
+          },
+        })
+      }
 
       return { success: true, order: updatedOrder, conflict: false }
     })
@@ -653,7 +699,13 @@ export async function dispatchPendingOutboxEvents(batchSize: number = 25): Promi
     for (const evt of pendingEvents) {
       try {
         const payload = typeof evt.payload === 'string' ? JSON.parse(evt.payload) : evt.payload
-        await broadcast(evt.event_type, payload)
+        if (evt.event_type === 'dispatch_requested') {
+          const { createDispatchOffers } = await import('@/lib/dispatch/create-dispatch-offers')
+          const result = await createDispatchOffers({ orderId: evt.order_id })
+          if (!result.success) throw new Error(result.message)
+        } else {
+          await broadcast(evt.event_type, payload)
+        }
 
         await prisma.orderOutbox.update({
           where: { id: evt.id },
@@ -669,7 +721,7 @@ export async function dispatchPendingOutboxEvents(batchSize: number = 25): Promi
           data: {
             attempts: { increment: 1 },
             last_error: sendErr?.message || String(sendErr),
-            status: evt.attempts >= 5 ? 'failed' : 'pending',
+            status: evt.attempts >= 4 ? 'failed' : 'pending',
           },
         })
       }

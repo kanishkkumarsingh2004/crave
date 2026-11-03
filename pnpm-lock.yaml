@@ -191,6 +191,9 @@ importers:
       '@capacitor/status-bar':
         specifier: 8.0.4
         version: 8.0.4(@capacitor/core@8.5.3)
+      '@crave/design-tokens':
+        specifier: workspace:*
+        version: link:packages/design-tokens
       '@crave/mobile-core':
         specifier: workspace:*
         version: link:packages/mobile-core
@@ -348,6 +351,9 @@ importers:
       '@capacitor/status-bar':
         specifier: 8.0.4
         version: 8.0.4(@capacitor/core@8.5.3)
+      '@crave/design-tokens':
+        specifier: workspace:*
+        version: link:../packages/design-tokens
       '@crave/mobile-core':
         specifier: workspace:*
         version: link:../packages/mobile-core
@@ -430,6 +436,9 @@ importers:
       '@capacitor/status-bar':
         specifier: 8.0.4
         version: 8.0.4(@capacitor/core@8.5.3)
+      '@crave/design-tokens':
+        specifier: workspace:*
+        version: link:../packages/design-tokens
       '@crave/mobile-core':
         specifier: workspace:*
         version: link:../packages/mobile-core
@@ -527,6 +536,9 @@ importers:
       '@capacitor/status-bar':
         specifier: 8.0.4
         version: 8.0.4(@capacitor/core@8.5.3)
+      '@crave/design-tokens':
+        specifier: workspace:*
+        version: link:../packages/design-tokens
       '@crave/mobile-core':
         specifier: workspace:*
         version: link:../packages/mobile-core
@@ -561,6 +573,12 @@ importers:
       vite:
         specifier: 8.3.4
         version: 8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)
+
+  packages/design-tokens:
+    devDependencies:
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
 
   packages/mobile-core:
     devDependencies:
@@ -609,6 +627,9 @@ importers:
       '@capacitor/status-bar':
         specifier: 8.0.4
         version: 8.0.4(@capacitor/core@8.5.3)
+      '@crave/design-tokens':
+        specifier: workspace:*
+        version: link:../packages/design-tokens
       '@crave/mobile-core':
         specifier: workspace:*
         version: link:../packages/mobile-core

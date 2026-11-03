@@ -14,6 +14,7 @@
     "assets": "capacitor-assets generate --assetPath assets --android --iconBackgroundColor '#121815' --iconBackgroundColorDark '#121815' --splashBackgroundColor '#121815' --splashBackgroundColorDark '#121815' && capacitor-assets generate --assetPath assets --ios --iconBackgroundColor '#121815' --iconBackgroundColorDark '#121815' --splashBackgroundColor '#121815' --splashBackgroundColorDark '#121815'"
   },
   "dependencies": {
+    "@crave/design-tokens": "workspace:*",
     "@crave/mobile-core": "workspace:*",
     "@capacitor/android": "8.5.3",
     "@capacitor/app": "8.1.2",

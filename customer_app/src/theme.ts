@@ -22,7 +22,7 @@ export const THEME_DICTIONARY: Record<ResolvedTheme, Record<string, string>> = {
     '--input-focus-ring': '#dff33f55',
     '--chrome-bg': 'rgb(255 255 255 / 94%)',
     '--overlay-bg': 'rgb(6 16 9 / 60%)',
-    '--accent': '#eaff3f',
+    '--accent': '#d9f447',
     '--accent-strong': '#5f7400',
     '--accent-soft': '#f1f8cc',
     '--on-accent': '#172014',
