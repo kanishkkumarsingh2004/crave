@@ -366,7 +366,6 @@ function MenuScreen({
     [retry, setRetry] = useState(0),
     [query, setQuery] = useState(''),
     [category, setCategory] = useState('All'),
-    [favorite, setFavorite] = useState(false),
     [pick, setPick] = useState<MenuItem | null>(null),
     [deviceLoc, setDeviceLoc] = useState<{ lat: number; lng: number } | null>(() => {
       try {
@@ -465,6 +464,8 @@ function MenuScreen({
     facts.push({ icon: 'pin' as const, value: `${roadDistance} km`, label: 'Distance' })
   } else if (restaurant.distance) {
     facts.push({ icon: 'pin' as const, value: restaurant.distance, label: 'Distance' })
+  } else {
+    facts.push({ icon: 'pin' as const, value: 'Nearby', label: 'Distance' })
   }
   const add = (item: MenuItem) => {
     const variants = (item.variants || []).filter((v) => v.in_stock !== false)
@@ -478,26 +479,13 @@ function MenuScreen({
     if (variants.length > 1) setPick(item)
     else onAdd(item, variants[0])
   }
-  const shareRestaurant = async () => {
-    const shareData = {
-      title: restaurant.name,
-      text: `Explore ${restaurant.name} on CRAVE.`,
-      url: window.location.href,
-    }
-    try {
-      if (navigator.share) await navigator.share(shareData)
-      else await navigator.clipboard?.writeText(window.location.href)
-    } catch {
-      // Closing the native share sheet is an expected no-op.
-    }
-  }
   return (
     <div className="detail-screen">
       <header
         className="detail-hero"
         style={{
           background: restaurant.image
-            ? `linear-gradient(0deg,var(--hero-overlay-strong),var(--hero-overlay-soft)),url(${restaurant.image}) center/cover`
+            ? `linear-gradient(180deg,rgb(0 0 0 / 18%),transparent 52%),url(${restaurant.image}) center/cover`
             : 'var(--hero-fallback)',
         }}
       >
@@ -505,38 +493,12 @@ function MenuScreen({
           <button className="round" onClick={onBack} aria-label="Back">
             <Icon name="back" />
           </button>
-          <div className="detail-hero-actions">
-            <button
-              className={`round${favorite ? ' is-favorite' : ''}`}
-              onClick={() => setFavorite((value) => !value)}
-              aria-label={
-                favorite
-                  ? `Remove ${restaurant.name} from favorites`
-                  : `Add ${restaurant.name} to favorites`
-              }
-              aria-pressed={favorite}
-            >
-              <Icon name="heart" />
-            </button>
-            <button
-              className="round"
-              onClick={() => void shareRestaurant()}
-              aria-label={`Share ${restaurant.name}`}
-            >
-              <Icon name="share" />
-            </button>
-          </div>
         </div>
       </header>
       <div className="detail-body">
         <section className="detail-summary" aria-labelledby="restaurant-name">
           <div className="detail-summary-heading">
-            <div>
-              <span className={`open-pill${restaurant.is_open === false ? ' closed' : ''}`}>
-                {restaurant.is_open === false ? 'Closed' : 'Open now'}
-              </span>
-              <h1 id="restaurant-name">{restaurant.name}</h1>
-            </div>
+            <h1 id="restaurant-name">{restaurant.name}</h1>
             {restaurant.rating != null && (
               <span className="rating-pill">
                 <Icon name="star" /> {Number(restaurant.rating).toFixed(1)}

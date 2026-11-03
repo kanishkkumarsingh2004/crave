@@ -65,10 +65,11 @@ test('customer discovery does not steal focus and restaurant menus follow the co
 
   assert.doesNotMatch(app, /autoFocus/)
   assert.match(app, /className="detail-summary"/)
-  assert.match(app, /className="detail-hero-actions"/)
+  assert.doesNotMatch(app, /detail-hero-actions|name="heart"|name="share"/)
   assert.match(app, /className="menu-group-heading"/)
   assert.match(app, /groupedItems\.map/)
   assert.match(app, /<DishImage src=\{image\} name=\{item\.name\} \/>/)
-  assert.match(styles, /\.detail-summary\s*\{[\s\S]*?margin-top: -72px;/)
+  assert.match(styles, /\.detail-hero\s*\{[\s\S]*?height: clamp\(220px, 28dvh, 270px\);/)
+  assert.match(styles, /\.detail-summary\s*\{[\s\S]*?margin-top: -76px;/)
   assert.match(styles, /\.menu-item\s*\{[\s\S]*?grid-template-columns: 94px minmax\(0, 1fr\) 76px;/)
 })

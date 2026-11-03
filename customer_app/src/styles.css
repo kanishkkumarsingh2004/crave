@@ -1132,7 +1132,7 @@ textarea {
   padding-bottom: 104px;
 }
 .detail-hero {
-  height: clamp(270px, 40dvh, 350px);
+  height: clamp(220px, 28dvh, 270px);
   position: relative;
   overflow: hidden;
   padding: calc(var(--safe-top-float) + 18px) var(--gutter) 22px;
@@ -1145,12 +1145,8 @@ textarea {
   z-index: 2;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   width: 100%;
-}
-.detail-hero-actions {
-  display: flex;
-  gap: 10px;
 }
 .detail-hero .round {
   border: 0;
@@ -1159,17 +1155,11 @@ textarea {
   box-shadow: 0 8px 24px rgb(4 16 9 / 18%);
   backdrop-filter: blur(10px);
 }
-.detail-hero .round.is-favorite {
-  color: var(--danger);
-}
-.detail-hero .round.is-favorite svg {
-  fill: currentColor;
-}
 .detail-summary {
   position: relative;
   z-index: 4;
-  margin-top: -72px;
-  padding: 22px 22px 18px;
+  margin-top: -76px;
+  padding: 20px 22px 17px;
   border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
   border-radius: 24px;
   background: var(--surface);
@@ -1182,7 +1172,7 @@ textarea {
   gap: 14px;
 }
 .detail-summary h1 {
-  margin: 7px 0 0;
+  margin: 0;
   font:
     800 clamp(24px, 6vw, 32px) / 1.08 var(--font-display),
     sans-serif;
@@ -1190,7 +1180,7 @@ textarea {
   text-wrap: balance;
 }
 .detail-summary > p {
-  margin: 14px 0 0;
+  margin: 12px 0 0;
   color: var(--muted);
   font-size: 14px;
   font-weight: 500;
@@ -1242,8 +1232,8 @@ textarea {
   display: flex;
   align-items: center;
   gap: 0;
-  margin-top: 18px;
-  padding-top: 16px;
+  margin-top: 15px;
+  padding-top: 14px;
   border-top: 1px solid var(--line);
 }
 .fact {
