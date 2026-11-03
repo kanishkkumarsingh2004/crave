@@ -14,6 +14,7 @@ COPY admin_app/package.json ./admin_app/package.json
 COPY customer_app/package.json ./customer_app/package.json
 COPY driver_app/package.json ./driver_app/package.json
 COPY restaurant_app/package.json ./restaurant_app/package.json
+COPY packages/design-tokens/package.json ./packages/design-tokens/package.json
 COPY packages/mobile-core/package.json ./packages/mobile-core/package.json
 RUN corepack enable pnpm && corepack prepare pnpm@12.8.1 --activate
 RUN pnpm install --frozen-lockfile
