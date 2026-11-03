@@ -1,91 +1,44 @@
 import { Capacitor, CapacitorHttp } from '@capacitor/core'
 import { Preferences } from '@capacitor/preferences'
-import { apiErrorMessage, normalizeApiPayload } from '../../lib/native/api-payload'
+import {
+  ApiError,
+  COOKIE_SESSION_TOKEN,
+  createApiClient,
+  createPlatformTokenStore,
+  createWebSocketUrl,
+} from '@crave/mobile-core'
 
 const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || 'https://crave.apexonestudio.com').replace(
   /\/$/,
   ''
 )
 
-export function getApiOrigin(): string {
-  return API_ORIGIN
-}
 const TOKEN_KEY = 'crave_customer_auth_token'
-export const COOKIE_SESSION_TOKEN = 'cookie-session'
-let currentToken = ''
 
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    public readonly status: number
-  ) {
-    super(message)
-    this.name = 'ApiError'
-  }
-}
+const client = createApiClient({
+  appId: 'customer',
+  apiOrigin: API_ORIGIN,
+  isNative: () => Capacitor.isNativePlatform(),
+  nativeRequest: (request) => CapacitorHttp.request(request),
+  tokenStore: createPlatformTokenStore({
+    key: TOKEN_KEY,
+    isNative: () => Capacitor.isNativePlatform(),
+    nativeStore: Preferences,
+    browserStore: () => localStorage,
+  }),
+  timeouts: { connectMs: 15_000, readMs: 25_000 },
+})
 
-export async function restoreAuthToken() {
-  if (currentToken) return currentToken
-  currentToken = Capacitor.isNativePlatform()
-    ? (await Preferences.get({ key: TOKEN_KEY })).value || ''
-    : localStorage.getItem(TOKEN_KEY) || ''
-  return currentToken
-}
-export async function saveAuthToken(token: string) {
-  currentToken = token
-  if (Capacitor.isNativePlatform()) await Preferences.set({ key: TOKEN_KEY, value: token })
-  else localStorage.setItem(TOKEN_KEY, token)
-}
-export async function clearAuthToken() {
-  currentToken = ''
-  if (Capacitor.isNativePlatform()) await Preferences.remove({ key: TOKEN_KEY })
-  else localStorage.removeItem(TOKEN_KEY)
-}
-export function getAuthToken() {
-  return currentToken
-}
+export { ApiError, COOKIE_SESSION_TOKEN }
+export const apiRequest = client.request
+export const restoreAuthToken = client.restoreAuthToken
+export const saveAuthToken = client.saveAuthToken
+export const clearAuthToken = client.clearAuthToken
+export const getAuthToken = client.getAuthToken
+export const getApiOrigin = client.getApiOrigin
+
 export function getWebSocketUrl() {
-  const base =
-    import.meta.env.VITE_WS_BASE_URL?.trim() || `${API_ORIGIN.replace(/^http/, 'ws')}/api/ws`
-  return new URL(base).toString()
-}
-export async function apiRequest<T>(
-  path: string,
-  options: { method?: string; body?: unknown; token?: string } = {}
-): Promise<T> {
-  const method = options.method || 'GET'
-  const token = options.token ?? currentToken
-  const headers: Record<string, string> = {
-    Accept: 'application/json',
-    'X-Crave-Native-App': 'customer',
-    ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-    ...(token && token !== COOKIE_SESSION_TOKEN ? { Authorization: `Bearer ${token}` } : {}),
-  }
-  let status = 0
-  let data: any
-  if (Capacitor.isNativePlatform()) {
-    const response = await CapacitorHttp.request({
-      url: `${API_ORIGIN}${path}`,
-      method,
-      headers,
-      data: options.body,
-      connectTimeout: 15000,
-      readTimeout: 25000,
-    })
-    status = response.status
-    data = normalizeApiPayload(response.data)
-  } else {
-    const response = await fetch(path, {
-      method,
-      headers,
-      credentials: 'include',
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
-    })
-    status = response.status
-    data = normalizeApiPayload(await response.text())
-  }
-  if (status < 200 || status >= 300) throw new ApiError(apiErrorMessage(data, status, path), status)
-  return data as T
+  return createWebSocketUrl(API_ORIGIN, import.meta.env.VITE_WS_BASE_URL)
 }
 
 /* ── Device cache ───────────────────────────────────────────────────────────

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@12.3.4",
+  "packageManager": "pnpm@12.8.1",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -14,6 +14,7 @@
     "assets": "capacitor-assets generate --assetPath assets --android --iconBackgroundColor '#F4FF52' --iconBackgroundColorDark '#F4FF52' --splashBackgroundColor '#08110C' --splashBackgroundColorDark '#08110C' && capacitor-assets generate --assetPath assets --ios --iconBackgroundColor '#F4FF52' --iconBackgroundColorDark '#F4FF52' --splashBackgroundColor '#08110C' --splashBackgroundColorDark '#08110C'"
   },
   "dependencies": {
+    "@crave/mobile-core": "workspace:*",
     "@capacitor/android": "8.5.3",
     "@capacitor/app": "8.1.2",
     "@capacitor/core": "8.5.3",

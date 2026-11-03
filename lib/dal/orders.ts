@@ -3,7 +3,7 @@
  * Requires Prisma PostgreSQL connection to be available.
  */
 import { prisma } from '@/lib/prisma'
-import type { OrderStatus } from '@prisma/client'
+import type { Prisma, OrderStatus } from '@prisma/client'
 import { isValidTransition } from '@/lib/order-state-machine'
 import { broadcast } from '@/lib/ws-server'
 
@@ -32,13 +32,61 @@ export async function findOrderById(id: string) {
   })
 }
 
-// In-memory short-lived cache to deduplicate simultaneous requests and cache owner mappings
-const restOwnerCache = new Map<string, { ids: string[]; expiresAt: number }>()
+// In-memory short-lived cache to deduplicate simultaneous non-offer requests.
 const listOrdersCache = new Map<string, { data: any[]; expiresAt: number }>()
 
 export function invalidateOrdersCache() {
   listOrdersCache.clear()
-  restOwnerCache.clear()
+}
+
+/**
+ * A driver may read assigned orders and only the unassigned orders that were
+ * explicitly offered to that driver and are still within their offer window.
+ * The database relation is part of the authorization predicate; Redis locks
+ * and broadcast payloads are coordination/UI mechanisms, not read grants.
+ */
+export function buildDriverOrderVisibilityFilter(
+  driverId: string,
+  now = new Date()
+): Prisma.OrderWhereInput {
+  return {
+    OR: [
+      { rider_id: driverId },
+      {
+        rider_id: null,
+        status: {
+          in: ['ready_for_pickup', 'sent_to_vendor', 'preparing', 'packing'] as OrderStatus[],
+        },
+        payment_status: 'verified',
+        dispatch_offers: {
+          some: {
+            driver_id: driverId,
+            status: 'pending',
+            expires_at: { gt: now },
+          },
+        },
+      },
+    ],
+  }
+}
+
+/**
+ * Restaurant IDs are authoritative for scoped vendor reads. Name matching is
+ * retained only for admin discovery when no exact ID was supplied.
+ */
+export function buildRestaurantOrderFilter(filters: {
+  restaurantId?: string
+  restaurantName?: string
+}): Prisma.OrderWhereInput | null {
+  if (filters.restaurantId) {
+    return { restaurant_id: filters.restaurantId }
+  }
+  if (filters.restaurantName) {
+    return {
+      restaurant_name: { contains: filters.restaurantName, mode: 'insensitive' },
+    }
+  }
+  return null
 }
 
 export async function listOrders(filters?: {
@@ -53,9 +101,14 @@ export async function listOrders(filters?: {
   limit?: number
 }) {
   const cacheKey = JSON.stringify(filters || {})
-  const cached = listOrdersCache.get(cacheKey)
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.data
+  // Offer visibility depends on the current time. Do not serve an offer-based
+  // driver result from the cache after its durable offer has expired.
+  const cacheable = !filters?.includeAvailableForRider
+  if (cacheable) {
+    const cached = listOrdersCache.get(cacheKey)
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.data
+    }
   }
 
   const where: any = {}
@@ -66,19 +119,12 @@ export async function listOrders(filters?: {
 
   if (filters?.driverId || filters?.riderId) {
     const driverId = filters.driverId || filters.riderId
-    if (filters?.includeAvailableForRider) {
-      where.OR = [
-        { rider_id: driverId },
-        {
-          rider_id: null,
-          status: {
-            in: ['ready_for_pickup', 'sent_to_vendor', 'preparing', 'packing'] as OrderStatus[],
-          },
-          payment_status: 'verified',
-        },
-      ]
-    } else {
-      where.rider_id = driverId
+    if (driverId) {
+      if (filters?.includeAvailableForRider) {
+        where.OR = buildDriverOrderVisibilityFilter(driverId).OR
+      } else {
+        where.rider_id = driverId
+      }
     }
   }
 
@@ -87,55 +133,13 @@ export async function listOrders(filters?: {
   }
 
   if (filters?.restaurantId || filters?.restaurantName) {
-    let restIds: string[] = filters?.restaurantId ? [filters.restaurantId] : []
-    const ownerCacheKey = `${filters?.restaurantId || ''}_${filters?.restaurantName || ''}`
-    const cachedOwner = restOwnerCache.get(ownerCacheKey)
+    const restaurantFilter = buildRestaurantOrderFilter(filters)
 
-    if (cachedOwner && cachedOwner.expiresAt > Date.now()) {
-      restIds = cachedOwner.ids
-    } else if (filters?.restaurantId) {
-      try {
-        const owned = await prisma.restaurant.findMany({
-          where: {
-            OR: [
-              { id: filters.restaurantId },
-              { owner_id: filters.restaurantId },
-              ...(filters.restaurantName ? [{ name: filters.restaurantName }] : []),
-            ],
-          },
-          select: { id: true },
-        })
-        const found = owned.map((r) => r.id)
-        restIds = Array.from(new Set([...restIds, ...found]))
-        restOwnerCache.set(ownerCacheKey, { ids: restIds, expiresAt: Date.now() + 60000 })
-      } catch (e) {
-        // P1.3 FIX: Log the DB error rather than silently swallowing it.
-        // We fall through with the original restaurantId so the orders
-        // query is still scoped correctly even if owner-expansion fails.
-        console.error(
-          '[listOrders] restaurant owner expansion failed:',
-          e instanceof Error ? e.message : e
-        )
-      }
-    }
-
-    const vendorConditions: any[] = []
-    if (restIds.length > 0) {
-      vendorConditions.push({ restaurant_id: { in: restIds } })
-    }
-    if (filters?.restaurantName) {
-      vendorConditions.push({
-        restaurant_name: { contains: filters.restaurantName, mode: 'insensitive' },
-      })
-    }
-
-    if (where.OR) {
-      where.AND = [{ OR: where.OR }, { OR: vendorConditions }]
+    if (where.OR && restaurantFilter) {
+      where.AND = [{ OR: where.OR }, restaurantFilter]
       delete where.OR
-    } else if (vendorConditions.length === 1 && restIds.length === 1 && !filters?.restaurantName) {
-      where.restaurant_id = restIds[0]
-    } else if (vendorConditions.length > 0) {
-      where.OR = vendorConditions
+    } else if (restaurantFilter) {
+      Object.assign(where, restaurantFilter)
     }
   }
 
@@ -193,7 +197,9 @@ export async function listOrders(filters?: {
     take: Math.min(filters?.limit ?? 50, 100), // Max 100, default 50
   })
 
-  listOrdersCache.set(cacheKey, { data: orders, expiresAt: Date.now() + 3000 })
+  if (cacheable) {
+    listOrdersCache.set(cacheKey, { data: orders, expiresAt: Date.now() + 3000 })
+  }
   return orders
 }
 

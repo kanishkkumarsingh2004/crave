@@ -269,7 +269,10 @@ export async function GET(request: Request) {
       const orders = await listOrders({
         customerId: scopedCustomerId,
         restaurantId: scopedRestaurantId,
-        restaurantName: vendorName ?? undefined,
+        // Restaurant names are an admin discovery mechanism only. Vendor
+        // ownership is derived from the authenticated restaurant ID and must
+        // never be widened by a request parameter.
+        restaurantName: actor?.role === 'admin' ? (vendorName ?? undefined) : undefined,
         driverId: scopedDriverId,
         onlyApprovedForVendor: isVendorActor ? true : undefined,
         includeAvailableForRider:

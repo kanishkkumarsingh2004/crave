@@ -11,6 +11,7 @@ import {
 import type { JWTPayload } from '../lib/jwt'
 import { hashPassword, validatePassword, verifyPassword } from '../lib/password'
 import { resolveClientIp } from '../lib/rate-limit'
+import { buildDriverOrderVisibilityFilter, buildRestaurantOrderFilter } from '../lib/dal/orders'
 
 function actor(role: JWTPayload['role'], id: string, restaurantId?: string): JWTPayload {
   return { id, role, restaurantId, name: role, email: `${role}@example.test` }
@@ -43,6 +44,41 @@ test('unassigned orders are not readable by arbitrary riders', () => {
     }),
     false
   )
+})
+
+test('driver list visibility requires an active durable offer for unassigned orders', () => {
+  const now = new Date('2026-11-03T10:00:00.000Z')
+  const filter = buildDriverOrderVisibilityFilter('rider-1', now)
+  const [assigned, offered] = filter.OR as Array<Record<string, unknown>>
+
+  assert.deepEqual(assigned, { rider_id: 'rider-1' })
+  assert.deepEqual(offered, {
+    rider_id: null,
+    status: { in: ['ready_for_pickup', 'sent_to_vendor', 'preparing', 'packing'] },
+    payment_status: 'verified',
+    dispatch_offers: {
+      some: {
+        driver_id: 'rider-1',
+        status: 'pending',
+        expires_at: { gt: now },
+      },
+    },
+  })
+})
+
+test('exact restaurant ID scope takes precedence over name discovery', () => {
+  assert.deepEqual(buildRestaurantOrderFilter({ restaurantId: 'restaurant-1' }), {
+    restaurant_id: 'restaurant-1',
+  })
+  assert.deepEqual(
+    buildRestaurantOrderFilter({ restaurantId: 'restaurant-1', restaurantName: 'Other' }),
+    {
+      restaurant_id: 'restaurant-1',
+    }
+  )
+  assert.deepEqual(buildRestaurantOrderFilter({ restaurantName: 'Kitchen' }), {
+    restaurant_name: { contains: 'Kitchen', mode: 'insensitive' },
+  })
 })
 
 test('delivery OTP is only returned to its customer or an admin', () => {

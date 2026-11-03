@@ -15,6 +15,7 @@
     "build:android:release": "bash scripts/build-apps-release.sh",
     "publish:android:release": "bash scripts/publish-android-release.sh",
     "build:ios": "bash scripts/build-ios.sh",
+    "postinstall": "prisma generate",
     "build:next": "prisma generate && next build --webpack",
     "rebuild": "turbo run //#build:next @crave/admin-app#build @crave/customer-app#build @crave/driver-app#build @crave/restaurant-app#build --force",
     "start": "node server.js",
@@ -57,6 +58,7 @@
     "db:reset": "tsx scripts/db-reset-and-seed.ts"
   },
   "dependencies": {
+    "@crave/mobile-core": "workspace:*",
     "@capacitor/app": "8.1.2",
     "@capacitor/core": "8.5.3",
     "@capacitor/device": "8.0.3",
