@@ -264,6 +264,8 @@ export interface ClaimOrderResult {
   order?: any
   error?: string
   conflict?: boolean
+  unauthorized?: boolean
+  offerRecipientIds?: string[]
 }
 
 /**
@@ -309,6 +311,30 @@ export async function claimOrderForDriverAtomic(params: {
       if (existing.rider_id === driverId) {
         return { success: true, order: existing, conflict: false }
       }
+
+      const now = new Date()
+      const validOffer = await tx.dispatchOffer.findFirst({
+        where: {
+          order_id: orderId,
+          driver_id: driverId,
+          status: 'pending',
+          expires_at: { gt: now },
+        },
+        orderBy: { created_at: 'desc' },
+      })
+      if (!validOffer) {
+        return {
+          success: false,
+          conflict: false,
+          unauthorized: true,
+          error: 'No valid dispatch offer exists for this driver and order',
+        }
+      }
+
+      const offerRecipients = await tx.dispatchOffer.findMany({
+        where: { order_id: orderId, status: 'pending', expires_at: { gt: now } },
+        select: { driver_id: true },
+      })
 
       // CR-13: Enforce one active assignment per driver at the database level.
       // The PostgreSQL order claim only prevents two drivers claiming the same
@@ -385,6 +411,23 @@ export async function claimOrderForDriverAtomic(params: {
         }
       }
 
+      const acceptedOffer = await tx.dispatchOffer.updateMany({
+        where: {
+          id: validOffer.id,
+          driver_id: driverId,
+          status: 'pending',
+          expires_at: { gt: now },
+        },
+        data: { status: 'accepted', accepted_at: now },
+      })
+      if (acceptedOffer.count !== 1) {
+        throw new Error('Dispatch offer expired or was consumed during assignment')
+      }
+      await tx.dispatchOffer.updateMany({
+        where: { order_id: orderId, id: { not: validOffer.id }, status: 'pending' },
+        data: { status: 'cancelled' },
+      })
+
       const assignedOrder = await tx.order.findUnique({
         where: { id: orderId },
         include: { customer: true, restaurant: true },
@@ -407,7 +450,12 @@ export async function claimOrderForDriverAtomic(params: {
         },
       })
 
-      return { success: true, order: assignedOrder, conflict: false }
+      return {
+        success: true,
+        order: assignedOrder,
+        conflict: false,
+        offerRecipientIds: offerRecipients.map((offer) => offer.driver_id),
+      }
     })
 
     invalidateOrdersCache()

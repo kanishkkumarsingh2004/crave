@@ -5,6 +5,7 @@ import { acquireDriverOfferLock, releaseDriverLock } from '@/lib/dispatch/atomic
 import { getDriverLocationDistributed, updateDriverLocation } from '@/lib/dispatch/driver-tracker'
 import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
 import { broadcast } from '@/lib/ws-server'
+import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
@@ -30,19 +31,26 @@ export async function POST(request: Request) {
       actor.role === 'admin' && (body.driverId || body.driver_id)
         ? body.driverId || body.driver_id
         : actor.id
-    const driverName =
-      actor.role === 'admin' && (body.driver_name || body.driverName)
-        ? body.driver_name || body.driverName
-        : actor.name || 'Verified Delivery Partner'
-    const driverPhone =
-      actor.role === 'admin' && (body.driver_phone || body.driverPhone)
-        ? body.driver_phone || body.driverPhone
-        : (actor as any)?.phone || '+91 98765 43210'
-
     if (!driverId || !requestId) {
       return NextResponse.json(
         { error: 'Missing required parameters: driverId, requestId' },
         { status: 400 }
+      )
+    }
+
+    const driverProfile = await prisma.user.findUnique({
+      where: { id: driverId },
+      select: { name: true, phone: true, role: true },
+    })
+    if (!driverProfile || !['rider', 'driver'].includes(String(driverProfile.role))) {
+      return NextResponse.json({ error: 'Verified driver profile not found' }, { status: 404 })
+    }
+    const driverName = driverProfile.name
+    const driverPhone = driverProfile.phone?.trim()
+    if (!driverPhone) {
+      return NextResponse.json(
+        { error: 'A verified driver phone number is required before accepting offers' },
+        { status: 422 }
       )
     }
 
@@ -101,6 +109,12 @@ export async function POST(request: Request) {
       })
 
       if (!claimResult.success) {
+        if (claimResult.unauthorized) {
+          return NextResponse.json(
+            { error: claimResult.error || 'This dispatch offer was not issued to the driver' },
+            { status: 403 }
+          )
+        }
         if (claimResult.conflict) {
           return NextResponse.json(
             { error: claimResult.error || 'Order has already been assigned to another driver' },
@@ -152,6 +166,7 @@ export async function POST(request: Request) {
         type: 'offer_claimed',
         orderId: requestId,
         driverId,
+        recipientDriverIds: claimResult.offerRecipientIds || [driverId],
         timestamp: new Date().toISOString(),
       }).catch(() => {})
 

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireRole, handleAuthError } from '@/lib/auth/auth-helpers'
 import { broadcast } from '@/lib/ws-server'
+import { processRefundTx } from '@/lib/finance/payment-service'
 
 export async function GET(request: Request) {
   try {
@@ -172,66 +173,56 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
-    let targetRefund = refundId ? order.refunds.find((r) => r.id === refundId) : order.refunds[0]
+    const targetRefund = refundId ? order.refunds.find((r) => r.id === refundId) : order.refunds[0]
 
     const amountPaise =
       order.total_amount_paise || (order.total_amount ? order.total_amount * 100 : 0)
 
-    const updatedRefund = await prisma.$transaction(async (tx) => {
-      let refundRecord = targetRefund
-
-      if (!refundRecord) {
-        // Create refund record on the fly if one wasn't queued yet
-        refundRecord = await tx.refund.create({
-          data: {
-            order_id: orderId,
-            idempotency_key: `admin_refund_${orderId}_${Date.now()}`,
-            amount: Math.round(amountPaise / 100),
-            amount_paise: amountPaise,
-            reason: notes || 'Admin processed refund',
-            status: action === 'approve' ? 'completed' : 'failed',
-            processed_at: new Date(),
-          },
-        })
-      } else {
-        refundRecord = await tx.refund.update({
-          where: { id: refundRecord.id },
-          data: {
-            status: action === 'approve' ? 'completed' : 'failed',
-            processed_at: new Date(),
-            reason: notes ? `${refundRecord.reason} | Note: ${notes}` : refundRecord.reason,
-          },
-        })
-      }
-
-      // Record admin action log
-      await tx.adminOverrideLog.create({
-        data: {
-          admin_id: admin.id,
-          order_id: orderId,
-          action: action === 'approve' ? 'REFUND_APPROVED' : 'REFUND_REJECTED',
-          reason:
-            notes || (action === 'approve' ? 'Refund approved from queue' : 'Refund rejected'),
-        },
+    const requestedPaise =
+      targetRefund?.amount_paise ??
+      (targetRefund?.amount != null ? targetRefund.amount * 100 : amountPaise)
+    let updatedRefund
+    if (action === 'approve') {
+      const outcome = await processRefundTx({
+        orderId,
+        amountPaise: requestedPaise,
+        reason: notes || targetRefund?.reason || 'Admin approved refund request',
+        idempotencyKey: targetRefund?.idempotency_key || `admin_refund_${orderId}_${Date.now()}`,
+        actorId: admin.id,
       })
+      updatedRefund = outcome.refund
+    } else {
+      updatedRefund = targetRefund
+        ? await prisma.refund.update({
+            where: { id: targetRefund.id },
+            data: {
+              status: 'failed',
+              processed_at: new Date(),
+              reason: notes ? `${targetRefund.reason} | Note: ${notes}` : targetRefund.reason,
+            },
+          })
+        : await prisma.refund.create({
+            data: {
+              order_id: orderId,
+              idempotency_key: `admin_refund_rejected_${orderId}_${Date.now()}`,
+              amount: Math.ceil(requestedPaise / 100),
+              amount_paise: requestedPaise,
+              reason: notes || 'Admin rejected refund request',
+              status: 'failed',
+              processed_at: new Date(),
+            },
+          })
+    }
 
-      // Double-entry ledger entry for accounting trace if approved
-      if (action === 'approve') {
-        await tx.ledgerEntry.create({
-          data: {
-            idempotency_key: `journal_refund_${orderId}_${Date.now()}`,
-            event_type: 'CUSTOMER_REFUND_APPROVED',
-            order_id: orderId,
-            account_code: '2100_CUSTOMER_REFUND_PAYABLE',
-            debit_paise: amountPaise,
-            credit_paise: 0,
-            description: `Admin approved refund for cancelled order #${orderId.slice(0, 8)}`,
-            notes: notes || 'Approved via Admin Order Cancellation Console',
-          },
-        })
-      }
-
-      return refundRecord
+    await prisma.adminOverrideLog.create({
+      data: {
+        admin_id: admin.id,
+        order_id: orderId,
+        action: action === 'approve' ? 'REFUND_APPROVED' : 'REFUND_REJECTED',
+        reason:
+          notes ||
+          (action === 'approve' ? 'Refund approved for provider processing' : 'Refund rejected'),
+      },
     })
 
     // Broadcast live update
@@ -245,7 +236,7 @@ export async function POST(request: Request) {
       success: true,
       message:
         action === 'approve'
-          ? 'Refund has been successfully approved and marked for disbursement.'
+          ? 'Refund approved and queued for provider confirmation.'
           : 'Refund has been rejected.',
       refund: updatedRefund,
     })

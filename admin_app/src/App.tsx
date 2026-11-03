@@ -1159,7 +1159,7 @@ export default function App() {
         </button>
       )}
 
-      <PullToRefresh onRefresh={() => void loadDashboard()} refreshing={refreshing}>
+      <PullToRefresh key={tab} onRefresh={() => void loadDashboard()} refreshing={refreshing}>
         <main className="app-content">
           {tab === 'overview' && (
             <section className="page">

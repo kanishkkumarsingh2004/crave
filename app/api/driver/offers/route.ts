@@ -1,8 +1,6 @@
 import { handleApiAuthError, requireAuthApi } from '@/lib/api-auth'
-import { listOrders } from '@/lib/dal/orders'
+import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
-
-const OFFER_STATUSES = new Set(['sent_to_vendor', 'preparing', 'packing', 'ready_for_pickup'])
 
 function toSafeOffer(order: any) {
   let items: any[] = []
@@ -42,14 +40,22 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Delivery partner access required' }, { status: 403 })
     }
 
-    const orders = await listOrders({ limit: 50 })
-    const offers = orders
-      .filter(
-        (order: any) =>
-          OFFER_STATUSES.has(order.status) && order.payment_status === 'verified' && !order.rider_id
-      )
-      .slice(0, 20)
-      .map(toSafeOffer)
+    const durableOffers = await prisma.dispatchOffer.findMany({
+      where: {
+        driver_id: actor.id,
+        status: 'pending',
+        expires_at: { gt: new Date() },
+        order: {
+          payment_status: 'verified',
+          rider_id: null,
+          status: { in: ['sent_to_vendor', 'preparing', 'packing', 'ready_for_pickup'] },
+        },
+      },
+      include: { order: true },
+      orderBy: { created_at: 'desc' },
+      take: 20,
+    })
+    const offers = durableOffers.map(({ order }) => toSafeOffer(order))
 
     return NextResponse.json({ success: true, offers })
   } catch (error) {

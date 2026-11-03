@@ -26,6 +26,7 @@ model User {
   driver_payouts          DriverPayout[]
   driver_push_tokens      DriverPushToken[]
   driver_current_location DriverCurrentLocation?
+  dispatch_offers         DispatchOffer[]
   driver_upi              DriverUpiAccount[]
   orders                  Order[]
   owned_restaurants       Restaurant[]
@@ -240,6 +241,7 @@ model Order {
   ledger_entries       LedgerEntry[]
   payment_transactions PaymentTransaction[]
   refunds              Refund[]
+  dispatch_offers      DispatchOffer[]
 
   // Idempotency key for preventing duplicate order creation under network retries
   idempotency_key String?
@@ -707,21 +709,44 @@ model PaymentTransaction {
 
 /// Refund records for customer returns, cancellations, and overpayment reversals.
 model Refund {
-  id                String       @id @default(cuid())
-  order_id          String
-  idempotency_key   String       @unique
-  amount            Int // in rupees (legacy)
-  amount_paise      Int? // exact refund amount in paise
-  reason            String
-  status            RefundStatus @default(pending)
-  gateway_refund_id String?      @unique
-  processed_at      DateTime?    @db.Timestamptz(6)
-  created_at        DateTime     @default(now()) @db.Timestamptz(6)
+  id                    String       @id @default(cuid())
+  order_id              String
+  idempotency_key       String       @unique
+  amount                Int // in rupees (legacy)
+  amount_paise          Int? // exact refund amount in paise
+  reason                String
+  status                RefundStatus @default(pending)
+  gateway_refund_id     String?      @unique
+  processed_at          DateTime?    @db.Timestamptz(6)
+  provider_confirmed_at DateTime?    @db.Timestamptz(6)
+  created_at            DateTime     @default(now()) @db.Timestamptz(6)
 
   order Order @relation(fields: [order_id], references: [id], onDelete: Cascade)
 
   @@index([order_id])
   @@map("refunds")
+}
+
+/// Durable proof that a specific driver was selected for a dispatch attempt.
+/// Redis locks coordinate availability, but only this record authorizes acceptance.
+model DispatchOffer {
+  id                  String    @id @default(cuid())
+  order_id            String
+  driver_id           String
+  dispatch_attempt_id String
+  status              String    @default("pending") // pending | accepted | expired | cancelled
+  expires_at          DateTime  @db.Timestamptz(6)
+  accepted_at         DateTime? @db.Timestamptz(6)
+  created_at          DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime  @updatedAt @db.Timestamptz(6)
+
+  order  Order @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  driver User  @relation(fields: [driver_id], references: [id], onDelete: Cascade)
+
+  @@unique([dispatch_attempt_id, driver_id])
+  @@index([driver_id, status, expires_at])
+  @@index([order_id, status, expires_at])
+  @@map("dispatch_offers")
 }
 
 enum PaymentTxStatus {
@@ -762,32 +787,39 @@ model RazorpayLinkedAccount {
 
 /// Durable Razorpay Route transfer intent + provider-confirmed state.
 model RazorpayTransfer {
-  id                     String    @id @default(cuid())
-  order_id               String
-  recipient_type         String // RESTAURANT | DRIVER
-  recipient_id           String
-  linked_account_id      String
-  razorpay_payment_id    String
-  razorpay_transfer_id   String?   @unique
-  idempotency_key        String    @unique
-  amount_paise           Int
-  currency               String    @default("INR")
-  status                 String    @default("pending")
+  id                          String    @id @default(cuid())
+  order_id                    String
+  recipient_type              String // RESTAURANT | DRIVER
+  recipient_id                String
+  linked_account_id           String
+  razorpay_payment_id         String
+  razorpay_transfer_id        String?   @unique
+  idempotency_key             String    @unique
+  amount_paise                Int
+  currency                    String    @default("INR")
+  status                      String    @default("pending")
   // pending | processing | unknown | processed | failed | partially_reversed | reversed
-  failure_reason         String?
-  provider_status        String?
-  settlement_status      String?
-  amount_reversed_paise  Int       @default(0)
-  razorpay_settlement_id String?
-  last_reconciled_at     DateTime? @db.Timestamptz(6)
-  last_webhook_at        DateTime? @db.Timestamptz(6)
-  created_at             DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at             DateTime  @updatedAt @db.Timestamptz(6)
-  processed_at           DateTime? @db.Timestamptz(6)
+  failure_reason              String?
+  provider_status             String?
+  settlement_status           String?
+  amount_reversed_paise       Int       @default(0)
+  razorpay_settlement_id      String?
+  last_reconciled_at          DateTime? @db.Timestamptz(6)
+  last_webhook_at             DateTime? @db.Timestamptz(6)
+  claim_token                 String?
+  claimed_at                  DateTime? @db.Timestamptz(6)
+  provider_request_started_at DateTime? @db.Timestamptz(6)
+  last_attempt_at             DateTime? @db.Timestamptz(6)
+  attempt_count               Int       @default(0)
+  reconciliation_status       String?
+  created_at                  DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at                  DateTime  @updatedAt @db.Timestamptz(6)
+  processed_at                DateTime? @db.Timestamptz(6)
 
   @@index([order_id, status])
   @@index([razorpay_payment_id])
   @@index([recipient_type, recipient_id, status])
+  @@index([reconciliation_status, updated_at])
   @@map("razorpay_transfers")
 }
 

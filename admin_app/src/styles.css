@@ -65,15 +65,18 @@ svg {
 }
 
 .app-shell {
-  min-height: 100vh;
-  min-height: 100dvh;
-  padding-bottom: calc(78px + env(safe-area-inset-bottom));
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: radial-gradient(circle at 92% 8%, rgb(128 174 43 / 13%), transparent 28%), #07100b;
 }
 .app-header {
   position: sticky;
   z-index: 40;
   top: 0;
+  flex: 0 0 auto;
   min-height: calc(68px + env(safe-area-inset-top));
   display: flex;
   align-items: center;
@@ -2152,12 +2155,16 @@ html[data-theme='dark'] .address-map-fallback {
    from the top of any page. */
 .ptr-scroll {
   position: relative;
-  max-height: calc(100dvh - var(--nav-height));
+  min-height: 0;
+  flex: 1 1 auto;
   overflow-y: auto;
+  padding-bottom: calc(68px + env(safe-area-inset-bottom));
   overscroll-behavior: contain;
+  touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
 }
 .ptr-stretch {
+  min-height: 100%;
   display: flex;
   flex-direction: column;
 }

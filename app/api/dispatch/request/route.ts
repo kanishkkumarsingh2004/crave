@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import crypto from 'node:crypto'
 
 // Hard ceilings so a vendor cannot hold driver locks excessively long
 // or request an unreasonably large candidate batch.
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { pickupLat, pickupLng, orderId, vehicleType, batchSize = 3, offerTtlSeconds = 15 } = body
+    const { orderId, vehicleType, batchSize = 3, offerTtlSeconds = 15 } = body
 
     if (typeof orderId !== 'string' || !orderId.trim()) {
       return NextResponse.json({ error: 'orderId is required' }, { status: 400 })
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
         status: true,
         payment_status: true,
         rider_id: true,
-        restaurant: { select: { owner_id: true } },
+        restaurant: { select: { owner_id: true, latitude: true, longitude: true } },
       },
     })
     if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
@@ -86,14 +87,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Order is not eligible for dispatch' }, { status: 409 })
     }
 
-    // Validate required coordinates and their ranges.
-    if (typeof pickupLat !== 'number' || typeof pickupLng !== 'number') {
-      return NextResponse.json(
-        { error: 'Missing required coordinates: pickupLat, pickupLng' },
-        { status: 400 }
-      )
-    }
+    // Dispatch always originates from the persisted restaurant coordinates;
+    // vendor-supplied coordinates are not trusted for candidate selection.
+    const storedLatitude = order.restaurant?.latitude
+    const storedLongitude = order.restaurant?.longitude
+    const pickupLat = Number(storedLatitude)
+    const pickupLng = Number(storedLongitude)
     if (
+      storedLatitude == null ||
+      storedLongitude == null ||
       !Number.isFinite(pickupLat) ||
       pickupLat < -90 ||
       pickupLat > 90 ||
@@ -173,14 +175,38 @@ export async function POST(request: Request) {
     }
 
     const candidateIds = alertedCandidates.map((candidate) => candidate.driverId)
+    const dispatchAttemptId = crypto.randomUUID()
+    const offerExpiresAt = new Date(Date.now() + clampedTtl * 1000)
+
+    await prisma.$transaction([
+      prisma.dispatchOffer.updateMany({
+        where: { order_id: order.id, status: 'pending' },
+        data: { status: 'cancelled' },
+      }),
+      prisma.dispatchOffer.createMany({
+        data: candidateIds.map((driverId) => ({
+          id: crypto.randomUUID(),
+          order_id: order.id,
+          driver_id: driverId,
+          dispatch_attempt_id: dispatchAttemptId,
+          status: 'pending',
+          expires_at: offerExpiresAt,
+        })),
+      }),
+    ])
+
     const safeOffer = {
       id: order.id,
       orderId: order.id,
       restaurantName: order.restaurant_name,
       status: order.status,
-      offerExpiresAt: Date.now() + clampedTtl * 1000,
+      offerExpiresAt: offerExpiresAt.getTime(),
     }
-    await broadcast('driver_offers', { type: 'dispatch_offer', offer: safeOffer }).catch(() => {})
+    await broadcast('driver_offers', {
+      type: 'dispatch_offer',
+      offer: safeOffer,
+      recipientDriverIds: candidateIds,
+    }).catch(() => {})
     await sendDriverPushToUsers(candidateIds, {
       title: 'New delivery offer',
       body: `Pickup available from ${order.restaurant_name}`,
@@ -196,7 +222,7 @@ export async function POST(request: Request) {
       pickupH3Cell: searchResult.pickupH3Cell,
       stageFound: searchResult.stageFound,
       alertsSentCount: alertedCandidates.length,
-      candidateDriverIds: candidateIds,
+      dispatchAttemptId,
     })
   } catch (err: any) {
     console.error('[POST /api/dispatch/request]', err)

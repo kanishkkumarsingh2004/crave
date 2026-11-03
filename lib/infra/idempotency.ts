@@ -208,6 +208,40 @@ export async function acquireIdempotency(
       return { status: 'processing' }
     }
 
+    // Legacy records created before payload hashing cannot be replayed safely.
+    // Keep them quarantined until their migration-defined retention expires,
+    // then atomically remove and replace them with a fully hashed lease.
+    if (!existing.request_hash) {
+      if (existing.expires_at > now) return { status: 'conflict' }
+
+      const removed = await prisma.idempotencyRecord.deleteMany({
+        where: {
+          id: existing.id,
+          request_hash: null,
+          expires_at: { lte: now },
+        },
+      })
+      if (removed.count === 0) return { status: 'processing' }
+
+      try {
+        await prisma.idempotencyRecord.create({
+          data: {
+            key: cleanKey,
+            scope,
+            status: 'processing',
+            request_hash: payloadHash || null,
+            fencing_token: fencingToken,
+            expires_at: expiresAt,
+          },
+        })
+        _primeRedisProcessing(scope, cleanKey, ttlSeconds)
+        return { status: 'new', fencingToken }
+      } catch (replaceErr: any) {
+        if (replaceErr?.code === 'P2002') return { status: 'processing' }
+        throw replaceErr
+      }
+    }
+
     // CR-05: Enforce payload hash on ALL existing-record code paths.
     // Hash mismatch means the caller is trying to reuse a key for a different operation.
     // This is rejected regardless of the record's status or expiry.

@@ -1610,6 +1610,9 @@ export default function App() {
         if (channel === 'driver_offers') {
           if (data?.type === 'offer_claimed' && data.orderId) {
             setOffers((current) => current.filter((offer) => offer.id !== data.orderId))
+          } else if (data?.type === 'dispatch_offer' && online && !activeOrderRef.current) {
+            void loadOffers()
+            setNotice(`New delivery offer from ${data.offer?.restaurantName || 'a nearby partner'}`)
           } else if (
             data?.type === 'offer_available' &&
             data.order &&

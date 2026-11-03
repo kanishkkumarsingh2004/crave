@@ -17,6 +17,21 @@ END $$;
 ALTER TABLE "public"."idempotency_records"
   ADD COLUMN IF NOT EXISTS "fencing_token" TEXT;
 
+-- Legacy rows have no trustworthy payload hash. Quarantine completed rows for
+-- one replay-retention window and expire abandoned leases immediately. Runtime
+-- acquisition deletes an unverifiable row only after this expiry has elapsed.
+UPDATE "public"."idempotency_records"
+SET
+  "status" = CASE
+    WHEN "status" IN ('processing', 'failed') THEN 'failed'
+    ELSE "status"
+  END,
+  "expires_at" = CASE
+    WHEN "status" = 'completed' THEN GREATEST("expires_at", NOW() + INTERVAL '24 hours')
+    ELSE LEAST("expires_at", NOW())
+  END
+WHERE "request_hash" IS NULL;
+
 DROP INDEX IF EXISTS "public"."idempotency_records_key_key";
 DROP INDEX IF EXISTS "public"."idempotency_records_key_scope_idx";
 

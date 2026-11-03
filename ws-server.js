@@ -147,10 +147,25 @@ const broadcastLocal = (channel, data, excludeSocket) => {
     channel
   )
   const isRestaurantChannel = channel === 'vendor_orders'
+  const isDriverOfferChannel = channel === 'driver_offers'
+  const recipientDriverIds = isDriverOfferChannel
+    ? new Set(Array.isArray(data?.recipientDriverIds) ? data.recipientDriverIds : [])
+    : null
+  const outboundData = isDriverOfferChannel ? { ...data } : data
+  if (isDriverOfferChannel) delete outboundData.recipientDriverIds
 
-  const payload = JSON.stringify({ channel, data, ts: Date.now() })
+  const payload = JSON.stringify({ channel, data: outboundData, ts: Date.now() })
 
-  if (isRestaurantChannel) {
+  if (isDriverOfferChannel) {
+    const globalSubscribers = subscribers.get('global')
+    globalSubscribers?.forEach((ws) => {
+      if (excludeSocket && ws === excludeSocket) return
+      const client = connectedClients.get(ws)
+      if (client && recipientDriverIds?.has(client.userId) && ws.readyState === WS_OPEN) {
+        ws.send(payload)
+      }
+    })
+  } else if (isRestaurantChannel) {
     const restaurantId = data?.restaurantId || data?.order?.restaurant_id
     const restaurantSubscribers = restaurantId ? subscribers.get(restaurantId) : undefined
     restaurantSubscribers?.forEach((ws) => {
@@ -911,9 +926,18 @@ function validateBroadcastPayload(channel, data) {
     case 'admin_stats':
     case 'admin_orders':
     case 'vendor_orders':
-    case 'driver_offers':
     case 'admin_users':
       return data.type && typeof data.type === 'string'
+    case 'driver_offers':
+      return (
+        data.type &&
+        typeof data.type === 'string' &&
+        Array.isArray(data.recipientDriverIds) &&
+        data.recipientDriverIds.length > 0 &&
+        data.recipientDriverIds.every(
+          (driverId) => typeof driverId === 'string' && driverId.length > 0
+        )
+      )
     case 'approval_update':
       return data.status && typeof data.status === 'string' && data.orderId
     case 'driver_location':

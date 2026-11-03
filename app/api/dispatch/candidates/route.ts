@@ -4,6 +4,7 @@ import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 import { getTestUser, isTestRequest, MOCK_TEST_VENDOR } from '@/lib/test-auth'
 import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/infra/rate-limit'
+import { prisma } from '@/lib/prisma'
 
 export async function GET(request: Request) {
   try {
@@ -46,20 +47,13 @@ export async function GET(request: Request) {
       return rateLimitResponse(rateLimitResult.resetTime, rateLimitResult.retryAfter)
     }
     const { searchParams } = new URL(request.url)
-    const lat = parseFloat(searchParams.get('lat') || '')
-    const lng = parseFloat(searchParams.get('lng') || '')
-    const requestId = searchParams.get('requestId') || `req_${Date.now()}`
+    const orderId = searchParams.get('orderId')?.trim()
     const vehicleType = searchParams.get('vehicleType') || undefined
     const maxRadiusKm = parseFloat(searchParams.get('maxRadiusKm') || '15')
     const minCandidates = parseInt(searchParams.get('minCandidates') || '3', 10)
 
     if (
-      !Number.isFinite(lat) ||
-      lat < -90 ||
-      lat > 90 ||
-      !Number.isFinite(lng) ||
-      lng < -180 ||
-      lng > 180 ||
+      !orderId ||
       !Number.isFinite(maxRadiusKm) ||
       maxRadiusKm <= 0 ||
       maxRadiusKm > 50 ||
@@ -68,13 +62,51 @@ export async function GET(request: Request) {
       minCandidates > 20
     ) {
       return NextResponse.json(
-        { error: 'Invalid or missing query parameters: lat, lng required' },
+        { error: 'A valid orderId and bounded candidate limits are required' },
         { status: 400 }
       )
     }
 
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        id: true,
+        payment_status: true,
+        rider_id: true,
+        restaurant: {
+          select: { owner_id: true, latitude: true, longitude: true },
+        },
+      },
+    })
+    if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+    if (actor.role !== 'admin' && order.restaurant?.owner_id !== actor.id) {
+      return NextResponse.json(
+        { error: 'Forbidden: order does not belong to this vendor' },
+        { status: 403 }
+      )
+    }
+    if (order.payment_status !== 'verified' || order.rider_id) {
+      return NextResponse.json({ error: 'Order is not eligible for dispatch' }, { status: 409 })
+    }
+
+    const storedLatitude = order.restaurant?.latitude
+    const storedLongitude = order.restaurant?.longitude
+    const lat = Number(storedLatitude)
+    const lng = Number(storedLongitude)
+    if (
+      storedLatitude == null ||
+      storedLongitude == null ||
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng)
+    ) {
+      return NextResponse.json(
+        { error: 'The order restaurant does not have dispatch coordinates' },
+        { status: 409 }
+      )
+    }
+
     const searchResult = await findGeofencedCandidateDrivers({
-      requestId,
+      requestId: order.id,
       pickupLat: lat,
       pickupLng: lng,
       requiredVehicleType: vehicleType,
@@ -86,10 +118,10 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       data: {
-        ...searchResult,
-        eligibleCandidates: searchResult.eligibleCandidates.map(
-          ({ name: _name, phone: _phone, ...candidate }) => candidate
-        ),
+        orderId: order.id,
+        pickupH3Cell: searchResult.pickupH3Cell,
+        stageFound: searchResult.stageFound,
+        candidateCount: searchResult.eligibleCandidates.length,
       },
     })
   } catch (err: any) {

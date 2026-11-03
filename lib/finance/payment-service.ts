@@ -501,6 +501,7 @@ export async function processPaymentRejectionTx(input: PaymentRejectionInput) {
  */
 export async function processRefundTx(input: RefundInput) {
   const { orderId, amount, amountPaise, reason, idempotencyKey, gatewayRefundId } = input
+  const providerConfirmed = Boolean(gatewayRefundId)
   const refundPaise =
     amountPaise != null
       ? amountPaise
@@ -515,20 +516,46 @@ export async function processRefundTx(input: RefundInput) {
   const cleanIdempotencyKey = idempotencyKey || `refund_${orderId}_${refundPaise}_${Date.now()}`
 
   return await prisma.$transaction(async (tx) => {
-    // 1. Check idempotency for existing refund
-    const existingRefund = await tx.refund.findUnique({
+    // Serialize every refund calculation for this order. A normal transaction
+    // alone does not prevent two different idempotency keys from both reading
+    // the same refundable balance before either inserts its refund.
+    await tx.$queryRaw`
+      SELECT pg_advisory_xact_lock(hashtextextended(${orderId}, 0)) IS NULL AS acquired
+    `
+
+    // 1. Check idempotency for an existing request.
+    let refund = await tx.refund.findUnique({
       where: { idempotency_key: cleanIdempotencyKey },
     })
-    if (existingRefund) {
+    if (refund?.status === 'completed' || (refund && !providerConfirmed)) {
       return {
         success: true,
-        refund: existingRefund,
+        refund,
         alreadyProcessed: true,
-        message: 'Refund was already processed (idempotent)',
+        message:
+          refund.status === 'completed'
+            ? 'Refund was already processed (idempotent)'
+            : 'Refund request is awaiting provider confirmation',
       }
     }
 
-    // 2. Fetch order and prior refunds
+    // A provider webhook may carry a different idempotency key from the admin
+    // request that initiated the refund. Complete the matching pending request
+    // instead of creating a second refund for the same amount.
+    if (!refund && providerConfirmed) {
+      refund = await tx.refund.findFirst({
+        where: {
+          order_id: orderId,
+          amount_paise: refundPaise,
+          status: 'pending',
+          gateway_refund_id: null,
+        },
+        orderBy: { created_at: 'asc' },
+      })
+    }
+
+    // 2. Fetch the order and the reserved/completed refund balance while the
+    // order-scoped advisory lock is held.
     const order = await tx.order.findUnique({
       where: { id: orderId },
       include: { refunds: true },
@@ -538,10 +565,9 @@ export async function processRefundTx(input: RefundInput) {
       throw new Error(`Order not found: ${orderId}`)
     }
 
-    const priorRefundedPaise = order.refunds.reduce(
-      (sum, refund) => sum + (refund.amount_paise ?? refund.amount * 100),
-      0
-    )
+    const priorRefundedPaise = order.refunds
+      .filter((entry) => entry.status !== 'failed' && entry.id !== refund?.id)
+      .reduce((sum, entry) => sum + (entry.amount_paise ?? entry.amount * 100), 0)
     const orderTotalPaise =
       order.total_amount_paise ??
       (order.financial_snapshot as { customerPayablePaise?: number } | null)
@@ -553,19 +579,46 @@ export async function processRefundTx(input: RefundInput) {
       )
     }
 
-    // 3. Create Refund record
-    const refund = await tx.refund.create({
-      data: {
-        order_id: orderId,
-        idempotency_key: cleanIdempotencyKey,
-        amount: Math.ceil(refundPaise / 100),
-        amount_paise: refundPaise,
-        reason,
-        status: 'completed',
-        gateway_refund_id: gatewayRefundId || null,
-        processed_at: new Date(),
-      },
-    })
+    // 3. Persist a request separately from provider confirmation. An admin can
+    // reserve the refundable balance, but only a provider-confirmed event may
+    // mark the refund completed and post its accounting journal.
+    const confirmedAt = providerConfirmed ? new Date() : null
+    if (refund) {
+      refund = await tx.refund.update({
+        where: { id: refund.id },
+        data: {
+          reason,
+          status: providerConfirmed ? 'completed' : 'pending',
+          gateway_refund_id: gatewayRefundId || null,
+          provider_confirmed_at: confirmedAt,
+          processed_at: confirmedAt,
+        },
+      })
+    } else {
+      refund = await tx.refund.create({
+        data: {
+          order_id: orderId,
+          idempotency_key: cleanIdempotencyKey,
+          amount: Math.ceil(refundPaise / 100),
+          amount_paise: refundPaise,
+          reason,
+          status: providerConfirmed ? 'completed' : 'pending',
+          gateway_refund_id: gatewayRefundId || null,
+          provider_confirmed_at: confirmedAt,
+          processed_at: confirmedAt,
+        },
+      })
+    }
+
+    if (!providerConfirmed) {
+      return {
+        success: true,
+        refund,
+        alreadyProcessed: false,
+        providerConfirmed: false,
+        isFullRefund: false,
+      }
+    }
 
     // 4. If full refund, cancel or update vendor settlement
     const isFullRefund = priorRefundedPaise + refundPaise >= orderTotalPaise
@@ -584,35 +637,32 @@ export async function processRefundTx(input: RefundInput) {
       })
     }
 
-    // 5. Post Balanced Double-Entry Subledger Refund Entry
-    try {
-      const refundJournal = buildRefundInitiatedJournal(orderId, refund.id, refundPaise)
-      for (let i = 0; i < refundJournal.lines.length; i++) {
-        const line = refundJournal.lines[i]
-        const lineKey = `${refundJournal.idempotencyKey}_line_${i}`
-        await tx.ledgerEntry.upsert({
-          where: { idempotency_key: lineKey },
-          create: {
-            idempotency_key: lineKey,
-            event_type: refundJournal.eventType,
-            order_id: orderId,
-            reference_id: refund.id,
-            account_code: line.accountCode,
-            debit_paise: line.debitPaise,
-            credit_paise: line.creditPaise,
-            description: line.description,
-          },
-          update: {},
-        })
-      }
-    } catch (ledgerErr) {
-      console.warn('[payment-service] Refund ledger posting notice:', ledgerErr)
+    // 5. Post the required balanced journal in this transaction. Any insertion
+    // error is intentionally allowed to escape so the completed refund, order
+    // changes, and all journal lines roll back together.
+    const refundJournal = buildRefundInitiatedJournal(orderId, refund.id, refundPaise)
+    for (let i = 0; i < refundJournal.lines.length; i++) {
+      const line = refundJournal.lines[i]
+      const lineKey = `${refundJournal.idempotencyKey}_line_${i}`
+      await tx.ledgerEntry.create({
+        data: {
+          idempotency_key: lineKey,
+          event_type: refundJournal.eventType,
+          order_id: orderId,
+          reference_id: refund.id,
+          account_code: line.accountCode,
+          debit_paise: line.debitPaise,
+          credit_paise: line.creditPaise,
+          description: line.description,
+        },
+      })
     }
 
     return {
       success: true,
       refund,
       alreadyProcessed: false,
+      providerConfirmed: true,
       isFullRefund,
     }
   })

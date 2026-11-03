@@ -5,6 +5,10 @@ import { prisma } from '../lib/prisma'
 import { checkAndIncrementCouponUsage } from '../lib/dal/coupons'
 import { acquireIdempotency, releaseIdempotency } from '../lib/idempotency'
 import { hashPassword } from '../lib/password'
+import { processRefundTx } from '../lib/finance/payment-service'
+import { claimOrderForDriverAtomic } from '../lib/dal/orders'
+import { clearDriverSpatialIndex, updateDriverLocation } from '../lib/dispatch/driver-tracker'
+import { reconcileStaleTransfers } from '../lib/payments/razorpay-split'
 
 /**
  * Concurrency and abuse tests that need the database.
@@ -231,6 +235,311 @@ test('only one rider can claim an order', { skip: !dbEnabled }, async () => {
     await clearFixture(fixture)
   }
 })
+
+test(
+  'a driver cannot claim an order without a durable unexpired dispatch offer',
+  { skip: !dbEnabled },
+  async () => {
+    const suffix = crypto.randomUUID()
+    const fixture = await seedOrderFixture({ stock: 100, suffix })
+    const orderId = `race_offer_${suffix}`
+    const driverId = `race_driver_${suffix}`
+    try {
+      await prisma.user.create({
+        data: {
+          id: driverId,
+          name: 'Dispatch Driver',
+          email: `driver-${suffix}@example.invalid`,
+          role: 'rider',
+          phone: '+919999999999',
+          password_hash: hashPassword('RaceDriver@123'),
+        },
+      })
+      await prisma.order.create({
+        data: {
+          ...orderData(fixture),
+          id: orderId,
+          status: 'ready_for_pickup',
+          payment_status: 'verified',
+        },
+      })
+
+      const unauthorized = await claimOrderForDriverAtomic({
+        orderId,
+        driverId,
+        driverName: 'Dispatch Driver',
+        driverPhone: '+919999999999',
+      })
+      assert.equal(unauthorized.success, false)
+      assert.equal(unauthorized.unauthorized, true)
+
+      await prisma.dispatchOffer.create({
+        data: {
+          order_id: orderId,
+          driver_id: driverId,
+          dispatch_attempt_id: crypto.randomUUID(),
+          expires_at: new Date(Date.now() + 60_000),
+        },
+      })
+      const authorized = await claimOrderForDriverAtomic({
+        orderId,
+        driverId,
+        driverName: 'Dispatch Driver',
+        driverPhone: '+919999999999',
+      })
+      assert.equal(authorized.success, true)
+
+      const acceptedOffer = await prisma.dispatchOffer.findFirstOrThrow({
+        where: { order_id: orderId, driver_id: driverId },
+      })
+      assert.equal(acceptedOffer.status, 'accepted')
+      assert.ok(acceptedOffer.accepted_at)
+    } finally {
+      await clearFixture(fixture)
+      await prisma.user.deleteMany({ where: { id: driverId } })
+    }
+  }
+)
+
+test(
+  'concurrent provider-confirmed refunds cannot exceed the order total',
+  { skip: !dbEnabled },
+  async () => {
+    const suffix = crypto.randomUUID()
+    const fixture = await seedOrderFixture({ stock: 100, suffix })
+    const orderId = `race_refund_${suffix}`
+    try {
+      await prisma.order.create({
+        data: {
+          ...orderData(fixture),
+          id: orderId,
+          status: 'delivered',
+          payment_status: 'verified',
+          total_amount_paise: 10_000,
+        },
+      })
+
+      const attempts = await Promise.allSettled([
+        processRefundTx({
+          orderId,
+          amountPaise: 7_000,
+          reason: 'Concurrent refund A',
+          idempotencyKey: `refund_a_${suffix}`,
+          gatewayRefundId: `rfnd_a_${suffix}`,
+        }),
+        processRefundTx({
+          orderId,
+          amountPaise: 7_000,
+          reason: 'Concurrent refund B',
+          idempotencyKey: `refund_b_${suffix}`,
+          gatewayRefundId: `rfnd_b_${suffix}`,
+        }),
+      ])
+      assert.equal(attempts.filter((attempt) => attempt.status === 'fulfilled').length, 1)
+
+      const refunds = await prisma.refund.findMany({ where: { order_id: orderId } })
+      assert.equal(
+        refunds.reduce((sum, refund) => sum + (refund.amount_paise || 0), 0),
+        7_000
+      )
+      assert.equal(refunds[0]?.status, 'completed')
+    } finally {
+      await clearFixture(fixture)
+    }
+  }
+)
+
+test(
+  'a refund completion rolls back when a required ledger line cannot be inserted',
+  { skip: !dbEnabled },
+  async () => {
+    const suffix = crypto.randomUUID()
+    const fixture = await seedOrderFixture({ stock: 100, suffix })
+    const orderId = `race_refund_ledger_${suffix}`
+    try {
+      await prisma.order.create({
+        data: {
+          ...orderData(fixture),
+          id: orderId,
+          status: 'delivered',
+          payment_status: 'verified',
+          total_amount_paise: 10_000,
+        },
+      })
+      await prisma.$executeRawUnsafe(`
+        CREATE OR REPLACE FUNCTION reject_test_refund_ledger() RETURNS trigger AS $$
+        BEGIN
+          IF NEW.event_type = 'REFUND_INITIATED' THEN
+            RAISE EXCEPTION 'forced refund ledger failure';
+          END IF;
+          RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql
+      `)
+      await prisma.$executeRawUnsafe(`
+        CREATE TRIGGER reject_test_refund_ledger_trigger
+        BEFORE INSERT ON ledger_entries
+        FOR EACH ROW EXECUTE FUNCTION reject_test_refund_ledger()
+      `)
+
+      await assert.rejects(
+        processRefundTx({
+          orderId,
+          amountPaise: 10_000,
+          reason: 'Forced rollback test',
+          idempotencyKey: `refund_rollback_${suffix}`,
+          gatewayRefundId: `rfnd_rollback_${suffix}`,
+        }),
+        /forced refund ledger failure/
+      )
+
+      assert.equal(await prisma.refund.count({ where: { order_id: orderId } }), 0)
+      const order = await prisma.order.findUniqueOrThrow({ where: { id: orderId } })
+      assert.equal(order.status, 'delivered')
+      assert.equal(order.payment_status, 'verified')
+    } finally {
+      await prisma.$executeRawUnsafe(
+        'DROP TRIGGER IF EXISTS reject_test_refund_ledger_trigger ON ledger_entries'
+      )
+      await prisma.$executeRawUnsafe('DROP FUNCTION IF EXISTS reject_test_refund_ledger()')
+      await clearFixture(fixture)
+    }
+  }
+)
+
+test(
+  'a refund request remains pending until the provider confirms it',
+  { skip: !dbEnabled },
+  async () => {
+    const suffix = crypto.randomUUID()
+    const fixture = await seedOrderFixture({ stock: 100, suffix })
+    const orderId = `race_refund_pending_${suffix}`
+    try {
+      await prisma.order.create({
+        data: {
+          ...orderData(fixture),
+          id: orderId,
+          status: 'delivered',
+          payment_status: 'verified',
+          total_amount_paise: 10_000,
+        },
+      })
+
+      const requested = await processRefundTx({
+        orderId,
+        amountPaise: 4_000,
+        reason: 'Admin requested refund',
+        idempotencyKey: `refund_request_${suffix}`,
+      })
+      assert.equal(requested.refund.status, 'pending')
+      assert.equal(requested.refund.provider_confirmed_at, null)
+      assert.equal(await prisma.ledgerEntry.count({ where: { order_id: orderId } }), 0)
+
+      const confirmed = await processRefundTx({
+        orderId,
+        amountPaise: 4_000,
+        reason: 'Provider confirmed refund',
+        idempotencyKey: `refund_webhook_${suffix}`,
+        gatewayRefundId: `rfnd_confirmed_${suffix}`,
+      })
+      assert.equal(confirmed.refund.id, requested.refund.id)
+      assert.equal(confirmed.refund.status, 'completed')
+      assert.ok(confirmed.refund.provider_confirmed_at)
+      assert.equal(await prisma.refund.count({ where: { order_id: orderId } }), 1)
+      assert.ok(await prisma.ledgerEntry.count({ where: { order_id: orderId } }))
+    } finally {
+      await clearFixture(fixture)
+    }
+  }
+)
+
+test(
+  'equal GPS timestamps cannot overwrite an accepted position',
+  { skip: !dbEnabled },
+  async () => {
+    const suffix = crypto.randomUUID()
+    const driverId = `race_gps_${suffix}`
+    const timestamp = Date.now()
+    try {
+      await prisma.user.create({
+        data: {
+          id: driverId,
+          name: 'GPS Driver',
+          email: `gps-${suffix}@example.invalid`,
+          role: 'rider',
+          password_hash: hashPassword('RaceGps@123'),
+        },
+      })
+      const first = await updateDriverLocation({
+        driverId,
+        lat: 12.9716,
+        lng: 77.5946,
+        timestamp,
+      })
+      const tied = await updateDriverLocation({
+        driverId,
+        lat: 13.0827,
+        lng: 80.2707,
+        timestamp,
+      })
+
+      assert.equal(tied.outOfOrder, true)
+      assert.equal(tied.state.lat, first.state.lat)
+      assert.equal(tied.state.lng, first.state.lng)
+      assert.equal(await prisma.driverLocationHistory.count({ where: { driver_id: driverId } }), 1)
+    } finally {
+      clearDriverSpatialIndex()
+      await prisma.driverLocationHistory.deleteMany({ where: { driver_id: driverId } })
+      await prisma.driverCurrentLocation.deleteMany({ where: { driver_id: driverId } })
+      await prisma.user.deleteMany({ where: { id: driverId } })
+    }
+  }
+)
+
+test(
+  'stale settlement claims are retryable only when provider submission never started',
+  { skip: !dbEnabled },
+  async () => {
+    const idempotencyKey = `route_recovery_${crypto.randomUUID()}`
+    try {
+      const transfer = await prisma.razorpayTransfer.create({
+        data: {
+          order_id: `order_${crypto.randomUUID()}`,
+          recipient_type: 'RESTAURANT',
+          recipient_id: `restaurant_${crypto.randomUUID()}`,
+          linked_account_id: 'acc_test_recovery',
+          razorpay_payment_id: 'pay_test_recovery',
+          idempotency_key: idempotencyKey,
+          amount_paise: 1_000,
+          status: 'processing',
+          claim_token: crypto.randomUUID(),
+          claimed_at: new Date(Date.now() - 60 * 60 * 1000),
+          provider_request_started_at: null,
+          last_attempt_at: new Date(Date.now() - 60 * 60 * 1000),
+          attempt_count: 1,
+          reconciliation_status: 'claimed_not_submitted',
+          updated_at: new Date(Date.now() - 60 * 60 * 1000),
+        },
+      })
+
+      const result = await reconcileStaleTransfers()
+      assert.ok(
+        result.results.some(
+          (entry) =>
+            entry.transferId === transfer.id && entry.reconciled === 'safe_to_retry_not_submitted'
+        )
+      )
+      const recovered = await prisma.razorpayTransfer.findUniqueOrThrow({
+        where: { id: transfer.id },
+      })
+      assert.equal(recovered.status, 'pending')
+      assert.equal(recovered.claim_token, null)
+      assert.equal(recovered.reconciliation_status, 'safe_to_retry_not_submitted')
+    } finally {
+      await prisma.razorpayTransfer.deleteMany({ where: { idempotency_key: idempotencyKey } })
+    }
+  }
+)
 
 test(
   'a delivery OTP can only be consumed once, even under a concurrent race',

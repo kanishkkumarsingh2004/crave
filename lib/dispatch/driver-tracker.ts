@@ -47,15 +47,6 @@ const driverSpatialIndex = new Map<string, DriverLocationState>()
 // Secondary H3 Cell Inverted Index: h3Cell -> Set of driverIds
 const cellToDriverMap = new Map<string, Set<string>>()
 
-// Position history buffer (driverId -> position history array)
-const positionHistoryBuffer = new Map<
-  string,
-  Array<{ lat: number; lng: number; ts: number; h3Cell: string }>
->()
-
-// History flush timer
-let historyFlushTimer: NodeJS.Timeout | null = null
-
 export const DEFAULT_H3_RESOLUTION = 8 // ~0.737 km² per cell, ~461m edge length
 export const DEFAULT_STALE_LOCATION_MS = 45 * 1000 // 45 seconds threshold for stale signal
 export const DEFAULT_MAX_LOCATION_AGE_MS = 120 * 1000 // 120 seconds threshold for expiry/offline
@@ -63,42 +54,57 @@ export const DEFAULT_MAX_LOCATION_AGE_MS = 120 * 1000 // 120 seconds threshold f
 async function persistCurrentDriverLocation(
   state: DriverLocationState,
   previousCell?: string,
-  cellChanged = false
+  cellChanged = false,
+  recordHistory = false
 ): Promise<void> {
   const reportedAt = new Date(state.reportedAt ?? state.lastUpdated)
-  const accepted = await prisma.$queryRaw<Array<{ driver_id: string }>>`
-    INSERT INTO "driver_current_locations" (
-      "driver_id", "latitude", "longitude", "h3_cell", "resolution",
-      "status", "available", "vehicle_type", "reported_at", "updated_at"
-    ) VALUES (
-      ${state.driverId}, ${state.lat}, ${state.lng}, ${state.h3Cell}, ${state.resolution},
-      ${state.status}, ${state.available}, ${state.vehicleType}, ${reportedAt}, NOW()
-    )
-    ON CONFLICT ("driver_id") DO UPDATE SET
-      "latitude" = EXCLUDED."latitude",
-      "longitude" = EXCLUDED."longitude",
-      "h3_cell" = EXCLUDED."h3_cell",
-      "resolution" = EXCLUDED."resolution",
-      "status" = EXCLUDED."status",
-      "available" = EXCLUDED."available",
-      "vehicle_type" = EXCLUDED."vehicle_type",
-      "reported_at" = EXCLUDED."reported_at",
-      "updated_at" = NOW()
-    WHERE "driver_current_locations"."reported_at" <= EXCLUDED."reported_at"
-    RETURNING "driver_id"
-  `
-  if (accepted.length !== 1) {
-    const error = new Error('Stale GPS update rejected by authoritative location record')
-    ;(error as Error & { code?: string }).code = 'STALE_GPS_UPDATE'
-    throw error
-  }
+  await prisma.$transaction(async (tx) => {
+    const accepted = await tx.$queryRaw<Array<{ driver_id: string }>>`
+      INSERT INTO "driver_current_locations" (
+        "driver_id", "latitude", "longitude", "h3_cell", "resolution",
+        "status", "available", "vehicle_type", "reported_at", "updated_at"
+      ) VALUES (
+        ${state.driverId}, ${state.lat}, ${state.lng}, ${state.h3Cell}, ${state.resolution},
+        ${state.status}, ${state.available}, ${state.vehicleType}, ${reportedAt}, NOW()
+      )
+      ON CONFLICT ("driver_id") DO UPDATE SET
+        "latitude" = EXCLUDED."latitude",
+        "longitude" = EXCLUDED."longitude",
+        "h3_cell" = EXCLUDED."h3_cell",
+        "resolution" = EXCLUDED."resolution",
+        "status" = EXCLUDED."status",
+        "available" = EXCLUDED."available",
+        "vehicle_type" = EXCLUDED."vehicle_type",
+        "reported_at" = EXCLUDED."reported_at",
+        "updated_at" = NOW()
+      WHERE "driver_current_locations"."reported_at" < EXCLUDED."reported_at"
+      RETURNING "driver_id"
+    `
+    if (accepted.length !== 1) {
+      const error = new Error('Stale GPS update rejected by authoritative location record')
+      ;(error as Error & { code?: string }).code = 'STALE_GPS_UPDATE'
+      throw error
+    }
+
+    if (recordHistory) {
+      await tx.driverLocationHistory.create({
+        data: {
+          driver_id: state.driverId,
+          latitude: state.lat,
+          longitude: state.lng,
+          h3_cell: state.h3Cell,
+          timestamp: reportedAt,
+        },
+      })
+    }
+  })
 
   if (!isRedisAvailable() || !redis) return
   const lua = `
     local current = redis.call('GET', KEYS[1])
     if current then
       local ok, decoded = pcall(cjson.decode, current)
-      if ok and tonumber(decoded.reportedAt or 0) > tonumber(ARGV[5]) then
+      if ok and tonumber(decoded.reportedAt or 0) >= tonumber(ARGV[5]) then
         return 0
       end
     end
@@ -194,7 +200,7 @@ export async function updateDriverLocation(params: {
   // If an update arrives with a timestamp older than the existing state's last update,
   // reject updating the authoritative position cache to prevent erratic track jumping.
   const existingReportedAt = existingState?.reportedAt ?? existingState?.lastUpdated
-  if (existingState && existingReportedAt != null && clientTs < existingReportedAt) {
+  if (existingState && existingReportedAt != null && clientTs <= existingReportedAt) {
     const ageFromExisting = now - existingState.lastUpdated
     return {
       state: {
@@ -207,7 +213,7 @@ export async function updateDriverLocation(params: {
       coalesced: true,
       stale: true,
       outOfOrder: true,
-      reason: `Out-of-order GPS packet: packet timestamp (${clientTs}) is older than last update (${existingReportedAt})`,
+      reason: `Out-of-order GPS packet: packet timestamp (${clientTs}) is not newer than last update (${existingReportedAt})`,
     }
   }
 
@@ -287,7 +293,7 @@ export async function updateDriverLocation(params: {
 
   // Persist with an authoritative timestamp compare before mutating local
   // indexes. A stale concurrent packet therefore cannot corrupt this pod.
-  await persistCurrentDriverLocation(updatedState, previousCell, cellChanged)
+  await persistCurrentDriverLocation(updatedState, previousCell, cellChanged, true)
 
   if (cellChanged && previousCell) {
     const prevSet = cellToDriverMap.get(previousCell)
@@ -301,14 +307,6 @@ export async function updateDriverLocation(params: {
   }
   cellToDriverMap.get(newH3Cell)!.add(driverId)
   driverSpatialIndex.set(driverId, updatedState)
-
-  // Buffer position for history (async, non-blocking)
-  bufferPositionHistory(driverId, { lat, lng, ts: effectiveTimestamp, h3Cell: newH3Cell })
-
-  // Ensure history flush timer is running
-  if (!historyFlushTimer) {
-    startHistoryFlushTimer()
-  }
 
   return {
     state: updatedState,
@@ -334,88 +332,6 @@ function calculateDistanceMeters(lat1: number, lng1: number, lat2: number, lng2:
       Math.sin(dLng / 2)
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   return R * c
-}
-
-/**
- * Buffer position history for batch writes
- */
-function bufferPositionHistory(
-  driverId: string,
-  position: { lat: number; lng: number; ts: number; h3Cell: string }
-): void {
-  const buffer = positionHistoryBuffer.get(driverId) || []
-  buffer.push(position)
-
-  // Trim buffer if too large
-  if (buffer.length > GPS_CONFIG.MAX_HISTORY_POINTS_PER_DRIVER) {
-    buffer.shift()
-  }
-
-  positionHistoryBuffer.set(driverId, buffer)
-}
-
-/**
- * Start periodic history flush to database
- */
-function startHistoryFlushTimer(): void {
-  if (historyFlushTimer) return
-
-  historyFlushTimer = setInterval(async () => {
-    await flushPositionHistory()
-  }, 30000) // Flush every 30 seconds
-
-  // Don't prevent process exit
-  if (historyFlushTimer.unref) historyFlushTimer.unref()
-}
-
-/**
- * Flush position history to database (batch write)
- */
-async function flushPositionHistory(): Promise<void> {
-  if (positionHistoryBuffer.size === 0) return
-
-  const entries: Array<{
-    driverId: string
-    positions: typeof positionHistoryBuffer extends Map<string, infer V> ? V : never
-  }> = []
-
-  // Collect entries to flush (copy positions, don't clear yet)
-  positionHistoryBuffer.forEach((positions, driverId) => {
-    if (positions.length > 0) {
-      entries.push({ driverId, positions: [...positions] })
-    }
-  })
-
-  if (entries.length === 0) return
-
-  // Batch write to database
-  try {
-    await prisma.$transaction(
-      entries.map(({ driverId, positions }) =>
-        prisma.driverLocationHistory.createMany({
-          data: positions.map((p) => ({
-            driver_id: driverId,
-            latitude: p.lat,
-            longitude: p.lng,
-            h3_cell: p.h3Cell,
-            timestamp: new Date(p.ts),
-          })),
-          skipDuplicates: true,
-        })
-      )
-    )
-    // Only clear buffers AFTER successful transaction
-    entries.forEach(({ driverId }) => {
-      const buffer = positionHistoryBuffer.get(driverId)
-      if (buffer) {
-        buffer.length = 0
-      }
-    })
-  } catch (error) {
-    // Silently fail - position history is non-critical
-    // Buffers are preserved for retry on next flush
-    console.warn('[driver-tracker] History flush failed, will retry:', error)
-  }
 }
 
 /**
@@ -451,14 +367,9 @@ export function getCapacityMetrics(): {
     maxPerCell = Math.max(maxPerCell, drivers.size)
   })
 
-  let bufferTotal = 0
-  positionHistoryBuffer.forEach((buf) => {
-    bufferTotal += buf.length
-  })
-
   return {
     activeDrivers: driverSpatialIndex.size,
-    historyBufferSize: bufferTotal,
+    historyBufferSize: 0,
     cellsActive: cellToDriverMap.size,
     maxDriversPerCell: maxPerCell,
     avgDriversPerCell: cellToDriverMap.size > 0 ? totalDrivers / cellToDriverMap.size : 0,

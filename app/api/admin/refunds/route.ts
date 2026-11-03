@@ -39,9 +39,12 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         success: true,
-        message: result.alreadyProcessed
-          ? 'Refund already processed (idempotent)'
-          : 'Refund processed successfully',
+        message:
+          result.refund.status === 'completed'
+            ? result.alreadyProcessed
+              ? 'Refund already processed (idempotent)'
+              : 'Provider-confirmed refund processed successfully'
+            : 'Refund request recorded and awaiting provider confirmation',
         refund: result.refund,
         alreadyProcessed: result.alreadyProcessed || false,
       })

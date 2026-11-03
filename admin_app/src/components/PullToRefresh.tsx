@@ -68,11 +68,7 @@ export function PullToRefresh({ children, onRefresh, refreshing = false }: PullT
   const showIndicator = refreshing || pullOffset > 10
 
   return (
-    <div
-      ref={containerRef}
-      className="ptr-scroll"
-      style={{ maxHeight: `calc(100dvh - var(--nav-height))` }}
-    >
+    <div ref={containerRef} className="ptr-scroll">
       <div
         className="ptr-indicator"
         style={{
