@@ -82,11 +82,19 @@ test('customer bag presents an address-led order review without a payment-method
   assert.match(cartPage, /Delivery address/)
   assert.match(cartPage, /Estimated time/)
   assert.match(cartPage, /Your selection/)
-  assert.match(cartPage, /Item subtotal/)
   assert.match(cartPage, /Place order/)
   assert.match(cartPage, /apiRequest<any>\('\/api\/calculator'/)
   assert.doesNotMatch(cartPage, /Payment method|payment-method/i)
+  assert.doesNotMatch(cartPage, /Item subtotal|Packaging|Delivery fee|Platform &amp; handling/)
   assert.match(app, /tab !== 'cart' && \(/)
   assert.match(styles, /\.bag-review-page\s*\{/)
   assert.match(styles, /\.bag-place-order\s*\{/)
+})
+
+test('admin dashboard omits the user ecosystem ratio card', () => {
+  const dashboard = read('app/admin/dashboard/page.tsx')
+
+  assert.doesNotMatch(dashboard, /User Ecosystem Ratio/)
+  assert.doesNotMatch(dashboard, /AppleProgressBar/)
+  assert.doesNotMatch(dashboard, /customerPct|vendorPct|driverPct/)
 })

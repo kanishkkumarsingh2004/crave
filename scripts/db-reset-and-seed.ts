@@ -58,6 +58,7 @@ async function dbResetAndSeed() {
     await tx.driverIncentive.deleteMany().catch(() => {})
     await tx.driverUpiAccount.deleteMany().catch(() => {})
     await tx.driverPushToken.deleteMany().catch(() => {})
+    await tx.devicePushToken.deleteMany().catch(() => {})
     await tx.idempotencyRecord.deleteMany().catch(() => {})
     await tx.webPushSubscription.deleteMany().catch(() => {})
     await tx.order.deleteMany().catch(() => {})

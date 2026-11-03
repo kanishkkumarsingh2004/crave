@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core'
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
 import { Device } from '@capacitor/device'
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { LocalNotifications } from '@capacitor/local-notifications'
@@ -32,37 +32,76 @@ export async function initializeNative() {
     lights: true,
     lightColor: '#F4FF52',
   }).catch(() => undefined)
-  // Register for remote push notifications if enabled
-  if (REMOTE_PUSH_ENABLED) {
-    try {
-      const permission = await PushNotifications.checkPermissions()
-      if (permission.receive === 'granted') {
-        await PushNotifications.addListener('registration', async (registration) => {
-          await Preferences.set({ key: PUSH_TOKEN_KEY, value: registration.value })
-          const device = await Device.getId()
-          const { apiRequest } = await import('./api')
-          await apiRequest('/api/customer/push-token', {
-            method: 'POST',
-            body: {
-              token: registration.value,
+}
+
+let pushListeners: PluginListenerHandle[] = []
+
+async function uploadCustomerPushToken(token: string): Promise<void> {
+  const device = await Device.getId()
+  const { apiRequest } = await import('./api')
+  await apiRequest('/api/push/device', {
+    method: 'POST',
+    body: {
+      token,
+      platform: Capacitor.getPlatform(),
+      deviceId: device.identifier,
+    },
+  })
+  await Preferences.set({ key: PUSH_TOKEN_KEY, value: token })
+}
+
+/** Register the current authenticated customer device with the server. */
+export async function registerCustomerPushNotifications(): Promise<boolean> {
+  if (!Capacitor.isNativePlatform() || !REMOTE_PUSH_ENABLED) return false
+  try {
+    const permission = await PushNotifications.checkPermissions()
+    if (permission.receive !== 'granted') return false
+
+    if (pushListeners.length === 0) {
+      pushListeners = [
+        await PushNotifications.addListener('registration', (registration) => {
+          void uploadCustomerPushToken(registration.value).catch((error) =>
+            console.error('[customer-push] Token registration failed', {
               platform: Capacitor.getPlatform(),
-              deviceId: device.identifier,
-            },
-          }).catch(() => undefined)
-        })
-        await PushNotifications.addListener('registrationError', () => undefined)
+              error: error instanceof Error ? error.message : String(error),
+            })
+          )
+        }),
+        await PushNotifications.addListener('registrationError', (error) => {
+          console.error('[customer-push] Native registration failed', error)
+        }),
         await PushNotifications.addListener('pushNotificationReceived', () => {
           void Haptics.impact({ style: ImpactStyle.Heavy }).catch(() => undefined)
-        })
+        }),
         await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-          const data = (action.notification.data || {}) as Record<string, unknown>
-          // Could deep-link based on data here
-        })
-        await PushNotifications.register()
-      }
-    } catch (error) {
-      console.warn('Remote push registration unavailable', error)
+          console.info('[customer-push] Notification opened', action.notification.data || {})
+        }),
+      ]
     }
+
+    const storedToken = (await Preferences.get({ key: PUSH_TOKEN_KEY })).value
+    if (storedToken) await uploadCustomerPushToken(storedToken)
+    await PushNotifications.register()
+    return true
+  } catch (error) {
+    console.error('[customer-push] Registration unavailable', error)
+    return false
+  }
+}
+
+export async function unregisterCustomerPushNotifications(): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) return true
+  const token = (await Preferences.get({ key: PUSH_TOKEN_KEY })).value
+  if (!token) return true
+  try {
+    const { apiRequest } = await import('./api')
+    await apiRequest('/api/push/device', { method: 'DELETE', body: { token } })
+    await Preferences.remove({ key: PUSH_TOKEN_KEY })
+    await Promise.all(pushListeners.splice(0).map((handle) => handle.remove()))
+    return true
+  } catch (error) {
+    console.error('[customer-push] Server deactivation failed; retaining token for retry', error)
+    return false
   }
 }
 export async function notificationEnabled() {
@@ -107,6 +146,7 @@ export async function enableNotifications(enabled: boolean) {
   }
   if (Capacitor.isNativePlatform()) await Preferences.set({ key: PREF, value: String(final) })
   else localStorage.setItem(PREF, String(final))
+  if (!final) await unregisterCustomerPushNotifications()
   return final
 }
 

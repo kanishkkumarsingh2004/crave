@@ -1993,28 +1993,6 @@ textarea {
   letter-spacing: 0.4px;
   text-transform: uppercase;
 }
-.bag-summary {
-  gap: 12px;
-  padding-top: 20px;
-  border-top: 1px solid var(--line);
-}
-.bag-summary-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  color: var(--muted);
-  font-size: 12px;
-}
-.bag-summary-row b {
-  color: var(--ink);
-  font-size: 12px;
-}
-.bag-summary-pending {
-  justify-content: flex-start;
-  color: var(--muted);
-  font-size: 10px;
-}
 .bag-review-bar {
   position: fixed;
   z-index: 100;

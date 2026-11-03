@@ -198,7 +198,7 @@ export async function initializeNativeDriverBridge(
       listenerHandles.push(
         await PushNotifications.addListener('registration', async ({ value: pushToken }) => {
           await Preferences.set({ key: 'crave_driver_push_token', value: pushToken })
-          await fetch('/api/driver/push-token', {
+          await fetch('/api/push/device', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -207,7 +207,9 @@ export async function initializeNativeDriverBridge(
               deviceId: deviceId.identifier,
               driverId: options.driverId,
             }),
-          }).catch(() => undefined)
+          }).catch((error) => {
+            console.error('[native] Driver token registration failed:', error)
+          })
         })
       )
       listenerHandles.push(
@@ -281,7 +283,7 @@ export async function unregisterNativePushToken(authToken?: string | null): Prom
     ])
     const { value: pushToken } = await Preferences.get({ key: 'crave_driver_push_token' })
     if (pushToken) {
-      await fetch('/api/driver/push-token', {
+      const response = await fetch('/api/push/device', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -290,7 +292,8 @@ export async function unregisterNativePushToken(authToken?: string | null): Prom
             : {}),
         },
         body: JSON.stringify({ token: pushToken }),
-      }).catch(() => undefined)
+      })
+      if (!response.ok) throw new Error(`Server returned ${response.status}`)
     }
     await Preferences.remove({ key: 'crave_driver_push_token' })
     await PushNotifications.removeAllListeners()

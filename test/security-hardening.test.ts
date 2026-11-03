@@ -12,6 +12,7 @@ import type { JWTPayload } from '../lib/jwt'
 import { hashPassword, validatePassword, verifyPassword } from '../lib/password'
 import { resolveClientIp } from '../lib/rate-limit'
 import { buildDriverOrderVisibilityFilter, buildRestaurantOrderFilter } from '../lib/dal/orders'
+import { appRoleForUser } from '../lib/notifications/native-device'
 
 function actor(role: JWTPayload['role'], id: string, restaurantId?: string): JWTPayload {
   return { id, role, restaurantId, name: role, email: `${role}@example.test` }
@@ -120,6 +121,16 @@ test('exact restaurant ID scope takes precedence over name discovery', () => {
   assert.deepEqual(buildRestaurantOrderFilter({ restaurantName: 'Kitchen' }), {
     restaurant_name: { contains: 'Kitchen', mode: 'insensitive' },
   })
+})
+
+test('native push registration derives app role from the authenticated account role', () => {
+  assert.equal(appRoleForUser('user'), 'customer')
+  assert.equal(appRoleForUser('restaurant_vendor'), 'restaurant')
+  assert.equal(appRoleForUser('cravexp_store_vendor'), 'restaurant')
+  assert.equal(appRoleForUser('rider'), 'driver')
+  assert.equal(appRoleForUser('admin'), 'admin')
+  assert.equal(appRoleForUser('customer'), 'customer')
+  assert.equal(appRoleForUser('unknown'), null)
 })
 
 test('delivery OTP is only returned to its customer or an admin', () => {

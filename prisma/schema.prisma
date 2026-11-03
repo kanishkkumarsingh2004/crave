@@ -25,6 +25,7 @@ model User {
   driver_incentives       DriverIncentive[]
   driver_payouts          DriverPayout[]
   driver_push_tokens      DriverPushToken[]
+  device_push_tokens      DevicePushToken[]
   driver_current_location DriverCurrentLocation?
   dispatch_offers         DispatchOffer[]
   driver_upi              DriverUpiAccount[]
@@ -453,6 +454,30 @@ model DriverPushToken {
 
   @@index([driver_id, is_active])
   @@map("driver_push_tokens")
+}
+
+/// Native FCM/APNs registrations for every Crave application role.
+/// app_role is derived from the authenticated account by the registration API.
+model DevicePushToken {
+  id           String    @id @default(cuid())
+  user_id      String
+  device_id    String
+  app_role     String // customer | restaurant | driver | admin
+  platform     String // android | ios
+  provider     String // fcm | apns
+  token        String    @unique
+  is_active    Boolean   @default(true)
+  last_seen_at DateTime  @default(now()) @db.Timestamptz(6)
+  revoked_at   DateTime? @db.Timestamptz(6)
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime  @updatedAt @db.Timestamptz(6)
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, device_id, app_role, provider])
+  @@index([user_id, app_role, is_active])
+  @@index([app_role, platform, is_active])
+  @@map("device_push_tokens")
 }
 
 model WebPushSubscription {

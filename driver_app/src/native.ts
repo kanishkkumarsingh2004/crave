@@ -134,18 +134,24 @@ export async function registerDriverPushNotifications(
         void (async () => {
           const device = await Device.getId()
           await Preferences.set({ key: PUSH_TOKEN_KEY, value: registration.value })
-          await apiRequest('/api/driver/push-token', {
+          await apiRequest('/api/push/device', {
             method: 'POST',
             body: {
               token: registration.value,
               platform: Capacitor.getPlatform(),
               deviceId: device.identifier,
             },
-          }).catch(() => undefined)
+          }).catch((error) => {
+            console.error('[driver-push] Token registration failed', error)
+          })
         })()
       })
     )
-    await addHandle(PushNotifications.addListener('registrationError', () => undefined))
+    await addHandle(
+      PushNotifications.addListener('registrationError', (error) => {
+        console.error('[driver-push] Native registration failed', error)
+      })
+    )
     await addHandle(
       PushNotifications.addListener('pushNotificationReceived', () => {
         void Haptics.impact({ style: ImpactStyle.Heavy }).catch(() => undefined)
@@ -173,10 +179,15 @@ export async function unregisterDriverPushNotifications(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return
   const token = (await Preferences.get({ key: PUSH_TOKEN_KEY })).value
   if (token) {
-    await apiRequest('/api/driver/push-token', {
-      method: 'DELETE',
-      body: { token },
-    }).catch(() => undefined)
+    try {
+      await apiRequest('/api/push/device', {
+        method: 'DELETE',
+        body: { token },
+      })
+    } catch (error) {
+      console.error('[driver-push] Server deactivation failed; retaining token', error)
+      return
+    }
   }
   await Preferences.remove({ key: PUSH_TOKEN_KEY })
   if (REMOTE_PUSH_ENABLED) await PushNotifications.unregister().catch(() => undefined)

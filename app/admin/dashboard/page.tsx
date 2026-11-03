@@ -1,6 +1,5 @@
 'use client'
 
-import AppleProgressBar from '@/components/ui/AppleProgressBar'
 import { apiFetch } from '@/lib/client/api-fetch'
 import { useLanguage } from '@/lib/language-context'
 import { useAdminStatsUpdates } from '@/lib/websocket'
@@ -105,11 +104,6 @@ export default function AdminDashboardPage() {
   }, [])
 
   // Proportional user metrics for Graphic Progress Bars
-  const totalUsers = Math.max(1, customerCount + vendorCount + driverCount)
-  const customerPct = Math.round((customerCount / totalUsers) * 100)
-  const vendorPct = Math.round((vendorCount / totalUsers) * 100)
-  const driverPct = Math.round((driverCount / totalUsers) * 100)
-
   return (
     <div className="space-y-6">
       {/* Platform Real-Time Control & Heartbeat Header */}
@@ -340,60 +334,8 @@ export default function AdminDashboardPage() {
           </section>
         </div>
 
-        {/* Right Column: User Ecosystem Breakdown & Top Partners */}
+        {/* Right Column: Top Partners */}
         <div className="space-y-6">
-          {/* User Ecosystem Breakdown with Graphic AppleProgressBar */}
-          <section className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-xs">
-            <div className="flex items-center justify-between border-b border-[#f0f3ec] dark:border-[#27342d] pb-4">
-              <div>
-                <h3 className="text-base font-extrabold text-[#18201c] dark:text-white">
-                  User Ecosystem Ratio
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Proportionate distribution of platform stakeholders.
-                </p>
-              </div>
-              <Link
-                href="/admin/users"
-                className="text-xs font-bold text-[#86a018] dark:text-[#d9f447] hover:underline"
-              >
-                Manage
-              </Link>
-            </div>
-
-            <div className="mt-5 space-y-4">
-              <AppleProgressBar
-                label="Customers"
-                sublabel={`${customerCount} accounts`}
-                value={customerPct}
-                max={100}
-                color="emerald"
-                icon={<Users className="size-3.5 text-emerald-600" />}
-                height="md"
-              />
-
-              <AppleProgressBar
-                label="Food Merchants & Vendors"
-                sublabel={`${vendorCount} kitchens`}
-                value={vendorPct}
-                max={100}
-                color="amber"
-                icon={<Store className="size-3.5 text-amber-600" />}
-                height="md"
-              />
-
-              <AppleProgressBar
-                label="Delivery Fleet Riders"
-                sublabel={`${driverCount} drivers`}
-                value={driverPct}
-                max={100}
-                color="blue"
-                icon={<Truck className="size-3.5 text-blue-600" />}
-                height="md"
-              />
-            </div>
-          </section>
-
           {/* Top Grossing Restaurant Partners */}
           <section className="rounded-3xl border border-[#dfe4dc] dark:border-[#27342d] bg-white dark:bg-[#18201c] p-6 shadow-xs">
             <div className="flex items-center justify-between border-b border-[#f0f3ec] dark:border-[#27342d] pb-4">

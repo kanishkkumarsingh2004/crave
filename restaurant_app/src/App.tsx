@@ -22,9 +22,11 @@ import {
   getNotificationPreference,
   initializeNativeAppearance,
   notifyRestaurantAppUpdate,
+  registerRestaurantPushNotifications,
   requestNotificationPermission,
   setNotificationPreference,
   showKitchenNotification,
+  unregisterRestaurantPushNotifications,
 } from './native'
 import { connectRestaurantEvents } from './realtime'
 import { checkForRestaurantUpdate, installRestaurantUpdate, type RestaurantUpdate } from './update'
@@ -728,6 +730,11 @@ export default function App() {
   }, [restaurant?.id])
 
   useEffect(() => {
+    if (!user || !notificationEnabled) return
+    void registerRestaurantPushNotifications()
+  }, [user?.id, notificationEnabled])
+
+  useEffect(() => {
     if (!user || !restaurant || !getAuthToken() || getAuthToken() === COOKIE_SESSION_TOKEN) {
       return
     }
@@ -1288,6 +1295,7 @@ export default function App() {
   async function toggleNotifications() {
     if (notificationEnabled) {
       await setNotificationPreference(false)
+      await unregisterRestaurantPushNotifications()
       setNotificationEnabled(false)
       showToast('Live notification alerts muted on this device.')
       return
@@ -1303,6 +1311,7 @@ export default function App() {
   async function logout() {
     if (!confirmLogout) return
     setConfirmLogout(false)
+    await unregisterRestaurantPushNotifications()
     await apiRequest('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
     await clearAuthToken()
     setUser(null)
@@ -2114,6 +2123,7 @@ export default function App() {
 
       {permissionSheet && (
         <PermissionSheet
+          onNotificationStateChange={setNotificationEnabled}
           onClose={() => setPermissionSheet(false)}
           onDone={() => {
             void markPermissionSheetSeen()

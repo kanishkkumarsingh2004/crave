@@ -26,6 +26,8 @@ import {
   notificationEnabled,
   notifyAppUpdate,
   notifyOrder,
+  registerCustomerPushNotifications,
+  unregisterCustomerPushNotifications,
   tap,
 } from './native'
 import {
@@ -34,6 +36,7 @@ import {
   installCustomerUpdate,
   type CustomerUpdate,
 } from './update'
+import { startOrderPolling, stopOrderPolling } from './background'
 import { connectCustomerOrders } from './realtime'
 import { startRazorpayCheckout } from './razorpay'
 import { checkoutDistanceKm, roadDistanceKm } from './pricing'
@@ -710,17 +713,14 @@ function CartPage({
   const subtotal = cart.reduce((n, x) => n + x.price * x.quantity, 0)
   const selectedAddress = addresses.find((entry) => entry.is_default) || addresses[0]
   const [billing, setBilling] = useState<any>(null)
-  const [pricingError, setPricingError] = useState('')
 
   useEffect(() => {
     if (!restaurant || cart.length === 0) {
       setBilling(null)
-      setPricingError('')
       return
     }
     let cancelled = false
     setBilling(null)
-    setPricingError('')
     apiRequest<any>('/api/calculator', {
       method: 'POST',
       body: {
@@ -738,20 +738,14 @@ function CartPage({
       .then((response) => {
         if (!cancelled) setBilling(response.breakdown?.customerBilling || null)
       })
-      .catch((quoteError) => {
-        if (!cancelled)
-          setPricingError(
-            quoteError instanceof Error ? quoteError.message : 'Could not calculate this order.'
-          )
+      .catch(() => {
+        if (!cancelled) setBilling(null)
       })
     return () => {
       cancelled = true
     }
   }, [cart, restaurant, selectedAddress, subtotal])
 
-  const payableTax = billing?.taxSplit
-    ? Number(billing?.platformServiceGst || 0)
-    : Number(billing?.gstAmount || 0)
   const totalToPay = billing?.grandTotal ?? subtotal
 
   return (
@@ -858,45 +852,6 @@ function CartPage({
                   </article>
                 ))}
               </div>
-            </section>
-
-            <section className="bag-review-section bag-summary" aria-label="Order summary">
-              <div className="bag-summary-row">
-                <span>Item subtotal</span>
-                <b>{money(billing?.customerFoodSubtotal || subtotal)}</b>
-              </div>
-              {billing ? (
-                <>
-                  {Number(billing.packagingFee || 0) > 0 && (
-                    <div className="bag-summary-row">
-                      <span>Packaging</span>
-                      <b>{money(billing.packagingFee)}</b>
-                    </div>
-                  )}
-                  <div className="bag-summary-row">
-                    <span>Delivery fee</span>
-                    <b>{billing.isFreeDelivery ? 'FREE' : money(billing.netDeliveryFee || 0)}</b>
-                  </div>
-                  {Number(billing.platformFee || 0) + Number(billing.handlingFee || 0) > 0 && (
-                    <div className="bag-summary-row">
-                      <span>Platform &amp; handling</span>
-                      <b>
-                        {money(Number(billing.platformFee || 0) + Number(billing.handlingFee || 0))}
-                      </b>
-                    </div>
-                  )}
-                  {payableTax > 0 && (
-                    <div className="bag-summary-row">
-                      <span>GST &amp; other charges</span>
-                      <b>{money(payableTax)}</b>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="bag-summary-row bag-summary-pending">
-                  <span>{pricingError || 'Calculating delivery and fees…'}</span>
-                </div>
-              )}
             </section>
           </div>
         )}
@@ -1787,6 +1742,7 @@ function Account({
   theme,
   onTheme,
   refreshing,
+  onNotificationStateChange,
 }: {
   user: User
   addresses: Address[]
@@ -1796,6 +1752,7 @@ function Account({
   theme: ThemeMode
   onTheme: (theme: ThemeMode) => void
   refreshing: boolean
+  onNotificationStateChange?: (enabled: boolean) => void
 }) {
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [passwordSheet, setPasswordSheet] = useState(false)
@@ -1820,9 +1777,12 @@ function Account({
     [message, setMessage] = useState('Tap to check for a newer version'),
     [helpSheet, setHelpSheet] = useState(false)
   useEffect(() => {
-    notificationEnabled().then(setNotifications)
+    notificationEnabled().then((enabled) => {
+      setNotifications(enabled)
+      onNotificationStateChange?.(enabled)
+    })
     void check()
-  }, [])
+  }, [onNotificationStateChange])
   const check = async () => {
     setChecking(true)
     try {
@@ -1946,7 +1906,11 @@ function Account({
             </span>
             <Toggle
               checked={notifications}
-              onChange={async (v) => setNotifications(await enableNotifications(v))}
+              onChange={async (v) => {
+                const enabled = await enableNotifications(v)
+                setNotifications(enabled)
+                onNotificationStateChange?.(enabled)
+              }}
             />
           </div>
           <button onClick={onAddresses}>
@@ -2726,6 +2690,7 @@ export default function App() {
   const [refreshingTab, setRefreshingTab] = useState<Tab | null>(null)
   const [ready, setReady] = useState(false),
     [user, setUser] = useState<User | null>(null),
+    [nativeNotificationsEnabled, setNativeNotificationsEnabled] = useState(false),
     [tab, setTab] = useState<Tab>('home'),
     [direction, setDirection] = useState<'next' | 'prev' | null>(null),
     [sliding, setSliding] = useState(false),
@@ -2782,6 +2747,14 @@ export default function App() {
   // P1 FIX: Track active order IDs to avoid reconnecting the WebSocket on
   // every status update (only reconnect when the set of active orders changes).
   const activeIdsRef = useRef<string[]>([])
+  const activeOrderIds = useMemo(
+    () =>
+      orders
+        .filter((order) => !['delivered', 'completed', 'cancelled'].includes(order.status))
+        .map((order) => order.id)
+        .sort(),
+    [orders]
+  )
   const selectTab = (next: Tab, dir: 'next' | 'prev' | null = null) => {
     if (transitionTimer.current) clearTimeout(transitionTimer.current)
     prevTabRef.current = tab
@@ -3045,6 +3018,37 @@ export default function App() {
     return () => clearInterval(timer)
   }, [user, loadRestaurants, loadAddresses, loadOrders])
   useEffect(() => {
+    if (!user) {
+      setNativeNotificationsEnabled(false)
+      return
+    }
+    void notificationEnabled().then(setNativeNotificationsEnabled)
+  }, [user?.id])
+  useEffect(() => {
+    if (!user || !Capacitor.isNativePlatform() || !nativeNotificationsEnabled) return
+    void registerCustomerPushNotifications()
+  }, [user?.id, nativeNotificationsEnabled])
+  useEffect(() => {
+    if (!user || !Capacitor.isNativePlatform() || !nativeNotificationsEnabled) {
+      if (!user) void stopOrderPolling()
+      return
+    }
+    const token = getAuthToken()
+    if (!token || token === COOKIE_SESSION_TOKEN || activeOrderIds.length === 0) {
+      void stopOrderPolling()
+      return
+    }
+    void startOrderPolling({
+      token,
+      userId: user.id,
+      apiRequest,
+      notificationsEnabled: true,
+    })
+    return () => {
+      void stopOrderPolling()
+    }
+  }, [user?.id, activeOrderIds.join(','), nativeNotificationsEnabled])
+  useEffect(() => {
     if (!user || getAuthToken() === COOKIE_SESSION_TOKEN) return
     // P1 FIX: Only reconnect the WebSocket when the set of active order IDs
     // actually changes (add/remove), not on every status update. Status
@@ -3133,6 +3137,8 @@ export default function App() {
     )
   const logout = async () => {
     setConfirmLogout(false)
+    await stopOrderPolling()
+    await unregisterCustomerPushNotifications()
     await apiRequest('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
     await clearAuthToken()
     // The saved copies belong to this account only.
@@ -3390,6 +3396,7 @@ export default function App() {
           }}
           onRefresh={loadProfile}
           refreshing={refreshingTab === 'account'}
+          onNotificationStateChange={setNativeNotificationsEnabled}
         />
       )
 
@@ -3467,6 +3474,7 @@ export default function App() {
       {toast && <div className="toast">{toast}</div>}
       {permissionSheet && (
         <PermissionSheet
+          onNotificationStateChange={setNativeNotificationsEnabled}
           onClose={() => {
             setPermissionSheet(false)
             void markPermissionSheetSeen()

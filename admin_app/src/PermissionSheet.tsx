@@ -9,6 +9,7 @@ import {
   type PermissionId,
   type PermissionState,
 } from './permissions'
+import { registerAdminPushNotifications } from './native'
 
 const ICON_MAP: Record<PermissionId, LucideIcon> = {
   location: MapPin,
@@ -47,6 +48,9 @@ export function PermissionSheet({ onClose, onDone }: { onClose: () => void; onDo
     try {
       const state = await requestPermission(id)
       setStates((current) => ({ ...current, [id]: state }))
+      if (id === 'notifications' && state === 'granted') {
+        await registerAdminPushNotifications()
+      }
     } catch {
       setStates((current) => ({ ...current, [id]: 'denied' }))
     } finally {

@@ -55,11 +55,15 @@ function getFirebaseCredentials(): FirebaseCredentials | null {
   return { projectId, clientEmail, privateKey }
 }
 
-function getApnsCredentials(): ApnsCredentials | null {
+function getApnsCredentials(appRole = 'driver'): ApnsCredentials | null {
   const keyId = process.env.APNS_KEY_ID?.trim() || ''
   const teamId = process.env.APNS_TEAM_ID?.trim() || ''
   const privateKey = normalizePrivateKey(process.env.APNS_PRIVATE_KEY)
-  const bundleId = process.env.APNS_BUNDLE_ID?.trim() || 'com.crave.driver'
+  const roleBundleKey = `APNS_${appRole.toUpperCase()}_BUNDLE_ID`
+  const bundleId =
+    process.env[roleBundleKey]?.trim() ||
+    (appRole === 'driver' ? process.env.APNS_BUNDLE_ID?.trim() : '') ||
+    `com.crave.${appRole}`
   if (!keyId || !teamId || !privateKey || !bundleId) return null
   return {
     keyId,
@@ -152,8 +156,9 @@ async function sendFirebasePush(
   const errorCode = String(result?.error?.details?.[0]?.errorCode || '')
   return {
     delivered: false,
-    invalid:
-      response.status === 404 || errorCode === 'UNREGISTERED' || errorCode === 'INVALID_ARGUMENT',
+    // INVALID_ARGUMENT can describe a malformed message payload. Only FCM's
+    // explicit UNREGISTERED result proves that this device token is dead.
+    invalid: errorCode === 'UNREGISTERED',
   }
 }
 
@@ -246,11 +251,10 @@ async function sendApnsPush(
 }
 
 async function sendToTokens(
-  tokens: Array<{ id: string; token: string; platform: string }>,
+  tokens: Array<{ id: string; token: string; platform: string; app_role: string }>,
   payload: DriverPushPayload
 ) {
   const firebase = getFirebaseCredentials()
-  const apns = getApnsCredentials()
   let sent = 0
   let failed = 0
   let disabled = 0
@@ -266,6 +270,7 @@ async function sendToTokens(
           }
           result = await sendFirebasePush(device.token, payload, firebase)
         } else if (device.platform === 'ios') {
+          const apns = getApnsCredentials(device.app_role)
           if (!apns) {
             disabled += 1
             return
@@ -279,7 +284,7 @@ async function sendToTokens(
         if (result.delivered) sent += 1
         else failed += 1
         if (result.invalid) {
-          await prisma.driverPushToken.update({
+          await prisma.devicePushToken.update({
             where: { id: device.id },
             data: { is_active: false, last_seen_at: new Date() },
           })
@@ -295,19 +300,43 @@ async function sendToTokens(
 }
 
 export async function sendDriverPushToUsers(userIds: string[], payload: DriverPushPayload) {
+  return sendNativePushToUsers(userIds, 'driver', payload)
+}
+
+export type NativeAppRole = 'customer' | 'restaurant' | 'driver' | 'admin'
+
+export async function sendNativePushToUsers(
+  userIds: string[],
+  appRole: NativeAppRole,
+  payload: DriverPushPayload
+) {
   const ids = [...new Set(userIds.filter(Boolean))]
   if (ids.length === 0) return { sent: 0, failed: 0, disabled: 0 }
-  const tokens = await prisma.driverPushToken.findMany({
-    where: { driver_id: { in: ids }, is_active: true },
-    select: { id: true, token: true, platform: true },
+  const tokens = await prisma.devicePushToken.findMany({
+    where: { user_id: { in: ids }, app_role: appRole, is_active: true },
+    select: { id: true, token: true, platform: true, app_role: true },
   })
   return sendToTokens(tokens, payload)
 }
 
 export async function sendDriverPushToAll(payload: DriverPushPayload) {
-  const tokens = await prisma.driverPushToken.findMany({
-    where: { is_active: true },
-    select: { id: true, token: true, platform: true },
+  return sendNativePushToAll('driver', payload)
+}
+
+export async function sendNativePushToAll(appRole: NativeAppRole, payload: DriverPushPayload) {
+  const tokens = await prisma.devicePushToken.findMany({
+    where: { app_role: appRole, is_active: true },
+    select: { id: true, token: true, platform: true, app_role: true },
+  })
+  return sendToTokens(tokens, payload)
+}
+
+export async function sendNativePushToRoles(appRoles: NativeAppRole[], payload: DriverPushPayload) {
+  const roles = [...new Set(appRoles)]
+  if (roles.length === 0) return { sent: 0, failed: 0, disabled: 0 }
+  const tokens = await prisma.devicePushToken.findMany({
+    where: { app_role: { in: roles }, is_active: true },
+    select: { id: true, token: true, platform: true, app_role: true },
   })
   return sendToTokens(tokens, payload)
 }

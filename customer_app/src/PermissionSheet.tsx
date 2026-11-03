@@ -9,6 +9,7 @@ import {
   type PermissionId,
   type PermissionState,
 } from './permissions'
+import { registerCustomerPushNotifications } from './native'
 
 /**
  * The first-run permission sheet.
@@ -17,7 +18,15 @@ import {
  * has never seen the app has no idea why it wants the camera or the location.
  * This sheet explains each one first, then asks.
  */
-export function PermissionSheet({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+export function PermissionSheet({
+  onClose,
+  onDone,
+  onNotificationStateChange,
+}: {
+  onClose: () => void
+  onDone: () => void
+  onNotificationStateChange?: (enabled: boolean) => void
+}) {
   const [states, setStates] = useState<Record<string, PermissionState>>({})
   const [busy, setBusy] = useState<PermissionId | null>(null)
 
@@ -45,6 +54,10 @@ export function PermissionSheet({ onClose, onDone }: { onClose: () => void; onDo
     try {
       const state = await requestPermission(id)
       setStates((current) => ({ ...current, [id]: state }))
+      if (id === 'notifications' && state === 'granted') {
+        await registerCustomerPushNotifications()
+        onNotificationStateChange?.(true)
+      }
     } catch {
       setStates((current) => ({ ...current, [id]: 'denied' }))
     } finally {

@@ -37,7 +37,7 @@ import {
 } from '@/lib/idempotency'
 import { withTiming } from '@/lib/instrumentation'
 import { calculateMenuAppPrice } from '@/lib/menu-pricing'
-import { sendDriverPushToUsers } from '@/lib/notifications/driver-push'
+import { sendDriverPushToUsers, sendNativePushToUsers } from '@/lib/notifications/driver-push'
 import { getPhaseName, isValidTransition, VALID_TRANSITIONS } from '@/lib/order-state-machine'
 import { maybeTriggerRouteSettlement } from '@/lib/payments/razorpay-split'
 import { DEFAULT_PAYMENT_CONFIG, PaymentConfig } from '@/lib/payment-config'
@@ -1930,12 +1930,29 @@ export async function PATCH(request: Request) {
         await sendWebPushToUsers([customerId].filter(Boolean), pushPayload).catch((pushError) =>
           console.error('[PATCH /api/orders] Web Push failed:', pushError)
         )
+        // Native delivery targets the same authenticated customer account; the
+        // app-role filter prevents a customer token from receiving driver data.
+        await sendNativePushToUsers([customerId].filter(Boolean), 'customer', {
+          title: pushPayload.title,
+          body: pushPayload.body,
+          orderId,
+          type: 'order_status_changed',
+          route: 'orders',
+        }).catch((pushError) =>
+          console.error('[PATCH /api/orders] Customer native push failed:', pushError)
+        )
 
         const assignedRiderId = updated.rider_id || existing.rider_id
         if (assignedRiderId && (status === 'rider_assigned' || status === 'ready_for_pickup')) {
+          const driverTitle =
+            status === 'rider_assigned' ? 'New delivery assignment' : 'Order ready for pickup'
+          const driverBody =
+            status === 'rider_assigned'
+              ? `Order #${orderId.slice(-8)} has been assigned to you. It will be ready after the restaurant finishes preparing it.`
+              : `Pick up order #${orderId.slice(-8)} from ${existing.restaurant_name}. Delivery value ₹${Number(existing.total_amount || 0).toLocaleString('en-IN')}.`
           await sendWebPushToUsers([assignedRiderId], {
-            title: 'Order ready for pickup',
-            body: `Pick up order #${orderId.slice(-8)} from ${existing.restaurant_name}. Delivery value ₹${Number(existing.total_amount || 0).toLocaleString('en-IN')}.`,
+            title: driverTitle,
+            body: driverBody,
             url: '/driver/orders',
             tag: `driver-order-${orderId}`,
             orderId,
@@ -1943,8 +1960,11 @@ export async function PATCH(request: Request) {
             console.error('[PATCH /api/orders] Driver Web Push failed:', pushError)
           )
           await sendDriverPushToUsers([assignedRiderId], {
-            title: 'Order ready for pickup',
-            body: `Pick up order #${orderId.slice(-8)} from ${existing.restaurant_name}.`,
+            title: driverTitle,
+            body:
+              status === 'rider_assigned'
+                ? `Order #${orderId.slice(-8)} has been assigned to you.`
+                : `Pick up order #${orderId.slice(-8)} from ${existing.restaurant_name}.`,
             orderId,
             type: 'order_ready',
             route: 'home',

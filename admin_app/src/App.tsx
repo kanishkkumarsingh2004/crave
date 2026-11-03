@@ -42,7 +42,12 @@ import { checkForAdminUpdate, installAdminUpdate, type AdminUpdate } from './upd
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
 import { useLanguage, type SupportedLocale } from '../../dictionary/react'
 import { PermissionSheet } from './PermissionSheet'
-import { initializeNativeAppearance, notifyAdminAppUpdate } from './native'
+import {
+  initializeNativeAppearance,
+  notifyAdminAppUpdate,
+  registerAdminPushNotifications,
+  unregisterAdminPushNotifications,
+} from './native'
 import { hasSeenPermissionSheet, markPermissionSheetSeen } from './permissions'
 import type { AddressMapPoint } from './AddressMap'
 
@@ -512,6 +517,11 @@ export default function App() {
   }, [user?.id])
 
   useEffect(() => {
+    if (!user) return
+    void registerAdminPushNotifications()
+  }, [user?.id])
+
+  useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
     const handles: Array<{ remove: () => Promise<void> }> = []
     void Network.getStatus().then(({ connected }) => setNetworkConnected(connected))
@@ -785,6 +795,7 @@ export default function App() {
   async function logout() {
     if (!confirmLogout) return
     setConfirmLogout(false)
+    await unregisterAdminPushNotifications()
     await apiRequest('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
     await clearAuthToken()
     setUser(null)

@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core'
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
 import { Device } from '@capacitor/device'
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { LocalNotifications } from '@capacitor/local-notifications'
@@ -35,36 +35,64 @@ export async function initializeNativeAppearance(): Promise<void> {
     lights: true,
     lightColor: '#D9F447',
   }).catch(() => undefined)
-  // Register for remote push notifications if enabled
-  if (REMOTE_PUSH_ENABLED) {
-    try {
-      const permission = await PushNotifications.checkPermissions()
-      if (permission.receive === 'granted') {
-        await PushNotifications.addListener('registration', async (registration) => {
-          await Preferences.set({ key: PUSH_TOKEN_KEY, value: registration.value })
-          const device = await Device.getId()
-          await apiRequest('/api/admin/push-token', {
-            method: 'POST',
-            body: {
-              token: registration.value,
-              platform: Capacitor.getPlatform(),
-              deviceId: device.identifier,
-            },
-          }).catch(() => undefined)
-        })
-        await PushNotifications.addListener('registrationError', () => undefined)
+}
+
+let pushListeners: PluginListenerHandle[] = []
+
+async function uploadAdminPushToken(token: string): Promise<void> {
+  const device = await Device.getId()
+  await apiRequest('/api/push/device', {
+    method: 'POST',
+    body: { token, platform: Capacitor.getPlatform(), deviceId: device.identifier },
+  })
+  await Preferences.set({ key: PUSH_TOKEN_KEY, value: token })
+}
+
+export async function registerAdminPushNotifications(): Promise<boolean> {
+  if (!Capacitor.isNativePlatform() || !REMOTE_PUSH_ENABLED) return false
+  try {
+    const permission = await PushNotifications.checkPermissions()
+    if (permission.receive !== 'granted') return false
+    if (pushListeners.length === 0) {
+      pushListeners = [
+        await PushNotifications.addListener('registration', (registration) => {
+          void uploadAdminPushToken(registration.value).catch((error) =>
+            console.error('[admin-push] Token registration failed', error)
+          )
+        }),
+        await PushNotifications.addListener('registrationError', (error) => {
+          console.error('[admin-push] Native registration failed', error)
+        }),
         await PushNotifications.addListener('pushNotificationReceived', () => {
           void Haptics.impact({ style: ImpactStyle.Heavy }).catch(() => undefined)
-        })
+        }),
         await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-          const data = (action.notification.data || {}) as Record<string, unknown>
-          // Could deep-link based on data here
-        })
-        await PushNotifications.register()
-      }
-    } catch (error) {
-      console.warn('Remote push registration unavailable', error)
+          console.info('[admin-push] Notification opened', action.notification.data || {})
+        }),
+      ]
     }
+    const storedToken = (await Preferences.get({ key: PUSH_TOKEN_KEY })).value
+    if (storedToken) await uploadAdminPushToken(storedToken)
+    await PushNotifications.register()
+    return true
+  } catch (error) {
+    console.error('[admin-push] Registration unavailable', error)
+    return false
+  }
+}
+
+export async function unregisterAdminPushNotifications(): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) return true
+  const token = (await Preferences.get({ key: PUSH_TOKEN_KEY })).value
+  if (!token) return true
+  try {
+    await apiRequest('/api/push/device', { method: 'DELETE', body: { token } })
+    await Preferences.remove({ key: PUSH_TOKEN_KEY })
+    await Promise.all(pushListeners.splice(0).map((handle) => handle.remove()))
+    return true
+  } catch (error) {
+    console.error('[admin-push] Server deactivation failed; retaining token', error)
+    return false
   }
 }
 

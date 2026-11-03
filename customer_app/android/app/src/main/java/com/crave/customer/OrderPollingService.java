@@ -44,6 +44,7 @@ public class OrderPollingService extends Service {
     public static final String EXTRA_TOKEN       = "token";
     public static final String EXTRA_USER_ID     = "userId";
     public static final String EXTRA_API_BASE_URL = "apiBaseUrl";
+    public static final String EXTRA_NOTIFICATIONS_ENABLED = "notificationsEnabled";
 
     private static final String CHANNEL_ONGOING = "customer-order-status";
     private static final String CHANNEL_ALERTS  = "customer-order-alerts";
@@ -72,6 +73,7 @@ public class OrderPollingService extends Service {
     public void onCreate() {
         super.onCreate();
         prefs = getSharedPreferences("order_polling_service", Context.MODE_PRIVATE);
+        loadLastSeenStatuses();
         createNotificationChannels();
     }
 
@@ -94,9 +96,11 @@ public class OrderPollingService extends Service {
         String token = intent.getStringExtra(EXTRA_TOKEN);
         String userId = intent.getStringExtra(EXTRA_USER_ID);
         String base   = intent.getStringExtra(EXTRA_API_BASE_URL);
+        boolean notificationsEnabled = intent.getBooleanExtra(EXTRA_NOTIFICATIONS_ENABLED, true);
         if (token  != null && !token.isBlank())  ed.putString("token", token);
         if (userId != null && !userId.isBlank())  ed.putString("userId", userId);
         if (base   != null && !base.isBlank())    ed.putString("apiBaseUrl", base);
+        ed.putBoolean("notificationsEnabled", notificationsEnabled);
         ed.apply();
     }
 
@@ -136,6 +140,15 @@ public class OrderPollingService extends Service {
                         JSONObject o = orders.optJSONObject(i);
                         if (o == null) continue;
                         String status = o.optString("status", "");
+                        String orderId = o.optString("id", "");
+                        String prev = lastSeenStatus.get(orderId);
+                        if (prev != null && !prev.equals(status)) {
+                            notifyStatusChange(orderId, status, o);
+                        }
+                        if (!orderId.isBlank() && !status.isBlank()) {
+                            lastSeenStatus.put(orderId, status);
+                            persistLastSeenStatuses();
+                        }
                         // Active order statuses — anything not terminal
                         boolean active = !status.equals("delivered")
                                 && !status.equals("completed")
@@ -143,13 +156,6 @@ public class OrderPollingService extends Service {
                         if (!active) continue;
                         hasActive = true;
                         idlePollCount = 0;
-
-                        String orderId = o.optString("id", "");
-                        String prev = lastSeenStatus.get(orderId);
-                        if (prev != null && !prev.equals(status)) {
-                            notifyStatusChange(orderId, status, o);
-                        }
-                        lastSeenStatus.put(orderId, status);
                     }
                 }
 
@@ -166,6 +172,7 @@ public class OrderPollingService extends Service {
     }
 
     private void notifyStatusChange(String orderId, String status, JSONObject order) {
+        if (!prefs.getBoolean("notificationsEnabled", true)) return;
         String title;
         String body;
         switch (status) {
@@ -216,6 +223,32 @@ public class OrderPollingService extends Service {
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
                 .build();
         NotificationManagerCompat.from(this).notify(Math.max(1, orderId.hashCode() & 0x7fffffff), n);
+    }
+
+    private void loadLastSeenStatuses() {
+        try {
+            JSONObject stored = new JSONObject(prefs.getString("lastSeenStatuses", "{}"));
+            java.util.Iterator<String> keys = stored.keys();
+            while (keys.hasNext()) {
+                String orderId = keys.next();
+                String status = stored.optString(orderId, "");
+                if (!status.isBlank()) lastSeenStatus.put(orderId, status);
+            }
+        } catch (Exception ignored) {
+            // A corrupt cursor is safe to rebuild from the next poll.
+        }
+    }
+
+    private void persistLastSeenStatuses() {
+        try {
+            JSONObject stored = new JSONObject();
+            for (java.util.Map.Entry<String, String> entry : lastSeenStatus.entrySet()) {
+                stored.put(entry.getKey(), entry.getValue());
+            }
+            prefs.edit().putString("lastSeenStatuses", stored.toString()).apply();
+        } catch (Exception ignored) {
+            // Polling remains functional even if the local cursor cannot be saved.
+        }
     }
 
     // ── Notification helpers ─────────────────────────────────────────────────

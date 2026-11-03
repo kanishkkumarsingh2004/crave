@@ -18,6 +18,7 @@
 import { Capacitor, registerPlugin } from '@capacitor/core'
 import { PushNotifications } from '@capacitor/push-notifications'
 import { Device } from '@capacitor/device'
+import { Preferences } from '@capacitor/preferences'
 import { getApiOrigin } from './api'
 
 // ── Android native bridge ─────────────────────────────────────────────────
@@ -27,6 +28,7 @@ interface OrderPollingPlugin {
     token: string
     userId: string
     apiBaseUrl: string
+    notificationsEnabled: boolean
   }): Promise<{ active: boolean }>
   stop(): Promise<void>
 }
@@ -36,6 +38,7 @@ const OrderPolling = registerPlugin<OrderPollingPlugin>('OrderPolling')
 // ── iOS push-notification registration ────────────────────────────────────
 
 let iosPushRegistered = false
+let iosPushListeners: Array<{ remove: () => Promise<void> }> = []
 
 async function registerIosPush(token: string, apiRequest: ApiRequest): Promise<void> {
   if (iosPushRegistered) return
@@ -45,18 +48,30 @@ async function registerIosPush(token: string, apiRequest: ApiRequest): Promise<v
     const permission = await PushNotifications.requestPermissions()
     if (permission.receive !== 'granted') return
 
-    PushNotifications.addListener('registration', async (reg) => {
-      iosPushRegistered = true
-      const device = await Device.getId()
-      await apiRequest('/api/user/push-token', {
-        method: 'POST',
-        body: {
-          token: reg.value,
-          platform: 'ios',
-          deviceId: device.identifier,
-        },
-      }).catch(() => undefined)
-    })
+    iosPushListeners.push(
+      await PushNotifications.addListener('registration', async (reg) => {
+        const device = await Device.getId()
+        try {
+          await apiRequest('/api/push/device', {
+            method: 'POST',
+            body: {
+              token: reg.value,
+              platform: 'ios',
+              deviceId: device.identifier,
+            },
+          })
+          await Preferences.set({ key: 'crave_customer_push_token', value: reg.value })
+          iosPushRegistered = true
+        } catch (error) {
+          console.error('[customer-push] iOS token registration failed', error)
+        }
+      })
+    )
+    iosPushListeners.push(
+      await PushNotifications.addListener('registrationError', (error) => {
+        console.error('[customer-push] iOS native registration failed', error)
+      })
+    )
     await PushNotifications.register()
   } catch (err) {
     console.warn('[background] iOS push registration failed:', err)
@@ -71,6 +86,7 @@ export async function startOrderPolling(input: {
   token: string
   userId: string
   apiRequest: ApiRequest
+  notificationsEnabled?: boolean
 }): Promise<void> {
   if (!Capacitor.isNativePlatform()) return
 
@@ -85,6 +101,7 @@ export async function startOrderPolling(input: {
       token: input.token,
       userId: input.userId,
       apiBaseUrl,
+      notificationsEnabled: input.notificationsEnabled !== false,
     }).catch((err: unknown) => console.warn('[background] OrderPolling.start failed:', err))
   } else if (platform === 'ios') {
     await registerIosPush(input.token, input.apiRequest)
@@ -95,5 +112,8 @@ export async function stopOrderPolling(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return
   if (Capacitor.getPlatform() === 'android') {
     await OrderPolling.stop().catch(() => undefined)
+  } else if (Capacitor.getPlatform() === 'ios') {
+    await Promise.all(iosPushListeners.splice(0).map((handle) => handle.remove()))
+    iosPushRegistered = false
   }
 }

@@ -1,5 +1,5 @@
 import { handleApiAuthError, requireAdmin } from '@/lib/api-auth'
-import { sendDriverPushToAll } from '@/lib/notifications/driver-push'
+import { sendNativePushToRoles, type NativeAppRole } from '@/lib/notifications/driver-push'
 import { isWebPushConfigured, sendWebPushToRoles } from '@/lib/web-push'
 import type { UserRole } from '@prisma/client'
 import { NextResponse } from 'next/server'
@@ -11,6 +11,11 @@ const AUDIENCE_ROLES: Record<string, UserRole[]> = {
   driver: ['rider'],
   restaurant: ['restaurant_vendor', 'cravexp_store_vendor'],
 }
+const AUDIENCE_NATIVE_ROLES: Record<string, NativeAppRole[]> = {
+  customer: ['customer'],
+  driver: ['driver'],
+  restaurant: ['restaurant'],
+} as const
 const PRODUCTION_ORIGIN = 'https://crave.apexonestudio.com'
 
 export async function POST(request: Request) {
@@ -61,19 +66,16 @@ export async function POST(request: Request) {
     const webResult = isWebPushConfigured()
       ? await sendWebPushToRoles(AUDIENCE_ROLES[audience], payload)
       : { sent: 0, failed: 0, disabled: true }
-    const nativeDriverResult =
-      audience === 'driver'
-        ? await sendDriverPushToAll({
-            title,
-            body: description,
-            type: 'admin_broadcast',
-            route: 'home',
-          })
-        : { sent: 0, failed: 0, disabled: 0 }
+    const nativeResult = await sendNativePushToRoles(AUDIENCE_NATIVE_ROLES[audience], {
+      title,
+      body: description,
+      type: 'admin_broadcast',
+      route: audience === 'customer' ? 'orders' : audience === 'restaurant' ? 'orders' : 'home',
+    })
     const result = {
-      sent: webResult.sent + nativeDriverResult.sent,
-      failed: webResult.failed + nativeDriverResult.failed,
-      disabled: webResult.disabled && nativeDriverResult.disabled > 0,
+      sent: webResult.sent + nativeResult.sent,
+      failed: webResult.failed + nativeResult.failed,
+      disabled: webResult.disabled && nativeResult.disabled > 0,
     }
 
     if (result.sent === 0) {

@@ -9,6 +9,7 @@ import {
   type PermissionId,
   type PermissionState,
 } from './permissions'
+import { registerRestaurantPushNotifications } from './native'
 
 const GRANTED_ICON: Record<PermissionId, IconName> = {
   location: 'pin',
@@ -19,7 +20,15 @@ const GRANTED_ICON: Record<PermissionId, IconName> = {
 /**
  * The first-run permission sheet for the restaurant app.
  */
-export function PermissionSheet({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+export function PermissionSheet({
+  onClose,
+  onDone,
+  onNotificationStateChange,
+}: {
+  onClose: () => void
+  onDone: () => void
+  onNotificationStateChange?: (enabled: boolean) => void
+}) {
   const [states, setStates] = useState<Record<string, PermissionState>>({})
   const [busy, setBusy] = useState<PermissionId | null>(null)
 
@@ -47,6 +56,10 @@ export function PermissionSheet({ onClose, onDone }: { onClose: () => void; onDo
     try {
       const state = await requestPermission(id)
       setStates((current) => ({ ...current, [id]: state }))
+      if (id === 'notifications' && state === 'granted') {
+        await registerRestaurantPushNotifications()
+        onNotificationStateChange?.(true)
+      }
     } catch {
       setStates((current) => ({ ...current, [id]: 'denied' }))
     } finally {

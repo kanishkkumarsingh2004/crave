@@ -110,7 +110,7 @@ export async function GET(request: Request) {
     // Fetch active notification counts safely
     try {
       activeWebPushSubs = await prisma.webPushSubscription.count({ where: { is_active: true } })
-      activeDriverPushTokens = await prisma.driverPushToken.count({ where: { is_active: true } })
+      activeDriverPushTokens = await prisma.devicePushToken.count({ where: { is_active: true } })
     } catch {}
   } catch (err: any) {
     dbStatus = 'error'

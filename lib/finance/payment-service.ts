@@ -17,6 +17,7 @@ import {
   type CanonicalPriceResult,
 } from '@/lib/finance'
 import { prisma } from '@/lib/prisma'
+import { sendNativePushToUsers } from '@/lib/notifications/driver-push'
 import { sendWebPushToUsers } from '@/lib/web-push'
 import { broadcast } from '@/lib/ws-server'
 import { stripOrderSecrets } from '@/lib/auth/order-access'
@@ -413,6 +414,15 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
       }).catch((pushError) =>
         console.error('[payment-service] Customer Web Push failed:', pushError)
       )
+      await sendNativePushToUsers([customerId], 'customer', {
+        title: 'Payment verified',
+        body: `Order #${orderId.slice(-8)} has been sent to the restaurant.`,
+        orderId,
+        type: 'payment_verified',
+        route: 'orders',
+      }).catch((pushError) =>
+        console.error('[payment-service] Customer native push failed:', pushError)
+      )
     }
 
     if (result.order!.restaurant_id) {
@@ -431,6 +441,15 @@ export async function processPaymentVerificationTx(input: PaymentVerificationInp
           orderId,
         }).catch((pushError) =>
           console.error('[payment-service] Vendor Web Push failed:', pushError)
+        )
+        await sendNativePushToUsers([restaurant.owner_id], 'restaurant', {
+          title: 'New paid order received',
+          body: `${result.order!.customer_name} placed order #${orderId.slice(-8)}. Start preparing it now.`,
+          orderId,
+          type: 'order_created',
+          route: 'orders',
+        }).catch((pushError) =>
+          console.error('[payment-service] Vendor native push failed:', pushError)
         )
       }
     }
@@ -564,6 +583,15 @@ export async function processPaymentRejectionTx(input: PaymentRejectionInput) {
         orderId,
       }).catch((pushError) =>
         console.error('[payment-service] Payment rejection Web Push failed:', pushError)
+      )
+      await sendNativePushToUsers([result.order.customer_id], 'customer', {
+        title: 'Payment not verified',
+        body: `Payment for order #${orderId.slice(-8)} was not approved. Open the app for details.`,
+        orderId,
+        type: 'payment_rejected',
+        route: 'orders',
+      }).catch((pushError) =>
+        console.error('[payment-service] Payment rejection native push failed:', pushError)
       )
     }
   }
@@ -804,6 +832,15 @@ export async function processRefundTx(input: RefundInput) {
         tag: `refund-${result.refund.id}`,
         orderId,
       }).catch((pushError) => console.error('[payment-service] Refund Web Push failed:', pushError))
+      await sendNativePushToUsers([order.customer_id], 'customer', {
+        title: 'Refund completed',
+        body: `Your refund for order #${orderId.slice(-8)} has been confirmed by the payment provider.`,
+        orderId,
+        type: 'refund_completed',
+        route: 'orders',
+      }).catch((pushError) =>
+        console.error('[payment-service] Refund native push failed:', pushError)
+      )
     }
   }
   return result
