@@ -42,7 +42,6 @@ summary.json
 junit.xml
 
 # Android / Capacitor native build artifacts
-android-builds/
 *.aab
 **/android/.gradle/
 **/android/build/
