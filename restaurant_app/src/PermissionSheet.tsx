@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { AccessibleDialog } from '@crave/mobile-core'
 import { Icon, type IconName } from './Icon'
 import {
   openAppSettings,
@@ -64,78 +65,72 @@ export function PermissionSheet({ onClose, onDone }: { onClose: () => void; onDo
     state === 'granted' ? 'Allowed' : state === 'denied' ? 'Denied' : 'Allow'
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <section
-        className="sheet permission-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="permission-title"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="sheet-handle" />
-        <header className="sheet-header">
-          <div>
-            <p className="eyebrow">WELCOME TO CRAVE KITCHEN</p>
-            <h2 id="permission-title">A few permissions</h2>
-          </div>
-          <button className="icon-button" onClick={onClose} aria-label="Close">
-            <Icon name="close" />
-          </button>
-        </header>
-        <p className="permission-note">
-          These keep the app fast and the right information on screen. You can change them any time
-          in your device settings.
-        </p>
-
-        <div className="permission-list">
-          {PERMISSION_REQUESTS.map((request) => {
-            const state = states[request.id] || 'prompt'
-            const granted = state === 'granted'
-            const iconName = GRANTED_ICON[request.id]
-            return (
-              <div className="permission-row" key={request.id}>
-                <span className={`permission-icon ${granted ? 'granted' : ''}`}>
-                  <Icon name={iconName} />
-                </span>
-                <div className="permission-copy">
-                  <b>{request.title}</b>
-                  <small>{request.reason}</small>
-                </div>
-                {request.id === 'updates' ? (
-                  <button
-                    className="permission-action updates"
-                    onClick={() => void ask(request.id)}
-                  >
-                    {granted ? 'Allowed' : 'Open settings'}
-                  </button>
-                ) : granted ? (
-                  <span className="permission-state allowed">Allowed</span>
-                ) : (
-                  <button
-                    className="permission-action"
-                    disabled={busy === request.id || state === 'unavailable'}
-                    onClick={() => void ask(request.id)}
-                  >
-                    {busy === request.id ? '…' : label(state)}
-                  </button>
-                )}
-              </div>
-            )
-          })}
+    <AccessibleDialog
+      className="sheet permission-sheet"
+      labelledBy="permission-title"
+      describedBy="permission-description"
+      onClose={onClose}
+    >
+      <div className="sheet-handle" />
+      <header className="sheet-header">
+        <div>
+          <p className="eyebrow">WELCOME TO CRAVE KITCHEN</p>
+          <h2 id="permission-title">A few permissions</h2>
         </div>
-
-        <div className="permission-actions">
-          <button className="secondary-button" onClick={() => void openAppSettings()}>
-            Open device settings
-          </button>
-          <button className="primary-button" onClick={() => void grantAll()}>
-            Allow all
-          </button>
-        </div>
-        <button className="permission-skip" onClick={onDone}>
-          Not now
+        <button className="icon-button" onClick={onClose} aria-label="Close">
+          <Icon name="close" />
         </button>
-      </section>
-    </div>
+      </header>
+      <p className="permission-note" id="permission-description">
+        These keep the app fast and the right information on screen. You can change them any time in
+        your device settings.
+      </p>
+
+      <div className="permission-list">
+        {PERMISSION_REQUESTS.map((request) => {
+          const state = states[request.id] || 'prompt'
+          const granted = state === 'granted'
+          const iconName = GRANTED_ICON[request.id]
+          return (
+            <div className="permission-row" key={request.id}>
+              <span className={`permission-icon ${granted ? 'granted' : ''}`}>
+                <Icon name={iconName} />
+              </span>
+              <div className="permission-copy">
+                <b>{request.title}</b>
+                <small>{request.reason}</small>
+              </div>
+              {request.id === 'updates' ? (
+                <button className="permission-action updates" onClick={() => void ask(request.id)}>
+                  {granted ? 'Allowed' : 'Open settings'}
+                </button>
+              ) : granted ? (
+                <span className="permission-state allowed">Allowed</span>
+              ) : (
+                <button
+                  className="permission-action"
+                  disabled={busy === request.id || state === 'unavailable'}
+                  onClick={() => void ask(request.id)}
+                >
+                  {busy === request.id ? '…' : label(state)}
+                </button>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="permission-actions">
+        <button className="secondary-button" onClick={() => void openAppSettings()}>
+          Open device settings
+        </button>
+        <button className="primary-button" onClick={() => void grantAll()}>
+          Allow all
+        </button>
+      </div>
+      <button className="permission-skip" onClick={onDone}>
+        Not now
+      </button>
+    </AccessibleDialog>
   )
 }

@@ -2,6 +2,7 @@ import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import { Network } from '@capacitor/network'
 import { SplashScreen } from '@capacitor/splash-screen'
+import { AccessibleDialog } from '@crave/mobile-core'
 import { FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PullToRefresh } from './components/PullToRefresh'
 import {
@@ -1644,209 +1645,196 @@ export default function App() {
                 <Icon name="logout" /> Sign out of admin app
               </button>
               {updateSheet && (
-                <div
-                  className="modal-backdrop"
-                  role="dialog"
-                  aria-modal="true"
-                  onClick={() => setUpdateSheet(false)}
+                <AccessibleDialog
+                  className="partner-sheet"
+                  labelledBy="admin-update-title"
+                  onClose={() => setUpdateSheet(false)}
                 >
-                  <article className="partner-sheet" onClick={(event) => event.stopPropagation()}>
-                    <div className="partner-sheet-heading">
+                  <div className="partner-sheet-heading">
+                    <div>
+                      <span className="eyebrow">Admin app</span>
+                      <h2 id="admin-update-title">{t.settings.checkForUpdates}</h2>
+                    </div>
+                    <button onClick={() => setUpdateSheet(false)} aria-label="Close">
+                      ×
+                    </button>
+                  </div>
+                  <div>
+                    <div className="settings-title">
+                      <span>
+                        <Icon name="download" />
+                      </span>
                       <div>
-                        <span className="eyebrow">Admin app</span>
-                        <h2>{t.settings.checkForUpdates}</h2>
+                        <h3>Admin app update</h3>
+                        <p>
+                          {checkingUpdate
+                            ? 'Checking for the latest admin app…'
+                            : availableUpdate
+                              ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
+                              : updateError || 'You are using the latest available version.'}
+                        </p>
                       </div>
-                      <button onClick={() => setUpdateSheet(false)} aria-label="Close">
-                        ×
+                    </div>
+                    <div className="software-actions">
+                      <button
+                        className="secondary-button"
+                        disabled={checkingUpdate || installingUpdate}
+                        onClick={() => void refreshUpdateStatus()}
+                      >
+                        {checkingUpdate ? 'Checking…' : 'Check again'}
+                      </button>
+                      <button
+                        className="primary-button"
+                        disabled={!availableUpdate || checkingUpdate || installingUpdate}
+                        onClick={() => void installUpdate()}
+                      >
+                        {installingUpdate
+                          ? 'Opening installer…'
+                          : availableUpdate
+                            ? `Update to ${availableUpdate.versionName}`
+                            : 'App is up to date'}
                       </button>
                     </div>
-                    <div>
-                      <div className="settings-title">
-                        <span>
-                          <Icon name="download" />
-                        </span>
-                        <div>
-                          <h3>Admin app update</h3>
-                          <p>
-                            {checkingUpdate
-                              ? 'Checking for the latest admin app…'
-                              : availableUpdate
-                                ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
-                                : updateError || 'You are using the latest available version.'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="software-actions">
-                        <button
-                          className="secondary-button"
-                          disabled={checkingUpdate || installingUpdate}
-                          onClick={() => void refreshUpdateStatus()}
-                        >
-                          {checkingUpdate ? 'Checking…' : 'Check again'}
-                        </button>
-                        <button
-                          className="primary-button"
-                          disabled={!availableUpdate || checkingUpdate || installingUpdate}
-                          onClick={() => void installUpdate()}
-                        >
-                          {installingUpdate
-                            ? 'Opening installer…'
-                            : availableUpdate
-                              ? `Update to ${availableUpdate.versionName}`
-                              : 'App is up to date'}
-                        </button>
-                      </div>
-                      {updateError && availableUpdate && (
-                        <div className="software-error">{updateError}</div>
-                      )}
-                    </div>
-                  </article>
-                </div>
+                    {updateError && availableUpdate && (
+                      <div className="software-error">{updateError}</div>
+                    )}
+                  </div>
+                </AccessibleDialog>
               )}
               {passwordSheet && (
-                <div
-                  className="modal-backdrop"
-                  role="dialog"
-                  aria-modal="true"
-                  onClick={() => setPasswordSheet(false)}
+                <AccessibleDialog
+                  className="partner-sheet"
+                  labelledBy="admin-password-title"
+                  onClose={() => setPasswordSheet(false)}
                 >
-                  <article className="partner-sheet" onClick={(event) => event.stopPropagation()}>
-                    <div className="partner-sheet-heading">
-                      <div>
-                        <span className="eyebrow">Account security</span>
-                        <h2>{t.settings.changePassword}</h2>
+                  <div className="partner-sheet-heading">
+                    <div>
+                      <span className="eyebrow">Account security</span>
+                      <h2 id="admin-password-title">{t.settings.changePassword}</h2>
+                    </div>
+                    <button onClick={() => setPasswordSheet(false)} aria-label="Close">
+                      ×
+                    </button>
+                  </div>
+                  <p>Update the password used to sign in to the admin app.</p>
+                  <form
+                    className="change-password-form"
+                    noValidate
+                    onSubmit={(event) => void changePassword(event)}
+                  >
+                    <div className="change-password-fields">
+                      <PasswordField
+                        label="Current password"
+                        value={currentPassword}
+                        onChange={setCurrentPassword}
+                        placeholder="Current password"
+                        autoComplete="current-password"
+                        visible={showCurrentPassword}
+                        onToggleVisibility={() => setShowCurrentPassword((visible) => !visible)}
+                        minLength={8}
+                        maxLength={256}
+                      />
+                      <PasswordField
+                        label="New password"
+                        value={newPassword}
+                        onChange={setNewPassword}
+                        placeholder="8–256 characters"
+                        autoComplete="new-password"
+                        visible={showNewPassword}
+                        onToggleVisibility={() => setShowNewPassword((visible) => !visible)}
+                        minLength={8}
+                        maxLength={256}
+                      />
+                      <PasswordField
+                        label="Confirm new password"
+                        value={confirmPassword}
+                        onChange={setConfirmPassword}
+                        placeholder="Re-enter new password"
+                        autoComplete="new-password"
+                        visible={showConfirmPassword}
+                        onToggleVisibility={() => setShowConfirmPassword((visible) => !visible)}
+                        minLength={8}
+                        maxLength={256}
+                      />
+                    </div>
+                    {passwordFeedback && (
+                      <div
+                        className={`password-feedback ${passwordFeedback.type}`}
+                        role={passwordFeedback.type === 'error' ? 'alert' : 'status'}
+                        aria-live="polite"
+                      >
+                        {passwordFeedback.message}
                       </div>
-                      <button onClick={() => setPasswordSheet(false)} aria-label="Close">
-                        ×
+                    )}
+                    <div className="change-password-actions">
+                      <small>Password length: 8–256 characters.</small>
+                      <button className="primary-button" type="submit" disabled={passwordBusy}>
+                        {passwordBusy ? 'Updating password…' : 'Update password'}
                       </button>
                     </div>
-                    <p>Update the password used to sign in to the admin app.</p>
-                    <form
-                      className="change-password-form"
-                      noValidate
-                      onSubmit={(event) => void changePassword(event)}
-                    >
-                      <div className="change-password-fields">
-                        <PasswordField
-                          label="Current password"
-                          value={currentPassword}
-                          onChange={setCurrentPassword}
-                          placeholder="Current password"
-                          autoComplete="current-password"
-                          visible={showCurrentPassword}
-                          onToggleVisibility={() => setShowCurrentPassword((visible) => !visible)}
-                          minLength={8}
-                          maxLength={256}
-                        />
-                        <PasswordField
-                          label="New password"
-                          value={newPassword}
-                          onChange={setNewPassword}
-                          placeholder="8–256 characters"
-                          autoComplete="new-password"
-                          visible={showNewPassword}
-                          onToggleVisibility={() => setShowNewPassword((visible) => !visible)}
-                          minLength={8}
-                          maxLength={256}
-                        />
-                        <PasswordField
-                          label="Confirm new password"
-                          value={confirmPassword}
-                          onChange={setConfirmPassword}
-                          placeholder="Re-enter new password"
-                          autoComplete="new-password"
-                          visible={showConfirmPassword}
-                          onToggleVisibility={() => setShowConfirmPassword((visible) => !visible)}
-                          minLength={8}
-                          maxLength={256}
-                        />
-                      </div>
-                      {passwordFeedback && (
-                        <div
-                          className={`password-feedback ${passwordFeedback.type}`}
-                          role={passwordFeedback.type === 'error' ? 'alert' : 'status'}
-                          aria-live="polite"
-                        >
-                          {passwordFeedback.message}
-                        </div>
-                      )}
-                      <div className="change-password-actions">
-                        <small>Password length: 8–256 characters.</small>
-                        <button className="primary-button" type="submit" disabled={passwordBusy}>
-                          {passwordBusy ? 'Updating password…' : 'Update password'}
-                        </button>
-                      </div>
-                    </form>{' '}
-                  </article>
-                </div>
+                  </form>{' '}
+                </AccessibleDialog>
               )}
               {languageSheet && (
-                <div
-                  className="modal-backdrop"
-                  role="dialog"
-                  aria-modal="true"
-                  onClick={() => setLanguageSheet(false)}
+                <AccessibleDialog
+                  className="partner-sheet"
+                  labelledBy="admin-language-title"
+                  onClose={() => setLanguageSheet(false)}
                 >
-                  <article className="partner-sheet" onClick={(event) => event.stopPropagation()}>
-                    <div className="partner-sheet-heading">
-                      <div>
-                        <span className="eyebrow">App language</span>
-                        <h2>{t.settings.chooseLanguage}</h2>
-                      </div>
-                      <button onClick={() => setLanguageSheet(false)} aria-label="Close">
-                        ×
+                  <div className="partner-sheet-heading">
+                    <div>
+                      <span className="eyebrow">App language</span>
+                      <h2 id="admin-language-title">{t.settings.chooseLanguage}</h2>
+                    </div>
+                    <button onClick={() => setLanguageSheet(false)} aria-label="Close">
+                      ×
+                    </button>
+                  </div>
+                  <div className="language-list">
+                    {languages.map((option) => (
+                      <button
+                        key={option.code}
+                        className={language === option.code ? 'selected' : ''}
+                        onClick={() => {
+                          setLanguage(option.code)
+                          setLanguageSheet(false)
+                        }}
+                      >
+                        <span>{option.nativeName}</span>
+                        {language === option.code && <Icon name="check" />}
                       </button>
-                    </div>
-                    <div className="language-list">
-                      {languages.map((option) => (
-                        <button
-                          key={option.code}
-                          className={language === option.code ? 'selected' : ''}
-                          onClick={() => {
-                            setLanguage(option.code)
-                            setLanguageSheet(false)
-                          }}
-                        >
-                          <span>{option.nativeName}</span>
-                          {language === option.code && <Icon name="check" />}
-                        </button>
-                      ))}
-                    </div>
-                  </article>
-                </div>
+                    ))}
+                  </div>
+                </AccessibleDialog>
               )}
               {confirmLogout && (
-                <div className="modal-backdrop" onClick={() => setConfirmLogout(false)}>
-                  <article
-                    className="partner-sheet"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="logout-confirm-title"
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    <div className="sheet-handle" />
-                    <div className="partner-sheet-heading">
-                      <div>
-                        <span className="eyebrow">Confirm sign out</span>
-                        <h2 id="logout-confirm-title">Really sign out?</h2>
-                      </div>
-                      <button onClick={() => setConfirmLogout(false)} aria-label="Close">
-                        ×
-                      </button>
+                <AccessibleDialog
+                  className="partner-sheet"
+                  labelledBy="logout-confirm-title"
+                  onClose={() => setConfirmLogout(false)}
+                >
+                  <div className="sheet-handle" />
+                  <div className="partner-sheet-heading">
+                    <div>
+                      <span className="eyebrow">Confirm sign out</span>
+                      <h2 id="logout-confirm-title">Really sign out?</h2>
                     </div>
-                    <p className="partner-form-help">
-                      You will be signed out of the admin app. You can sign back in anytime.
-                    </p>
-                    <div className="partner-form-actions">
-                      <button className="secondary-button" onClick={() => setConfirmLogout(false)}>
-                        Cancel
-                      </button>
-                      <button className="primary-button" onClick={() => void logout()}>
-                        <Icon name="logout" /> Sign out
-                      </button>
-                    </div>
-                  </article>
-                </div>
+                    <button onClick={() => setConfirmLogout(false)} aria-label="Close">
+                      ×
+                    </button>
+                  </div>
+                  <p className="partner-form-help">
+                    You will be signed out of the admin app. You can sign back in anytime.
+                  </p>
+                  <div className="partner-form-actions">
+                    <button className="secondary-button" onClick={() => setConfirmLogout(false)}>
+                      Cancel
+                    </button>
+                    <button className="primary-button" onClick={() => void logout()}>
+                      <Icon name="logout" /> Sign out
+                    </button>
+                  </div>
+                </AccessibleDialog>
               )}
             </section>
           )}
@@ -1871,388 +1859,377 @@ export default function App() {
         ))}
       </nav>
       {partnerMode && (
-        <div className="modal-backdrop" onClick={() => !partnerBusy && setPartnerMode(null)}>
-          <section
-            className="partner-sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="partner-form-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="sheet-handle" />
-            <div className="partner-sheet-heading">
-              <div>
-                <span className="eyebrow">Partner management</span>
-                <h2 id="partner-form-title">
-                  {partnerMode === 'add' ? 'Add restaurant' : 'Edit restaurant'}
-                </h2>
-              </div>
-              <button onClick={() => setPartnerMode(null)} aria-label="Close">
-                ×
-              </button>
+        <AccessibleDialog
+          className="partner-sheet"
+          labelledBy="partner-form-title"
+          closeOnBackdrop={!partnerBusy}
+          onClose={() => setPartnerMode(null)}
+        >
+          <div className="sheet-handle" />
+          <div className="partner-sheet-heading">
+            <div>
+              <span className="eyebrow">Partner management</span>
+              <h2 id="partner-form-title">
+                {partnerMode === 'add' ? 'Add restaurant' : 'Edit restaurant'}
+              </h2>
             </div>
-            <form className="partner-form" onSubmit={savePartner}>
-              {partnerMode === 'add' && (
-                <>
-                  <label>
-                    Owner name
-                    <input
-                      value={partnerForm.ownerName}
-                      onChange={(event) =>
-                        setPartnerForm((form) => ({ ...form, ownerName: event.target.value }))
-                      }
-                      required
-                    />
-                  </label>
-                  <label>
-                    Owner email
-                    <input
-                      type="email"
-                      value={partnerForm.email}
-                      onChange={(event) =>
-                        setPartnerForm((form) => ({ ...form, email: event.target.value }))
-                      }
-                      required
-                    />
-                  </label>
-                  <label>
-                    Temporary password
-                    <input
-                      type="password"
-                      minLength={8}
-                      value={partnerForm.password}
-                      onChange={(event) =>
-                        setPartnerForm((form) => ({ ...form, password: event.target.value }))
-                      }
-                      required
-                    />
-                  </label>
-                </>
-              )}
-              <label>
-                Restaurant name
-                <input
-                  value={partnerForm.name}
-                  onChange={(event) =>
-                    setPartnerForm((form) => ({ ...form, name: event.target.value }))
-                  }
-                  required
-                />
-              </label>
-              <label>
-                Cuisine
-                <input
-                  value={partnerForm.cuisine}
-                  onChange={(event) =>
-                    setPartnerForm((form) => ({ ...form, cuisine: event.target.value }))
-                  }
-                  placeholder="Multi-Cuisine"
-                />
-              </label>
-              <label>
-                Phone
-                <input
-                  type="tel"
-                  value={partnerForm.phone}
-                  onChange={(event) =>
-                    setPartnerForm((form) => ({ ...form, phone: event.target.value }))
-                  }
-                />
-              </label>
-              <label>
-                Address
-                <textarea
-                  value={partnerForm.address}
-                  onChange={(event) =>
-                    setPartnerForm((form) => ({ ...form, address: event.target.value }))
-                  }
-                />
-              </label>
-              <label className="commercial-model-field">
-                Commercial model
-                <select
-                  value={partnerForm.commercialModel}
-                  onChange={(event) =>
-                    setPartnerForm((form) => ({
-                      ...form,
-                      commercialModel: event.target.value as PartnerForm['commercialModel'],
-                    }))
-                  }
-                >
-                  <option value="commission">Commission</option>
-                  <option value="markup">Markup</option>
-                  <option value="hybrid">Hybrid</option>
-                </select>
-              </label>
-              {partnerForm.commercialModel !== 'markup' && (
-                <div className="commercial-fields">
-                  <label>
-                    Commission (%)
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={partnerForm.commissionRate}
-                      onChange={(event) =>
-                        setPartnerForm((form) => ({
-                          ...form,
-                          commissionRate: event.target.value,
-                        }))
-                      }
-                      required
-                    />
-                  </label>
-                  <label>
-                    Fixed commission (₹)
-                    <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={partnerForm.fixedCommission}
-                      onChange={(event) =>
-                        setPartnerForm((form) => ({
-                          ...form,
-                          fixedCommission: event.target.value,
-                        }))
-                      }
-                      required
-                    />
-                  </label>
-                </div>
-              )}
-              {partnerForm.commercialModel !== 'commission' && (
-                <div className="commercial-fields">
-                  <label>
-                    Markup (%)
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={partnerForm.markupRate}
-                      onChange={(event) =>
-                        setPartnerForm((form) => ({ ...form, markupRate: event.target.value }))
-                      }
-                      required
-                    />
-                  </label>
-                  <label>
-                    Fixed markup (₹)
-                    <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={partnerForm.fixedMarkup}
-                      onChange={(event) =>
-                        setPartnerForm((form) => ({ ...form, fixedMarkup: event.target.value }))
-                      }
-                      required
-                    />
-                  </label>
-                </div>
-              )}
-              <div className="partner-map-wrap">
-                <div className="partner-map-head">
-                  <span>Restaurant location</span>
-                  <small>Click the map to drop the pin and capture coordinates.</small>
-                </div>
-                <Suspense
-                  fallback={<div className="address-map-canvas map-loading">Loading map…</div>}
-                >
-                  <AddressMap
-                    location={mapPoint}
-                    onPick={(point) => {
-                      setMapPoint(point)
+            <button onClick={() => setPartnerMode(null)} aria-label="Close">
+              ×
+            </button>
+          </div>
+          <form className="partner-form" onSubmit={savePartner}>
+            {partnerMode === 'add' && (
+              <>
+                <label>
+                  Owner name
+                  <input
+                    value={partnerForm.ownerName}
+                    onChange={(event) =>
+                      setPartnerForm((form) => ({ ...form, ownerName: event.target.value }))
+                    }
+                    required
+                  />
+                </label>
+                <label>
+                  Owner email
+                  <input
+                    type="email"
+                    value={partnerForm.email}
+                    onChange={(event) =>
+                      setPartnerForm((form) => ({ ...form, email: event.target.value }))
+                    }
+                    required
+                  />
+                </label>
+                <label>
+                  Temporary password
+                  <input
+                    type="password"
+                    minLength={8}
+                    value={partnerForm.password}
+                    onChange={(event) =>
+                      setPartnerForm((form) => ({ ...form, password: event.target.value }))
+                    }
+                    required
+                  />
+                </label>
+              </>
+            )}
+            <label>
+              Restaurant name
+              <input
+                value={partnerForm.name}
+                onChange={(event) =>
+                  setPartnerForm((form) => ({ ...form, name: event.target.value }))
+                }
+                required
+              />
+            </label>
+            <label>
+              Cuisine
+              <input
+                value={partnerForm.cuisine}
+                onChange={(event) =>
+                  setPartnerForm((form) => ({ ...form, cuisine: event.target.value }))
+                }
+                placeholder="Multi-Cuisine"
+              />
+            </label>
+            <label>
+              Phone
+              <input
+                type="tel"
+                value={partnerForm.phone}
+                onChange={(event) =>
+                  setPartnerForm((form) => ({ ...form, phone: event.target.value }))
+                }
+              />
+            </label>
+            <label>
+              Address
+              <textarea
+                value={partnerForm.address}
+                onChange={(event) =>
+                  setPartnerForm((form) => ({ ...form, address: event.target.value }))
+                }
+              />
+            </label>
+            <label className="commercial-model-field">
+              Commercial model
+              <select
+                value={partnerForm.commercialModel}
+                onChange={(event) =>
+                  setPartnerForm((form) => ({
+                    ...form,
+                    commercialModel: event.target.value as PartnerForm['commercialModel'],
+                  }))
+                }
+              >
+                <option value="commission">Commission</option>
+                <option value="markup">Markup</option>
+                <option value="hybrid">Hybrid</option>
+              </select>
+            </label>
+            {partnerForm.commercialModel !== 'markup' && (
+              <div className="commercial-fields">
+                <label>
+                  Commission (%)
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={partnerForm.commissionRate}
+                    onChange={(event) =>
                       setPartnerForm((form) => ({
                         ...form,
-                        latitude: String(point.lat.toFixed(6)),
-                        longitude: String(point.lng.toFixed(6)),
+                        commissionRate: event.target.value,
                       }))
-                    }}
+                    }
+                    required
                   />
-                </Suspense>
-                <div className="partner-coords">
-                  <label>
-                    Latitude
-                    <input value={partnerForm.latitude} readOnly placeholder="Click the map" />
-                  </label>
-                  <label>
-                    Longitude
-                    <input value={partnerForm.longitude} readOnly placeholder="Click the map" />
-                  </label>
-                </div>
+                </label>
+                <label>
+                  Fixed commission (₹)
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={partnerForm.fixedCommission}
+                    onChange={(event) =>
+                      setPartnerForm((form) => ({
+                        ...form,
+                        fixedCommission: event.target.value,
+                      }))
+                    }
+                    required
+                  />
+                </label>
               </div>
-              <div className="partner-form-actions">
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => setPartnerMode(null)}
-                  disabled={partnerBusy}
-                >
-                  Cancel
-                </button>
-                <button className="primary-button" type="submit" disabled={partnerBusy}>
-                  {partnerBusy
-                    ? 'Saving…'
-                    : partnerMode === 'add'
-                      ? 'Add restaurant'
-                      : 'Save changes'}
-                </button>
+            )}
+            {partnerForm.commercialModel !== 'commission' && (
+              <div className="commercial-fields">
+                <label>
+                  Markup (%)
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={partnerForm.markupRate}
+                    onChange={(event) =>
+                      setPartnerForm((form) => ({ ...form, markupRate: event.target.value }))
+                    }
+                    required
+                  />
+                </label>
+                <label>
+                  Fixed markup (₹)
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={partnerForm.fixedMarkup}
+                    onChange={(event) =>
+                      setPartnerForm((form) => ({ ...form, fixedMarkup: event.target.value }))
+                    }
+                    required
+                  />
+                </label>
               </div>
-            </form>
-          </section>
-        </div>
-      )}
-      {xpFormOpen && (
-        <div className="modal-backdrop" onClick={closeXPProductForm}>
-          <section
-            className="partner-sheet xp-product-sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="xp-product-form-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="sheet-handle" />
-            <div className="partner-sheet-heading">
-              <div>
-                <span className="eyebrow">XP Store catalog</span>
-                <h2 id="xp-product-form-title">{xpEditingId ? 'Edit XP item' : 'Add XP item'}</h2>
+            )}
+            <div className="partner-map-wrap">
+              <div className="partner-map-head">
+                <span>Restaurant location</span>
+                <small>Click the map to drop the pin and capture coordinates.</small>
               </div>
-              <button onClick={closeXPProductForm} aria-label="Close">
-                ×
+              <Suspense
+                fallback={<div className="address-map-canvas map-loading">Loading map…</div>}
+              >
+                <AddressMap
+                  location={mapPoint}
+                  onPick={(point) => {
+                    setMapPoint(point)
+                    setPartnerForm((form) => ({
+                      ...form,
+                      latitude: String(point.lat.toFixed(6)),
+                      longitude: String(point.lng.toFixed(6)),
+                    }))
+                  }}
+                />
+              </Suspense>
+              <div className="partner-coords">
+                <label>
+                  Latitude
+                  <input value={partnerForm.latitude} readOnly placeholder="Click the map" />
+                </label>
+                <label>
+                  Longitude
+                  <input value={partnerForm.longitude} readOnly placeholder="Click the map" />
+                </label>
+              </div>
+            </div>
+            <div className="partner-form-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setPartnerMode(null)}
+                disabled={partnerBusy}
+              >
+                Cancel
+              </button>
+              <button className="primary-button" type="submit" disabled={partnerBusy}>
+                {partnerBusy
+                  ? 'Saving…'
+                  : partnerMode === 'add'
+                    ? 'Add restaurant'
+                    : 'Save changes'}
               </button>
             </div>
-            <p className="partner-form-help">
-              This item is saved directly to the customer-facing CraveXP catalog.
-            </p>
-            <form className="partner-form xp-product-form" onSubmit={saveXPProduct}>
-              <label>
-                Product name
+          </form>
+        </AccessibleDialog>
+      )}
+      {xpFormOpen && (
+        <AccessibleDialog
+          className="partner-sheet xp-product-sheet"
+          labelledBy="xp-product-form-title"
+          onClose={closeXPProductForm}
+        >
+          <div className="sheet-handle" />
+          <div className="partner-sheet-heading">
+            <div>
+              <span className="eyebrow">XP Store catalog</span>
+              <h2 id="xp-product-form-title">{xpEditingId ? 'Edit XP item' : 'Add XP item'}</h2>
+            </div>
+            <button onClick={closeXPProductForm} aria-label="Close">
+              ×
+            </button>
+          </div>
+          <p className="partner-form-help">
+            This item is saved directly to the customer-facing CraveXP catalog.
+          </p>
+          <form className="partner-form xp-product-form" onSubmit={saveXPProduct}>
+            <label>
+              Product name
+              <input
+                value={xpForm.name}
+                onChange={(event) => setXPForm((form) => ({ ...form, name: event.target.value }))}
+                placeholder="Organic eggs"
+                required
+              />
+            </label>
+            <label>
+              Category
+              <input
+                value={xpForm.category}
+                onChange={(event) =>
+                  setXPForm((form) => ({ ...form, category: event.target.value }))
+                }
+                placeholder="Dairy & Eggs"
+                required
+              />
+            </label>
+            <label>
+              Unit
+              <input
+                value={xpForm.unit}
+                onChange={(event) => setXPForm((form) => ({ ...form, unit: event.target.value }))}
+                placeholder="6 Pieces"
+                required
+              />
+            </label>
+            <label>
+              Selling price (₹)
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={xpForm.price}
+                onChange={(event) => setXPForm((form) => ({ ...form, price: event.target.value }))}
+                required
+              />
+            </label>
+            <label>
+              MRP (₹)
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={xpForm.mrp}
+                onChange={(event) => setXPForm((form) => ({ ...form, mrp: event.target.value }))}
+                placeholder="Defaults to selling price"
+              />
+            </label>
+            <label>
+              Stock count
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={xpForm.stockCount}
+                onChange={(event) =>
+                  setXPForm((form) => ({ ...form, stockCount: event.target.value }))
+                }
+                required
+              />
+            </label>
+            <label className="barcode-field">
+              Barcode
+              <span className="barcode-input-row">
                 <input
-                  value={xpForm.name}
-                  onChange={(event) => setXPForm((form) => ({ ...form, name: event.target.value }))}
-                  placeholder="Organic eggs"
-                  required
-                />
-              </label>
-              <label>
-                Category
-                <input
-                  value={xpForm.category}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={xpForm.barcode}
                   onChange={(event) =>
-                    setXPForm((form) => ({ ...form, category: event.target.value }))
+                    setXPForm((form) => ({ ...form, barcode: event.target.value }))
                   }
-                  placeholder="Dairy & Eggs"
-                  required
+                  placeholder="Scan or enter barcode"
                 />
-              </label>
-              <label>
-                Unit
-                <input
-                  value={xpForm.unit}
-                  onChange={(event) => setXPForm((form) => ({ ...form, unit: event.target.value }))}
-                  placeholder="6 Pieces"
-                  required
-                />
-              </label>
-              <label>
-                Selling price (₹)
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={xpForm.price}
-                  onChange={(event) =>
-                    setXPForm((form) => ({ ...form, price: event.target.value }))
-                  }
-                  required
-                />
-              </label>
-              <label>
-                MRP (₹)
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={xpForm.mrp}
-                  onChange={(event) => setXPForm((form) => ({ ...form, mrp: event.target.value }))}
-                  placeholder="Defaults to selling price"
-                />
-              </label>
-              <label>
-                Stock count
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={xpForm.stockCount}
-                  onChange={(event) =>
-                    setXPForm((form) => ({ ...form, stockCount: event.target.value }))
-                  }
-                  required
-                />
-              </label>
-              <label className="barcode-field">
-                Barcode
-                <span className="barcode-input-row">
-                  <input
-                    inputMode="numeric"
-                    autoComplete="off"
-                    value={xpForm.barcode}
-                    onChange={(event) =>
-                      setXPForm((form) => ({ ...form, barcode: event.target.value }))
-                    }
-                    placeholder="Scan or enter barcode"
-                  />
-                  <button
-                    type="button"
-                    className="barcode-scan-button"
-                    onClick={() => setBarcodeScannerOpen(true)}
-                    aria-label="Scan product barcode with camera"
-                  >
-                    <Icon name="camera" />
-                    <span>Scan</span>
-                  </button>
-                </span>
-              </label>
-              <label>
-                Image URL
-                <input
-                  type="url"
-                  value={xpForm.image}
-                  onChange={(event) =>
-                    setXPForm((form) => ({ ...form, image: event.target.value }))
-                  }
-                  placeholder="https://…"
-                />
-              </label>
-              <label className="xp-availability-field">
-                <input
-                  type="checkbox"
-                  checked={xpForm.inStock}
-                  onChange={(event) =>
-                    setXPForm((form) => ({ ...form, inStock: event.target.checked }))
-                  }
-                />
-                Available to customers
-              </label>
-              <div className="partner-form-actions">
                 <button
                   type="button"
-                  className="secondary-button"
-                  onClick={closeXPProductForm}
-                  disabled={xpBusy}
+                  className="barcode-scan-button"
+                  onClick={() => setBarcodeScannerOpen(true)}
+                  aria-label="Scan product barcode with camera"
                 >
-                  Cancel
+                  <Icon name="camera" />
+                  <span>Scan</span>
                 </button>
-                <button className="primary-button" type="submit" disabled={xpBusy}>
-                  {xpBusy ? 'Saving…' : xpEditingId ? 'Save item' : 'Add to XP Store'}
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
+              </span>
+            </label>
+            <label>
+              Image URL
+              <input
+                type="url"
+                value={xpForm.image}
+                onChange={(event) => setXPForm((form) => ({ ...form, image: event.target.value }))}
+                placeholder="https://…"
+              />
+            </label>
+            <label className="xp-availability-field">
+              <input
+                type="checkbox"
+                checked={xpForm.inStock}
+                onChange={(event) =>
+                  setXPForm((form) => ({ ...form, inStock: event.target.checked }))
+                }
+              />
+              Available to customers
+            </label>
+            <div className="partner-form-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={closeXPProductForm}
+                disabled={xpBusy}
+              >
+                Cancel
+              </button>
+              <button className="primary-button" type="submit" disabled={xpBusy}>
+                {xpBusy ? 'Saving…' : xpEditingId ? 'Save item' : 'Add to XP Store'}
+              </button>
+            </div>
+          </form>
+        </AccessibleDialog>
       )}
       {barcodeScannerOpen && (
         <Suspense

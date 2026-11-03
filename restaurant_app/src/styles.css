@@ -3,23 +3,23 @@
 
 :root {
   font-family: var(--font-ui);
-  color: #f7faf7;
-  background: #0a0f0d;
+  color: var(--theme-dark-ink);
+  background: var(--theme-dark-canvas);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --ink: #f7faf7;
-  --muted: #91a097;
-  --surface: #131a16;
-  --surface-2: #18221c;
+  --ink: var(--theme-dark-ink);
+  --muted: var(--theme-dark-muted);
+  --surface: var(--theme-dark-surface);
+  --surface-2: var(--theme-dark-raised);
   --surface-3: #202c25;
-  --line: #29372f;
+  --line: var(--theme-dark-line);
   --lime: var(--brand-primary);
   --lime-dark: #91aa20;
   --danger: #ff6b77;
   --input-bg: #0e1511;
-  --input-text: #f7faf7;
+  --input-text: var(--theme-dark-ink);
   --accent: var(--brand-primary);
-  --app-bg: #0a0f0d;
+  --app-bg: var(--theme-dark-canvas);
   --chrome-bg: rgb(10 15 13 / 94%);
   --overlay-bg: rgb(0 0 0 / 58%);
   --on-accent: #101710;
@@ -2237,14 +2237,19 @@ textarea,
    from the top of any page. */
 .ptr-scroll {
   position: relative;
-  max-height: calc(100dvh - var(--nav-height));
+  min-height: 0;
+  flex: 1 1 auto;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   overscroll-behavior: contain;
+  touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
 }
 .ptr-stretch {
+  min-height: 100%;
   display: flex;
   flex-direction: column;
+  padding-bottom: calc(var(--app-nav-height) + var(--safe-bottom) + var(--space-3));
 }
 .ptr-indicator {
   position: absolute;
@@ -2276,9 +2281,15 @@ textarea,
 
 /* Kitchen queue alignment: readable at a glance and usable with gloved hands. */
 .app-shell {
-  padding-bottom: calc(var(--app-nav-height) + var(--safe-bottom) + var(--space-3));
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 0;
 }
 .app-header {
+  flex: 0 0 auto;
   min-height: calc(var(--app-header-height) + var(--safe-top));
   height: auto;
   padding-top: max(var(--space-3), var(--safe-top));

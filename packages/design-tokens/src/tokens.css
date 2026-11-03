@@ -6,6 +6,9 @@
   --brand-ink: #121815;
   --brand-forest: #193b28;
   --brand-forest-soft: #284f38;
+  --commerce-primary: #07883f;
+  --commerce-primary-hover: #066f35;
+  --commerce-primary-soft: #e7f4ec;
 
   /* Shared semantic colors. Surface colors remain theme-specific. */
   --semantic-success: #22a861;
@@ -13,6 +16,20 @@
   --semantic-danger: #d3515c;
   --semantic-info: #3b82f6;
   --semantic-neutral: #6f776f;
+
+  /* Shared semantic surfaces. Apps may layer role accents over these values. */
+  --theme-light-canvas: #f7f7f2;
+  --theme-light-surface: #ffffff;
+  --theme-light-raised: #f1f4ed;
+  --theme-light-line: #dfe3dc;
+  --theme-light-ink: #101712;
+  --theme-light-muted: #6f776f;
+  --theme-dark-canvas: #07100b;
+  --theme-dark-surface: #101914;
+  --theme-dark-raised: #18231c;
+  --theme-dark-line: #28372d;
+  --theme-dark-ink: #f5f7f5;
+  --theme-dark-muted: #829087;
 
   /* One typography system across web and native shells. */
   --font-ui:

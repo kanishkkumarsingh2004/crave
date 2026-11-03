@@ -1,5 +1,6 @@
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import { useEffect, useRef, useState } from 'react'
+import { AccessibleDialog } from '@crave/mobile-core'
 
 interface BarcodeScannerProps {
   onClose: () => void
@@ -118,44 +119,43 @@ export default function BarcodeScanner({ onClose, onDetected }: BarcodeScannerPr
   }, [attempt])
 
   return (
-    <div className="barcode-scanner-backdrop" role="presentation">
-      <section
-        className="barcode-scanner-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="barcode-scanner-title"
-      >
-        <div className="barcode-scanner-heading">
-          <div>
-            <span className="eyebrow">Product camera</span>
-            <h2 id="barcode-scanner-title">Scan product barcode</h2>
-          </div>
-          <button type="button" onClick={onClose} aria-label="Close barcode scanner">
-            ×
-          </button>
+    <AccessibleDialog
+      backdropClassName="barcode-scanner-backdrop"
+      className="barcode-scanner-sheet"
+      labelledBy="barcode-scanner-title"
+      closeOnBackdrop={false}
+      onClose={onClose}
+    >
+      <div className="barcode-scanner-heading">
+        <div>
+          <span className="eyebrow">Product camera</span>
+          <h2 id="barcode-scanner-title">Scan product barcode</h2>
         </div>
-
-        <div className="barcode-reader-frame">
-          <div id={READER_ID} />
-          {starting && !error && <div className="barcode-camera-status">Starting camera…</div>}
-          {error && (
-            <div className="barcode-camera-error" role="alert">
-              <p>{error}</p>
-              <button type="button" onClick={() => setAttempt((value) => value + 1)}>
-                Try again
-              </button>
-            </div>
-          )}
-        </div>
-
-        <p className="barcode-scanner-help">
-          Hold the package steady and place the barcode inside the frame. It will be entered
-          automatically.
-        </p>
-        <button type="button" className="secondary-button barcode-cancel" onClick={onClose}>
-          Cancel scan
+        <button type="button" onClick={onClose} aria-label="Close barcode scanner">
+          ×
         </button>
-      </section>
-    </div>
+      </div>
+
+      <div className="barcode-reader-frame">
+        <div id={READER_ID} />
+        {starting && !error && <div className="barcode-camera-status">Starting camera…</div>}
+        {error && (
+          <div className="barcode-camera-error" role="alert">
+            <p>{error}</p>
+            <button type="button" onClick={() => setAttempt((value) => value + 1)}>
+              Try again
+            </button>
+          </div>
+        )}
+      </div>
+
+      <p className="barcode-scanner-help">
+        Hold the package steady and place the barcode inside the frame. It will be entered
+        automatically.
+      </p>
+      <button type="button" className="secondary-button barcode-cancel" onClick={onClose}>
+        Cancel scan
+      </button>
+    </AccessibleDialog>
   )
 }

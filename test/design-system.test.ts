@@ -42,10 +42,11 @@ test('operational apps default to dark while the customer app remains light-firs
 
 test('admin shell has a dedicated touch-scroll content owner', () => {
   const styles = read('admin_app/src/styles.css')
-  const alignmentBlock = styles.slice(styles.indexOf('Compact control-center alignment'))
-  assert.match(alignmentBlock, /\.app-content\s*{[^}]*overflow-y:\s*auto;/s)
-  assert.match(alignmentBlock, /-webkit-overflow-scrolling:\s*touch;/)
-  assert.match(alignmentBlock, /padding:[^;]*var\(--app-nav-height\)/s)
+  const scrollBlock = styles.slice(styles.indexOf('Pull to refresh'))
+  assert.match(scrollBlock, /\.ptr-scroll\s*{[^}]*overflow-y:\s*auto;/s)
+  assert.match(scrollBlock, /-webkit-overflow-scrolling:\s*touch;/)
+  assert.match(scrollBlock, /\.app-content\s*{[^}]*overflow-y:\s*visible;/s)
+  assert.match(scrollBlock, /padding:[^;]*var\(--app-nav-height\)/s)
 })
 
 test('shared tokens define accessible controls, role typography, and status semantics', () => {
@@ -57,4 +58,9 @@ test('shared tokens define accessible controls, role typography, and status sema
   for (const token of ['success', 'warning', 'danger', 'info']) {
     assert.match(tokens, new RegExp(`--semantic-${token}:`))
   }
+  for (const token of ['canvas', 'surface', 'raised', 'line', 'ink', 'muted']) {
+    assert.match(tokens, new RegExp(`--theme-light-${token}:`))
+    assert.match(tokens, new RegExp(`--theme-dark-${token}:`))
+  }
+  assert.match(tokens, /--commerce-primary:/)
 })

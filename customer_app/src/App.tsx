@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom'
 import { Network } from '@capacitor/network'
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
+import { AccessibleDialog } from '@crave/mobile-core'
+import { PullToRefresh } from './components/PullToRefresh'
 import appLogo from '../assets/logo.svg'
 import {
   ApiError,
@@ -98,105 +100,6 @@ function Empty({
       </div>
       <h3>{title ?? t.customer.noOrdersYet}</h3>
       <p>{text ?? t.customer.noOrdersYetHint}</p>
-    </div>
-  )
-}
-function PullToRefresh({
-  children,
-  onRefresh,
-  refreshing,
-}: {
-  children: React.ReactNode
-  onRefresh?: () => void | Promise<void>
-  refreshing?: boolean
-}) {
-  const [pullOffset, setPullOffset] = useState(0)
-  const [active, setActive] = useState(false)
-  const startY = useRef(0)
-  const THRESHOLD = 70
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  const onTouchStart = (e: TouchEvent) => {
-    const el = e.currentTarget as HTMLElement
-    if (el.scrollTop > 0) return
-    startY.current = e.touches[0].clientY
-    setActive(true)
-    setPullOffset(0)
-  }
-
-  const onTouchMove = (e: TouchEvent) => {
-    if (!active) return
-    const el = e.currentTarget as HTMLElement
-    if (el.scrollTop > 0) {
-      setActive(false)
-      setPullOffset(0)
-      return
-    }
-    const y = e.touches[0].clientY
-    const delta = y - startY.current
-    if (delta <= 0) {
-      setPullOffset(0)
-      return
-    }
-    const offset = Math.min(delta * 0.5, 140)
-    setPullOffset(offset)
-    if (offset > 6) e.preventDefault()
-  }
-
-  const onTouchEnd = useCallback(async () => {
-    if (!active) return
-    setActive(false)
-    const off = pullOffset
-    setPullOffset(0)
-    if (off >= THRESHOLD && onRefresh && !refreshing) {
-      await onRefresh()
-    }
-  }, [active, pullOffset, onRefresh, refreshing])
-
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    el.addEventListener('touchstart', onTouchStart, { passive: false })
-    el.addEventListener('touchmove', onTouchMove, { passive: false })
-    el.addEventListener('touchend', onTouchEnd)
-    return () => {
-      el.removeEventListener('touchstart', onTouchStart)
-      el.removeEventListener('touchmove', onTouchMove)
-      el.removeEventListener('touchend', onTouchEnd)
-    }
-  }, [onTouchStart, onTouchMove, onTouchEnd])
-
-  const stretch = refreshing ? THRESHOLD : pullOffset
-  const showIndicator = refreshing || pullOffset > 10
-
-  return (
-    <div
-      ref={containerRef}
-      className="ptr-scroll"
-      style={{ maxHeight: `calc(100dvh - var(--nav-height))` }}
-    >
-      <div
-        className="ptr-indicator"
-        style={{
-          transform: refreshing ? 'translateY(0)' : `translateY(calc(-100% + ${pullOffset}px))`,
-          opacity: refreshing ? 1 : Math.min(pullOffset / 30, 1),
-          transition: refreshing
-            ? 'none'
-            : 'transform 0.25s cubic-bezier(0, 0, 0.2, 1), opacity 0.15s ease',
-        }}
-      >
-        <Spinner />
-        <span>{refreshing ? 'Refreshing…' : 'Pull to refresh'}</span>
-      </div>
-      <div
-        className="ptr-stretch"
-        style={{
-          transform: `translateY(${stretch}px)`,
-          transition: refreshing ? 'none' : 'transform 0.25s cubic-bezier(0, 0, 0.2, 1)',
-        }}
-      >
-        {children}
-      </div>
     </div>
   )
 }
@@ -727,41 +630,44 @@ function MenuScreen({
       </div>
       {pick &&
         createPortal(
-          <div className="modal-backdrop animated-backdrop" onClick={() => setPick(null)}>
-            <section className="bottom-sheet animated-sheet" onClick={(e) => e.stopPropagation()}>
-              <div className="sheet-handle" />
-              <div className="sheet-title">
-                <div>
-                  <p className="eyebrow">CHOOSE A SIZE</p>
-                  <h2>{pick.name}</h2>
-                </div>
-                <button className="round pale" onClick={() => setPick(null)}>
-                  <Icon name="close" />
-                </button>
+          <AccessibleDialog
+            backdropClassName="modal-backdrop animated-backdrop"
+            className="bottom-sheet animated-sheet"
+            labelledBy="variant-sheet-title"
+            onClose={() => setPick(null)}
+          >
+            <div className="sheet-handle" />
+            <div className="sheet-title">
+              <div>
+                <p className="eyebrow">CHOOSE A SIZE</p>
+                <h2 id="variant-sheet-title">{pick.name}</h2>
               </div>
-              <div className="variant-list">
-                {(pick.variants || [])
-                  .filter((v) => v.in_stock !== false)
-                  .map((v) => (
-                    <button
-                      key={v.id}
-                      onClick={() => {
-                        onAdd(pick, v)
-                        setPick(null)
-                      }}
-                    >
-                      <span>
-                        <b>{v.name}</b>
-                        <small>Freshly made</small>
-                      </span>
-                      <strong>
-                        {money(v.price)} <Icon name="plus" />
-                      </strong>
-                    </button>
-                  ))}
-              </div>
-            </section>
-          </div>,
+              <button className="round pale" onClick={() => setPick(null)} aria-label="Close">
+                <Icon name="close" />
+              </button>
+            </div>
+            <div className="variant-list">
+              {(pick.variants || [])
+                .filter((v) => v.in_stock !== false)
+                .map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => {
+                      onAdd(pick, v)
+                      setPick(null)
+                    }}
+                  >
+                    <span>
+                      <b>{v.name}</b>
+                      <small>Freshly made</small>
+                    </span>
+                    <strong>
+                      {money(v.price)} <Icon name="plus" />
+                    </strong>
+                  </button>
+                ))}
+            </div>
+          </AccessibleDialog>,
           document.body
         )}
     </div>
@@ -805,15 +711,7 @@ function CartPage({
             </button>
           </>
         ) : (
-          <div
-            style={{
-              flex: 1,
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              paddingBottom: 78,
-            }}
-          >
+          <div className="cart-scroll-content">
             <div className="cart-restaurant">
               <div className="mini-logo">{restaurant?.name?.[0] || 'C'}</div>
               <span>
@@ -1237,135 +1135,127 @@ function Checkout({
         </div>
       )}
       {addressSheet && (
-        <div className="modal-backdrop" onClick={() => setAddressSheet(false)}>
-          <section
-            className="bottom-sheet address-sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="address-sheet-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="sheet-handle" />
-            <div className="sheet-title">
-              <div>
-                <p className="eyebrow">DELIVERY</p>
-                <h2 id="address-sheet-title">Change address</h2>
-              </div>
-              <button
-                className="round pale"
-                onClick={() => setAddressSheet(false)}
-                aria-label="Close"
-              >
-                <Icon name="close" />
-              </button>
+        <AccessibleDialog
+          className="bottom-sheet address-sheet"
+          labelledBy="address-sheet-title"
+          onClose={() => setAddressSheet(false)}
+        >
+          <div className="sheet-handle" />
+          <div className="sheet-title">
+            <div>
+              <p className="eyebrow">DELIVERY</p>
+              <h2 id="address-sheet-title">Change address</h2>
             </div>
-            <div className="address-list">
-              {addresses.map((a) => (
-                <button
-                  className={selected === a.id ? 'selected' : ''}
-                  onClick={() => {
-                    setSelected(a.id)
-                    setAddressSheet(false)
-                  }}
-                  key={a.id}
-                >
-                  <Icon name="pin" />
-                  <span>
-                    <b>{a.label}</b>
-                    <small>{a.address}</small>
-                  </span>
-                  <i>{selected === a.id ? <Icon name="check" /> : null}</i>
-                </button>
-              ))}
-            </div>
-            {onManageAddresses && (
+            <button
+              className="round pale"
+              onClick={() => setAddressSheet(false)}
+              aria-label="Close"
+            >
+              <Icon name="close" />
+            </button>
+          </div>
+          <div className="address-list">
+            {addresses.map((a) => (
               <button
-                className="secondary wide address-add"
+                className={selected === a.id ? 'selected' : ''}
                 onClick={() => {
+                  setSelected(a.id)
                   setAddressSheet(false)
-                  onManageAddresses()
                 }}
+                key={a.id}
               >
-                <Icon name="plus" />
-                Add a new address
+                <Icon name="pin" />
+                <span>
+                  <b>{a.label}</b>
+                  <small>{a.address}</small>
+                </span>
+                <i>{selected === a.id ? <Icon name="check" /> : null}</i>
               </button>
-            )}
-          </section>
-        </div>
+            ))}
+          </div>
+          {onManageAddresses && (
+            <button
+              className="secondary wide address-add"
+              onClick={() => {
+                setAddressSheet(false)
+                onManageAddresses()
+              }}
+            >
+              <Icon name="plus" />
+              Add a new address
+            </button>
+          )}
+        </AccessibleDialog>
       )}
 
       {tipSheet && (
-        <div className="modal-backdrop" onClick={() => setTipSheet(false)}>
-          <section
-            className="bottom-sheet tip-sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="tip-sheet-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="sheet-handle" />
-            <div className="sheet-title">
-              <div>
-                <p className="eyebrow">DELIVERY PARTNER</p>
-                <h2 id="tip-sheet-title">Add a tip</h2>
-              </div>
-              <button className="round pale" onClick={() => setTipSheet(false)} aria-label="Close">
-                <Icon name="close" />
-              </button>
+        <AccessibleDialog
+          className="bottom-sheet tip-sheet"
+          labelledBy="tip-sheet-title"
+          onClose={() => setTipSheet(false)}
+        >
+          <div className="sheet-handle" />
+          <div className="sheet-title">
+            <div>
+              <p className="eyebrow">DELIVERY PARTNER</p>
+              <h2 id="tip-sheet-title">Add a tip</h2>
             </div>
-
-            <div className="tip-bill">
-              <span className="tip-bill-rule" />
-              {[
-                [0, 'No tip'],
-                [10, 'Small tip'],
-                [20, 'Medium tip'],
-                [50, 'Large tip'],
-              ].map(([amount, label]) => (
-                <button
-                  key={String(amount)}
-                  className={tip === amount ? 'active' : ''}
-                  onClick={() => {
-                    setTip(amount as number)
-                    setTipInput(amount ? String(amount) : '')
-                  }}
-                >
-                  <span>{label}</span>
-                  <b>{amount ? `₹${amount}` : '₹0'}</b>
-                </button>
-              ))}
-              <span className="tip-bill-rule" />
-              <label className="tip-bill-custom">
-                <span>Custom amount</span>
-                <span className="coupon-input">
-                  <span className="tip-rupee">₹</span>
-                  <input
-                    className="tip-input"
-                    type="number"
-                    inputMode="numeric"
-                    min="0"
-                    placeholder="0"
-                    value={tipInput}
-                    onChange={(e) => {
-                      const val = e.target.value
-                      setTipInput(val)
-                      setTip(Math.max(0, Number(val) || 0))
-                    }}
-                  />
-                </span>
-              </label>
-              <span className="tip-bill-rule" />
-              <span className="tip-bill-total">
-                <span>Tip added</span>
-                <b>{money(tip)}</b>
-              </span>
-            </div>
-
-            <button className="primary wide" onClick={() => setTipSheet(false)}>
-              Save tip
+            <button className="round pale" onClick={() => setTipSheet(false)} aria-label="Close">
+              <Icon name="close" />
             </button>
-          </section>
-        </div>
+          </div>
+
+          <div className="tip-bill">
+            <span className="tip-bill-rule" />
+            {[
+              [0, 'No tip'],
+              [10, 'Small tip'],
+              [20, 'Medium tip'],
+              [50, 'Large tip'],
+            ].map(([amount, label]) => (
+              <button
+                key={String(amount)}
+                className={tip === amount ? 'active' : ''}
+                onClick={() => {
+                  setTip(amount as number)
+                  setTipInput(amount ? String(amount) : '')
+                }}
+              >
+                <span>{label}</span>
+                <b>{amount ? `₹${amount}` : '₹0'}</b>
+              </button>
+            ))}
+            <span className="tip-bill-rule" />
+            <label className="tip-bill-custom">
+              <span>Custom amount</span>
+              <span className="coupon-input">
+                <span className="tip-rupee">₹</span>
+                <input
+                  className="tip-input"
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  placeholder="0"
+                  value={tipInput}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    setTipInput(val)
+                    setTip(Math.max(0, Number(val) || 0))
+                  }}
+                />
+              </span>
+            </label>
+            <span className="tip-bill-rule" />
+            <span className="tip-bill-total">
+              <span>Tip added</span>
+              <b>{money(tip)}</b>
+            </span>
+          </div>
+
+          <button className="primary wide" onClick={() => setTipSheet(false)}>
+            Save tip
+          </button>
+        </AccessibleDialog>
       )}
     </div>
   )
@@ -1614,132 +1504,128 @@ function InvoiceSheet({
   if (rounding !== 0) charges.push(['Rounding', rounding])
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <section
-        className="bottom-sheet invoice-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="invoice-title"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="sheet-handle" />
-        <button className="invoice-close" onClick={onClose} aria-label="Close">
-          <Icon name="close" />
-        </button>
+    <AccessibleDialog
+      className="bottom-sheet invoice-sheet"
+      labelledBy="invoice-title"
+      onClose={onClose}
+    >
+      <div className="sheet-handle" />
+      <button className="invoice-close" onClick={onClose} aria-label="Close">
+        <Icon name="close" />
+      </button>
 
-        <div className="receipt">
-          <div className="receipt-head">
-            <div>
-              <h2 id="invoice-title" className="receipt-title">
-                Order
-              </h2>
-              <p className="receipt-sub">Receipt #{order.id.slice(-8).toUpperCase()}</p>
-            </div>
-            <div className="receipt-head-right">
-              <p className="receipt-shop">{order.restaurant_name || 'CRAVE'}</p>
-              <span className="receipt-stamp">Paid</span>
-            </div>
+      <div className="receipt">
+        <div className="receipt-head">
+          <div>
+            <h2 id="invoice-title" className="receipt-title">
+              Order
+            </h2>
+            <p className="receipt-sub">Receipt #{order.id.slice(-8).toUpperCase()}</p>
           </div>
-
-          <p className="receipt-line">
-            {date} {time}
-          </p>
-
-          <p className="receipt-label">Address</p>
-          <p className="receipt-line receipt-line-icon">
-            <Icon name="pin" />
-            <span>{order.customer_address || '—'}</span>
-          </p>
-
-          <div className="receipt-kv">
-            <span>
-              <Icon name="user" /> Client
-            </span>
-            <b>{guestName}</b>
+          <div className="receipt-head-right">
+            <p className="receipt-shop">{order.restaurant_name || 'CRAVE'}</p>
+            <span className="receipt-stamp">Paid</span>
           </div>
-          <div className="receipt-kv">
-            <span>
-              <Icon name="tag" /> Transaction
-            </span>
-            <b>{order.utr_ref || '—'}</b>
-          </div>
-          <div className="receipt-kv">
-            <span>
-              <Icon name="wallet" /> Location
-            </span>
-            <b>{order.payment_method || 'UPI'}</b>
-          </div>
-
-          <table className="receipt-table">
-            <thead>
-              <tr>
-                <th>ITEM</th>
-                <th>QTY</th>
-                <th>DESCRIPTION</th>
-                <th>COST</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lines.map((item: any, index: number) => {
-                const quantity = Number(item.quantity) || 1
-                const cost = Number(item.lineTotal ?? (item.price || 0) * quantity)
-                return (
-                  <tr key={`${item.id || 'item'}-${index}`}>
-                    <td>{index + 1}</td>
-                    <td>{quantity}</td>
-                    <td>{item.name || 'Item'}</td>
-                    <td>{money(cost)}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-
-          <div className="receipt-divider">
-            <span aria-hidden="true">✦</span>
-          </div>
-          <div className="receipt-total">
-            <span>Sub Total :</span>
-            <b>{rupees(subtotal)}</b>
-          </div>
-          {charges.map(([label, value]) => (
-            <div className="receipt-total" key={label}>
-              <span>{label} :</span>
-              <b>{rupees(value)}</b>
-            </div>
-          ))}
-          <div className="receipt-total receipt-grand">
-            <span>Order Total :</span>
-            <b>{rupees(total)}</b>
-          </div>
-          <div className="receipt-divider">
-            <span aria-hidden="true">✦</span>
-          </div>
-
-          <p className="receipt-thanks">
-            <span aria-hidden="true">✦</span> THANK YOU! <span aria-hidden="true">✦</span>
-          </p>
-          <div className="receipt-brand">
-            <b>CRAVE</b>
-            <i>.</i>
-          </div>
-          <p className="receipt-tagline">Delivered with care</p>
-          <div className="receipt-sign">
-            <span>RESTAURANT</span>
-            <b>{order.restaurant_name || 'CRAVE'}</b>
-          </div>
-          <div className="receipt-sign">
-            <span>ADDRESS</span>
-            <b>{restaurant?.address || '—'}</b>
-          </div>
-          <div className="receipt-sign">
-            <span>FSSAI LICENCE</span>
-            <b>{restaurant?.fssai_license || '—'}</b>
-          </div>
-          <div className="receipt-strip" aria-hidden="true" />
         </div>
-      </section>
-    </div>
+
+        <p className="receipt-line">
+          {date} {time}
+        </p>
+
+        <p className="receipt-label">Address</p>
+        <p className="receipt-line receipt-line-icon">
+          <Icon name="pin" />
+          <span>{order.customer_address || '—'}</span>
+        </p>
+
+        <div className="receipt-kv">
+          <span>
+            <Icon name="user" /> Client
+          </span>
+          <b>{guestName}</b>
+        </div>
+        <div className="receipt-kv">
+          <span>
+            <Icon name="tag" /> Transaction
+          </span>
+          <b>{order.utr_ref || '—'}</b>
+        </div>
+        <div className="receipt-kv">
+          <span>
+            <Icon name="wallet" /> Location
+          </span>
+          <b>{order.payment_method || 'UPI'}</b>
+        </div>
+
+        <table className="receipt-table">
+          <thead>
+            <tr>
+              <th>ITEM</th>
+              <th>QTY</th>
+              <th>DESCRIPTION</th>
+              <th>COST</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lines.map((item: any, index: number) => {
+              const quantity = Number(item.quantity) || 1
+              const cost = Number(item.lineTotal ?? (item.price || 0) * quantity)
+              return (
+                <tr key={`${item.id || 'item'}-${index}`}>
+                  <td>{index + 1}</td>
+                  <td>{quantity}</td>
+                  <td>{item.name || 'Item'}</td>
+                  <td>{money(cost)}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+
+        <div className="receipt-divider">
+          <span aria-hidden="true">✦</span>
+        </div>
+        <div className="receipt-total">
+          <span>Sub Total :</span>
+          <b>{rupees(subtotal)}</b>
+        </div>
+        {charges.map(([label, value]) => (
+          <div className="receipt-total" key={label}>
+            <span>{label} :</span>
+            <b>{rupees(value)}</b>
+          </div>
+        ))}
+        <div className="receipt-total receipt-grand">
+          <span>Order Total :</span>
+          <b>{rupees(total)}</b>
+        </div>
+        <div className="receipt-divider">
+          <span aria-hidden="true">✦</span>
+        </div>
+
+        <p className="receipt-thanks">
+          <span aria-hidden="true">✦</span> THANK YOU! <span aria-hidden="true">✦</span>
+        </p>
+        <div className="receipt-brand">
+          <b>CRAVE</b>
+          <i>.</i>
+        </div>
+        <p className="receipt-tagline">Delivered with care</p>
+        <div className="receipt-sign">
+          <span>RESTAURANT</span>
+          <b>{order.restaurant_name || 'CRAVE'}</b>
+        </div>
+        <div className="receipt-sign">
+          <span>ADDRESS</span>
+          <b>{restaurant?.address || '—'}</b>
+        </div>
+        <div className="receipt-sign">
+          <span>FSSAI LICENCE</span>
+          <b>{restaurant?.fssai_license || '—'}</b>
+        </div>
+        <div className="receipt-strip" aria-hidden="true" />
+      </div>
+    </AccessibleDialog>
   )
 }
 
@@ -1985,7 +1871,7 @@ function Account({
             </span>
             <span>
               <b>Help &amp; Support (24/7)</b>
-              <small>FAQs, cancellation policy, reach -9625694673</small>
+              <small>FAQs, cancellation policy, reach +91 96256 94673</small>
             </span>
             <Icon name="chevron" />
           </button>
@@ -1994,465 +1880,440 @@ function Account({
           <Icon name="logout" /> Sign out
         </button>
         {passwordSheet && (
-          <div
-            className="modal-backdrop animated-backdrop"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="change-password-title"
-            onClick={() => setPasswordSheet(false)}
+          <AccessibleDialog
+            backdropClassName="modal-backdrop animated-backdrop"
+            className="bottom-sheet animated-sheet password-sheet"
+            labelledBy="change-password-title"
+            describedBy="change-password-description"
+            onClose={() => setPasswordSheet(false)}
           >
-            <section
-              className="bottom-sheet animated-sheet password-sheet"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="sheet-handle" />
-              <div className="sheet-title">
-                <div>
-                  <p className="eyebrow">ACCOUNT SECURITY</p>
-                  <h2 id="change-password-title">{t.customer.changePassword}</h2>
+            <div className="sheet-handle" />
+            <div className="sheet-title">
+              <div>
+                <p className="eyebrow">ACCOUNT SECURITY</p>
+                <h2 id="change-password-title">{t.customer.changePassword}</h2>
+              </div>
+              <button
+                className="round pale"
+                onClick={() => setPasswordSheet(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </div>
+            <p className="confirm-note" id="change-password-description">
+              Choose a password you do not use anywhere else.
+            </p>
+            <form className="password-form" onSubmit={changePassword} noValidate>
+              <div className="password-card">
+                <div className="password-fields">
+                  <label>
+                    Current password
+                    <div className="password">
+                      <input
+                        required
+                        minLength={8}
+                        maxLength={256}
+                        type={showCurrentPassword ? 'text' : 'password'}
+                        value={currentPassword}
+                        onChange={(event) => {
+                          setCurrentPassword(event.target.value)
+                          setPasswordFeedback(null)
+                        }}
+                        autoComplete="current-password"
+                        placeholder="Current password"
+                      />
+                      <button
+                        type="button"
+                        aria-label={
+                          showCurrentPassword ? 'Hide current password' : 'Show current password'
+                        }
+                        aria-pressed={showCurrentPassword}
+                        onClick={() => setShowCurrentPassword((visible) => !visible)}
+                      >
+                        {showCurrentPassword ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+                  </label>
+                  <label>
+                    New password
+                    <div className="password">
+                      <input
+                        required
+                        minLength={8}
+                        maxLength={256}
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(event) => {
+                          setNewPassword(event.target.value)
+                          setPasswordFeedback(null)
+                        }}
+                        autoComplete="new-password"
+                        placeholder="8–256 characters"
+                      />
+                      <button
+                        type="button"
+                        aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                        aria-pressed={showNewPassword}
+                        onClick={() => setShowNewPassword((visible) => !visible)}
+                      >
+                        {showNewPassword ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+                  </label>
+                  <label>
+                    Confirm new password
+                    <div className="password">
+                      <input
+                        required
+                        minLength={8}
+                        maxLength={256}
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(event) => {
+                          setConfirmPassword(event.target.value)
+                          setPasswordFeedback(null)
+                        }}
+                        autoComplete="new-password"
+                        placeholder="Re-enter new password"
+                      />
+                      <button
+                        type="button"
+                        aria-label={
+                          showConfirmPassword
+                            ? 'Hide confirmed password'
+                            : 'Show confirmed password'
+                        }
+                        aria-pressed={showConfirmPassword}
+                        onClick={() => setShowConfirmPassword((visible) => !visible)}
+                      >
+                        {showConfirmPassword ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+                  </label>
                 </div>
-                <button
-                  className="round pale"
-                  onClick={() => setPasswordSheet(false)}
-                  aria-label="Close"
-                >
-                  <Icon name="close" />
+                <p className="password-guidance">New passwords must be 8–256 characters long.</p>
+                {passwordFeedback && (
+                  <div
+                    className={passwordFeedback.type === 'success' ? 'success-box' : 'error-box'}
+                    role={passwordFeedback.type === 'success' ? 'status' : 'alert'}
+                    aria-live="polite"
+                  >
+                    {passwordFeedback.message}
+                  </div>
+                )}
+                <button className="primary wide" type="submit" disabled={changingPassword}>
+                  {changingPassword ? (
+                    <>
+                      <Spinner /> Updating password
+                    </>
+                  ) : (
+                    'Change password'
+                  )}
                 </button>
               </div>
-              <p className="confirm-note">Choose a password you do not use anywhere else.</p>
-              <form className="password-form" onSubmit={changePassword} noValidate>
-                <div className="password-card">
-                  <div className="password-fields">
-                    <label>
-                      Current password
-                      <div className="password">
-                        <input
-                          required
-                          minLength={8}
-                          maxLength={256}
-                          type={showCurrentPassword ? 'text' : 'password'}
-                          value={currentPassword}
-                          onChange={(event) => {
-                            setCurrentPassword(event.target.value)
-                            setPasswordFeedback(null)
-                          }}
-                          autoComplete="current-password"
-                          placeholder="Current password"
-                        />
-                        <button
-                          type="button"
-                          aria-label={
-                            showCurrentPassword ? 'Hide current password' : 'Show current password'
-                          }
-                          aria-pressed={showCurrentPassword}
-                          onClick={() => setShowCurrentPassword((visible) => !visible)}
-                        >
-                          {showCurrentPassword ? 'Hide' : 'Show'}
-                        </button>
-                      </div>
-                    </label>
-                    <label>
-                      New password
-                      <div className="password">
-                        <input
-                          required
-                          minLength={8}
-                          maxLength={256}
-                          type={showNewPassword ? 'text' : 'password'}
-                          value={newPassword}
-                          onChange={(event) => {
-                            setNewPassword(event.target.value)
-                            setPasswordFeedback(null)
-                          }}
-                          autoComplete="new-password"
-                          placeholder="8–256 characters"
-                        />
-                        <button
-                          type="button"
-                          aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
-                          aria-pressed={showNewPassword}
-                          onClick={() => setShowNewPassword((visible) => !visible)}
-                        >
-                          {showNewPassword ? 'Hide' : 'Show'}
-                        </button>
-                      </div>
-                    </label>
-                    <label>
-                      Confirm new password
-                      <div className="password">
-                        <input
-                          required
-                          minLength={8}
-                          maxLength={256}
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          value={confirmPassword}
-                          onChange={(event) => {
-                            setConfirmPassword(event.target.value)
-                            setPasswordFeedback(null)
-                          }}
-                          autoComplete="new-password"
-                          placeholder="Re-enter new password"
-                        />
-                        <button
-                          type="button"
-                          aria-label={
-                            showConfirmPassword
-                              ? 'Hide confirmed password'
-                              : 'Show confirmed password'
-                          }
-                          aria-pressed={showConfirmPassword}
-                          onClick={() => setShowConfirmPassword((visible) => !visible)}
-                        >
-                          {showConfirmPassword ? 'Hide' : 'Show'}
-                        </button>
-                      </div>
-                    </label>
-                  </div>
-                  <p className="password-guidance">New passwords must be 8–256 characters long.</p>
-                  {passwordFeedback && (
-                    <div
-                      className={passwordFeedback.type === 'success' ? 'success-box' : 'error-box'}
-                      role={passwordFeedback.type === 'success' ? 'status' : 'alert'}
-                      aria-live="polite"
-                    >
-                      {passwordFeedback.message}
-                    </div>
-                  )}
-                  <button className="primary wide" type="submit" disabled={changingPassword}>
-                    {changingPassword ? (
-                      <>
-                        <Spinner /> Updating password
-                      </>
-                    ) : (
-                      'Change password'
-                    )}
-                  </button>
-                </div>
-              </form>
-            </section>
-          </div>
+            </form>
+          </AccessibleDialog>
         )}
         {languageSheet && (
-          <div
-            className="modal-backdrop animated-backdrop"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="language-sheet-title"
-            onClick={() => setLanguageSheet(false)}
+          <AccessibleDialog
+            backdropClassName="modal-backdrop animated-backdrop"
+            className="bottom-sheet animated-sheet language-sheet"
+            labelledBy="language-sheet-title"
+            onClose={() => setLanguageSheet(false)}
           >
-            <section
-              className="bottom-sheet animated-sheet language-sheet"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="sheet-handle" />
-              <div className="sheet-title">
-                <div>
-                  <p className="eyebrow">{t.customer.accountSecurity}</p>
-                  <h2 id="language-sheet-title">{t.customer.chooseLanguage}</h2>
-                </div>
+            <div className="sheet-handle" />
+            <div className="sheet-title">
+              <div>
+                <p className="eyebrow">{t.customer.accountSecurity}</p>
+                <h2 id="language-sheet-title">{t.customer.chooseLanguage}</h2>
+              </div>
+              <button
+                className="round pale"
+                onClick={() => setLanguageSheet(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </div>
+            <div className="language-list">
+              {languages.map((option) => (
                 <button
-                  className="round pale"
-                  onClick={() => setLanguageSheet(false)}
-                  aria-label="Close"
+                  key={option.code}
+                  className={locale === option.code ? 'selected' : ''}
+                  onClick={() => {
+                    setLanguage(option.code)
+                    setLanguageSheet(false)
+                  }}
                 >
-                  <Icon name="close" />
+                  <span>{option.nativeName}</span>
+                  {locale === option.code && <Icon name="check" />}
                 </button>
-              </div>
-              <div className="language-list">
-                {languages.map((option) => (
-                  <button
-                    key={option.code}
-                    className={locale === option.code ? 'selected' : ''}
-                    onClick={() => {
-                      setLanguage(option.code)
-                      setLanguageSheet(false)
-                    }}
-                  >
-                    <span>{option.nativeName}</span>
-                    {locale === option.code && <Icon name="check" />}
-                  </button>
-                ))}
-              </div>
-            </section>
-          </div>
+              ))}
+            </div>
+          </AccessibleDialog>
         )}
         {confirmLogout && (
-          <div
-            className="modal-backdrop animated-backdrop"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="customer-logout-title"
-            onClick={() => setConfirmLogout(false)}
+          <AccessibleDialog
+            backdropClassName="modal-backdrop animated-backdrop"
+            className="bottom-sheet animated-sheet"
+            labelledBy="customer-logout-title"
+            describedBy="customer-logout-description"
+            onClose={() => setConfirmLogout(false)}
           >
-            <section
-              className="bottom-sheet animated-sheet"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="sheet-handle" />
-              <div className="sheet-title">
-                <div>
-                  <p className="eyebrow">Confirm sign out</p>
-                  <h2 id="customer-logout-title">Really sign out?</h2>
-                </div>
-                <button
-                  className="round pale"
-                  onClick={() => setConfirmLogout(false)}
-                  aria-label="Close"
-                >
+            <div className="sheet-handle" />
+            <div className="sheet-title">
+              <div>
+                <p className="eyebrow">Confirm sign out</p>
+                <h2 id="customer-logout-title">Really sign out?</h2>
+              </div>
+              <button
+                className="round pale"
+                onClick={() => setConfirmLogout(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </div>
+            <p className="confirm-note" id="customer-logout-description">
+              You will be signed out of the CRAVE app. You can sign back in anytime.
+            </p>
+            <div className="confirm-grid">
+              <button onClick={() => setConfirmLogout(false)}>
+                <span className="confirm-icon cancel">
                   <Icon name="close" />
-                </button>
-              </div>
-              <p className="confirm-note">
-                You will be signed out of the CRAVE app. You can sign back in anytime.
-              </p>
-              <div className="confirm-grid">
-                <button onClick={() => setConfirmLogout(false)}>
-                  <span className="confirm-icon cancel">
-                    <Icon name="close" />
-                  </span>
-                  <b>Cancel</b>
-                  <small>Stay signed in</small>
-                </button>
-                <button onClick={onLogout}>
-                  <span className="confirm-icon signout">
-                    <Icon name="logout" />
-                  </span>
-                  <b>Sign out</b>
-                  <small>Leave the app</small>
-                </button>
-              </div>
-            </section>
-          </div>
+                </span>
+                <b>Cancel</b>
+                <small>Stay signed in</small>
+              </button>
+              <button onClick={onLogout}>
+                <span className="confirm-icon signout">
+                  <Icon name="logout" />
+                </span>
+                <b>Sign out</b>
+                <small>Leave the app</small>
+              </button>
+            </div>
+          </AccessibleDialog>
         )}
         {helpSheet && (
-          <div
-            className="modal-backdrop animated-backdrop"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="help-sheet-title"
-            onClick={() => setHelpSheet(false)}
+          <AccessibleDialog
+            backdropClassName="modal-backdrop animated-backdrop"
+            className="bottom-sheet animated-sheet help-sheet"
+            labelledBy="help-sheet-title"
+            onClose={() => setHelpSheet(false)}
           >
-            <section
-              className="bottom-sheet animated-sheet"
-              style={{ maxHeight: '85vh', overflowY: 'auto' }}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="sheet-handle" />
-              <div className="sheet-title">
-                <div>
-                  <p className="eyebrow">24/7 CUSTOMER CARE</p>
-                  <h2 id="help-sheet-title">Help &amp; Support</h2>
-                </div>
-                <button
-                  className="round pale"
-                  onClick={() => setHelpSheet(false)}
-                  aria-label="Close"
-                >
-                  <Icon name="close" />
-                </button>
+            <div className="sheet-handle" />
+            <div className="sheet-title">
+              <div>
+                <p className="eyebrow">24/7 CUSTOMER CARE</p>
+                <h2 id="help-sheet-title">Help &amp; Support</h2>
               </div>
+              <button className="round pale" onClick={() => setHelpSheet(false)} aria-label="Close">
+                <Icon name="close" />
+              </button>
+            </div>
+
+            <div
+              style={{
+                padding: '16px',
+                background: 'var(--green)',
+                color: 'var(--profile-text)',
+                borderRadius: '18px',
+                margin: '8px 16px',
+              }}
+            >
+              <p
+                style={{
+                  fontSize: '11px',
+                  color: 'var(--lime)',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                Priority Assistance Desk
+              </p>
+              <h3
+                style={{
+                  fontSize: '20px',
+                  fontWeight: 900,
+                  margin: '6px 0',
+                  color: 'var(--profile-text)',
+                }}
+              >
+                Reach out to: +91 96256 94673
+              </h3>
+              <p
+                style={{
+                  fontSize: '12px',
+                  color: 'var(--muted)',
+                  margin: '4px 0 14px 0',
+                  lineHeight: 1.5,
+                }}
+              >
+                Our Bengaluru support team is online 24/7 to resolve cancellations, refund status,
+                or delivery partner tracking queries.
+              </p>
+              <a
+                href="tel:+919625694673"
+                style={{
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 20px',
+                  borderRadius: '999px',
+                  background: 'var(--accent)',
+                  color: 'var(--on-accent)',
+                  fontWeight: 900,
+                  fontSize: '13px',
+                }}
+              >
+                <Icon name="phone" /> Call +91 96256 94673
+              </a>
+            </div>
+
+            <div style={{ padding: '12px 16px 32px 16px' }}>
+              <h4
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  color: 'var(--muted)',
+                  marginBottom: '12px',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                Pre-Questions &amp; Policy FAQs
+              </h4>
 
               <div
                 style={{
-                  padding: '16px',
-                  background: 'var(--green)',
-                  color: 'var(--profile-text)',
-                  borderRadius: '18px',
-                  margin: '8px 16px',
+                  background: 'var(--surface-2)',
+                  padding: '14px',
+                  borderRadius: '14px',
+                  marginBottom: '10px',
                 }}
               >
-                <p
+                <b
                   style={{
-                    fontSize: '11px',
-                    color: 'var(--lime)',
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
+                    fontSize: '13px',
+                    display: 'block',
+                    color: 'var(--ink)',
+                    marginBottom: '4px',
                   }}
                 >
-                  Priority Assistance Desk
-                </p>
-                <h3
-                  style={{
-                    fontSize: '20px',
-                    fontWeight: 900,
-                    margin: '6px 0',
-                    color: 'var(--profile-text)',
-                  }}
-                >
-                  Reach out to: -9625694673
-                </h3>
+                  Can I cancel my order? What is the cancellation window?
+                </b>
                 <p
                   style={{
                     fontSize: '12px',
                     color: 'var(--muted)',
-                    margin: '4px 0 14px 0',
+                    margin: 0,
                     lineHeight: 1.5,
                   }}
                 >
-                  Our Bengaluru support team is online 24/7 to resolve cancellations, refund status,
-                  or delivery partner tracking queries.
+                  Orders can be cancelled strictly within the first 15 seconds after placement.
+                  After 15 seconds, the restaurant kitchen immediately begins food preparation and
+                  cancellation is locked.
                 </p>
-                <a
-                  href="tel:+919625694673"
-                  style={{
-                    textDecoration: 'none',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '10px 20px',
-                    borderRadius: '999px',
-                    background: 'var(--accent)',
-                    color: 'var(--on-accent)',
-                    fontWeight: 900,
-                    fontSize: '13px',
-                  }}
-                >
-                  <Icon name="phone" /> Call -9625694673
-                </a>
               </div>
 
-              <div style={{ padding: '12px 16px 32px 16px' }}>
-                <h4
+              <div
+                style={{
+                  background: 'var(--surface-2)',
+                  padding: '14px',
+                  borderRadius: '14px',
+                  marginBottom: '10px',
+                }}
+              >
+                <b
                   style={{
                     fontSize: '13px',
-                    fontWeight: 900,
-                    textTransform: 'uppercase',
+                    display: 'block',
+                    color: 'var(--ink)',
+                    marginBottom: '4px',
+                  }}
+                >
+                  I cancelled within 15 seconds. Where is my refund?
+                </b>
+                <p
+                  style={{
+                    fontSize: '12px',
                     color: 'var(--muted)',
-                    marginBottom: '12px',
-                    letterSpacing: '0.04em',
+                    margin: 0,
+                    lineHeight: 1.5,
                   }}
                 >
-                  Pre-Questions &amp; Policy FAQs
-                </h4>
-
-                <div
-                  style={{
-                    background: 'var(--surface-2)',
-                    padding: '14px',
-                    borderRadius: '14px',
-                    marginBottom: '10px',
-                  }}
-                >
-                  <b
-                    style={{
-                      fontSize: '13px',
-                      display: 'block',
-                      color: 'var(--ink)',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    Can I cancel my order? What is the cancellation window?
-                  </b>
-                  <p
-                    style={{
-                      fontSize: '12px',
-                      color: 'var(--muted)',
-                      margin: 0,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Orders can be cancelled strictly within the first 15 seconds after placement.
-                    After 15 seconds, the restaurant kitchen immediately begins food preparation and
-                    cancellation is locked.
-                  </p>
-                </div>
-
-                <div
-                  style={{
-                    background: 'var(--surface-2)',
-                    padding: '14px',
-                    borderRadius: '14px',
-                    marginBottom: '10px',
-                  }}
-                >
-                  <b
-                    style={{
-                      fontSize: '13px',
-                      display: 'block',
-                      color: 'var(--ink)',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    I cancelled within 15 seconds. Where is my refund?
-                  </b>
-                  <p
-                    style={{
-                      fontSize: '12px',
-                      color: 'var(--muted)',
-                      margin: 0,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Cancelled orders enter our Admin Review Queue. Once approved, refunds are
-                    credited back to your original payment method (UPI / Card / NetBanking) within
-                    2-4 business days.
-                  </p>
-                </div>
-
-                <div
-                  style={{
-                    background: 'var(--surface-2)',
-                    padding: '14px',
-                    borderRadius: '14px',
-                    marginBottom: '10px',
-                  }}
-                >
-                  <b
-                    style={{
-                      fontSize: '13px',
-                      display: 'block',
-                      color: 'var(--ink)',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    Where is my 6-digit Delivery OTP?
-                  </b>
-                  <p
-                    style={{
-                      fontSize: '12px',
-                      color: 'var(--muted)',
-                      margin: 0,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Your delivery OTP is revealed on your order screen once the rider picks up your
-                    package. Share this 6-digit code only at your doorstep when receiving the food.
-                  </p>
-                </div>
-
-                <div
-                  style={{
-                    background: 'var(--surface-2)',
-                    padding: '14px',
-                    borderRadius: '14px',
-                  }}
-                >
-                  <b
-                    style={{
-                      fontSize: '13px',
-                      display: 'block',
-                      color: 'var(--ink)',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    What if an item is missing or spoiled?
-                  </b>
-                  <p
-                    style={{
-                      fontSize: '12px',
-                      color: 'var(--muted)',
-                      margin: 0,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Please call our direct support line at -9625694673 within 30 minutes of delivery
-                    with your Order ID for instant assistance and resolution.
-                  </p>
-                </div>
+                  Cancelled orders enter our Admin Review Queue. Once approved, refunds are credited
+                  back to your original payment method (UPI / Card / NetBanking) within 2-4 business
+                  days.
+                </p>
               </div>
-            </section>
-          </div>
+
+              <div
+                style={{
+                  background: 'var(--surface-2)',
+                  padding: '14px',
+                  borderRadius: '14px',
+                  marginBottom: '10px',
+                }}
+              >
+                <b
+                  style={{
+                    fontSize: '13px',
+                    display: 'block',
+                    color: 'var(--ink)',
+                    marginBottom: '4px',
+                  }}
+                >
+                  Where is my 6-digit Delivery OTP?
+                </b>
+                <p
+                  style={{
+                    fontSize: '12px',
+                    color: 'var(--muted)',
+                    margin: 0,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Your delivery OTP is revealed on your order screen once the rider picks up your
+                  package. Share this 6-digit code only at your doorstep when receiving the food.
+                </p>
+              </div>
+
+              <div
+                style={{
+                  background: 'var(--surface-2)',
+                  padding: '14px',
+                  borderRadius: '14px',
+                }}
+              >
+                <b
+                  style={{
+                    fontSize: '13px',
+                    display: 'block',
+                    color: 'var(--ink)',
+                    marginBottom: '4px',
+                  }}
+                >
+                  What if an item is missing or spoiled?
+                </b>
+                <p
+                  style={{
+                    fontSize: '12px',
+                    color: 'var(--muted)',
+                    margin: 0,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Please call our direct support line at +91 96256 94673 within 30 minutes of
+                  delivery with your Order ID for instant assistance and resolution.
+                </p>
+              </div>
+            </div>
+          </AccessibleDialog>
         )}
         <p className="version">CRAVE. Customer · 1.0.0</p>
       </PullToRefresh>

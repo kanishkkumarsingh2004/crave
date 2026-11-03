@@ -4,23 +4,23 @@
 
 @theme {
   --color-lime: var(--brand-primary);
-  --color-accent: var(--brand-primary);
-  --color-accent-strong: #5f7400;
-  --color-accent-soft: #f1f8cc;
-  --color-muted: #6f776f;
-  --color-line: #dfe3dc;
+  --color-accent: var(--commerce-primary);
+  --color-accent-strong: var(--commerce-primary-hover);
+  --color-accent-soft: var(--commerce-primary-soft);
+  --color-muted: var(--theme-light-muted);
+  --color-line: var(--theme-light-line);
   --color-chrome-bg: rgb(255 255 255 / 94%);
-  --color-surface: #ffffff;
-  --color-surface-2: #f7f7f2;
-  --color-input-bg: #ffffff;
-  --color-input-text: #101712;
-  --color-ink: #101712;
-  --color-app-bg: #f7f7f2;
-  --color-nav-active-text: #101712;
-  --color-border: #dfe3dc;
-  --color-ring: #dfe3dc;
-  --color-background: #ffffff;
-  --color-foreground: #101712;
+  --color-surface: var(--theme-light-surface);
+  --color-surface-2: var(--theme-light-canvas);
+  --color-input-bg: var(--theme-light-surface);
+  --color-input-text: var(--theme-light-ink);
+  --color-ink: var(--theme-light-ink);
+  --color-app-bg: var(--theme-light-canvas);
+  --color-nav-active-text: var(--theme-light-ink);
+  --color-border: var(--theme-light-line);
+  --color-ring: var(--theme-light-line);
+  --color-background: var(--theme-light-surface);
+  --color-foreground: var(--theme-light-ink);
   --radius: 15px;
   --font-manrope: var(--font-display);
   --font-mono: var(--font-technical);
@@ -37,27 +37,27 @@
   color: var(--ink);
   background: var(--app-bg);
   font-synthesis: none;
-  --ink: #101712;
-  --muted: #6f776f;
+  --ink: var(--theme-light-ink);
+  --muted: var(--theme-light-muted);
   --lime: var(--brand-primary);
   --green: #0b2e1c;
-  --line: #dfe3dc;
+  --line: var(--theme-light-line);
   --line-strong: #cbd4c9;
-  --surface: #fff;
-  --surface-2: #f1f4ed;
+  --surface: var(--theme-light-surface);
+  --surface-2: var(--theme-light-raised);
   --surface-3: #e7ece5;
   --input-bg: #fff;
   --input-text: #101712;
   --input-placeholder: #6f776f;
   --input-focus-border: #7b9518;
   --input-focus-ring: #dff33f55;
-  --app-bg: #f7f7f2;
+  --app-bg: var(--theme-light-canvas);
   --chrome-bg: rgb(255 255 255 / 94%);
   --overlay-bg: rgb(6 16 9 / 60%);
-  --accent: var(--brand-primary);
-  --accent-strong: #5f7400;
-  --accent-soft: #f1f8cc;
-  --on-accent: #172014;
+  --accent: var(--commerce-primary);
+  --accent-strong: var(--commerce-primary-hover);
+  --accent-soft: var(--commerce-primary-soft);
+  --on-accent: #ffffff;
   --success: #267448;
   --success-bg: #edf8e9;
   --success-border: #bfe1bf;
@@ -68,12 +68,12 @@
   --warning-bg: #fff5d9;
   --chip-bg: #fff;
   --chip-text: #101712;
-  --chip-active-bg: #142119;
+  --chip-active-bg: var(--commerce-primary);
   --chip-active-text: #fff;
-  --nav-active-bg: #edff77;
-  --nav-active-text: #264713;
+  --nav-active-bg: var(--commerce-primary-soft);
+  --nav-active-text: var(--commerce-primary);
   --icon-surface: #eff3e6;
-  --icon-accent: #4d6500;
+  --icon-accent: var(--commerce-primary);
   --media-placeholder-bg: #e8ebdf;
   --cart-header-bg: #eaf2df;
   --cart-header-text: #101712;
@@ -328,7 +328,7 @@ textarea {
   transform: scale(0.97);
 }
 .primary {
-  background: var(--lime);
+  background: var(--accent);
   color: var(--on-accent);
 }
 .primary:disabled {
@@ -533,10 +533,19 @@ textarea {
   cursor: pointer;
 }
 .app-shell {
-  min-height: 100dvh;
+  width: 100%;
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 .content {
   position: relative;
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
   max-width: 740px;
   margin: auto;
 }
@@ -550,8 +559,11 @@ textarea {
   position: absolute;
   inset: 0;
   width: 100%;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 .page-frame.active {
   position: relative;
@@ -560,8 +572,10 @@ textarea {
 .page {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: var(--page-top) 19px var(--nav-height);
-  min-height: 100dvh;
+  overflow: hidden;
 }
 .home {
   padding-top: var(--page-top);
@@ -576,14 +590,30 @@ textarea {
    from the top of any page. */
 .ptr-scroll {
   position: relative;
-  max-height: calc(100dvh - var(--nav-height));
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   overscroll-behavior: contain;
+  touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
 }
 .ptr-stretch {
+  min-height: 100%;
   display: flex;
   flex-direction: column;
+}
+.cart-scroll-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding-bottom: calc(var(--space-16) + var(--space-4));
+}
+.help-sheet {
+  max-height: min(85dvh, 760px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .ptr-indicator {
   position: absolute;
@@ -691,9 +721,9 @@ textarea {
 }
 .promo button {
   border: 0;
-  background: var(--surface);
-  color: var(--ink);
-  border-radius: 11px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border-radius: 999px;
   padding: 10px 13px;
   font-size: 12px;
   font-weight: 800;
@@ -768,7 +798,8 @@ textarea {
   left: 12px;
   bottom: 12px;
   border-radius: 9px;
-  background: var(--lime);
+  background: var(--accent);
+  color: var(--on-accent);
   padding: 7px 10px;
   font-size: 11px;
   font-weight: 900;
@@ -1484,7 +1515,7 @@ textarea {
   height: 59px;
   border: 0;
   border-radius: 16px;
-  background: var(--green);
+  background: var(--accent);
   color: var(--profile-text);
   display: flex;
   align-items: center;
@@ -1497,8 +1528,8 @@ textarea {
   display: grid;
   place-content: center;
   border-radius: 9px;
-  background: var(--lime);
-  color: var(--on-accent);
+  background: rgb(255 255 255 / 18%);
+  color: #ffffff;
   font-size: 12px;
   font-weight: 900;
 }
@@ -1508,7 +1539,7 @@ textarea {
   padding-left: 11px;
 }
 .floating-cart strong {
-  color: var(--lime);
+  color: #ffffff;
 }
 .modal-backdrop {
   position: fixed;
@@ -3226,7 +3257,7 @@ html[data-theme='dark'] .meter-track {
 }
 .theme-control button.active {
   color: var(--on-accent);
-  background: var(--lime);
+  background: var(--accent);
 }
 
 html[data-theme='dark'] {
@@ -3525,7 +3556,7 @@ html[data-theme='dark'] .bottom-nav .active {
   border: 0;
   border-radius: 12px;
   padding: 0 12px;
-  background: var(--lime);
+  background: var(--accent);
   color: var(--on-accent);
   display: flex;
   align-items: center;

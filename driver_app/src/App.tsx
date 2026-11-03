@@ -1,6 +1,7 @@
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import { Network } from '@capacitor/network'
+import { AccessibleDialog } from '@crave/mobile-core'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { PullToRefresh } from './components/PullToRefresh'
 import appLogo from '../assets/logo.svg'
@@ -562,46 +563,52 @@ function EarningsPage({
           )}
         </div>
         {showCashout && (
-          <div className="modal-backdrop" role="dialog" aria-modal="true">
-            <section className="sheet small-sheet">
-              <header>
-                <div>
-                  <span className="eyebrow">Instant payout</span>
-                  <h2>Move your earnings</h2>
-                </div>
-                <button className="icon-button" onClick={() => setShowCashout(false)}>
-                  <Icon name="close" />
-                </button>
-              </header>
-              <label className="field-label">
-                Amount
-                <input
-                  type="number"
-                  min="1"
-                  max={balance}
-                  value={amount}
-                  onChange={(event) => setAmount(event.target.value)}
-                />
-              </label>
-              <div className="destination-card">
-                <Icon name="card" />
-                <div>
-                  <span>Destination</span>
-                  <strong>{primary?.vpa}</strong>
-                </div>
+          <AccessibleDialog
+            className="sheet small-sheet"
+            labelledBy="driver-payout-title"
+            onClose={() => setShowCashout(false)}
+          >
+            <header>
+              <div>
+                <span className="eyebrow">Instant payout</span>
+                <h2 id="driver-payout-title">Move your earnings</h2>
               </div>
               <button
-                className="primary-button"
-                disabled={busy || Number(amount) <= 0 || Number(amount) > balance}
-                onClick={async () => {
-                  await onCashout(Number(amount))
-                  setShowCashout(false)
-                }}
+                className="icon-button"
+                onClick={() => setShowCashout(false)}
+                aria-label="Close"
               >
-                {busy ? <span className="button-spinner dark" /> : `Request ${money(amount)}`}
+                <Icon name="close" />
               </button>
-            </section>
-          </div>
+            </header>
+            <label className="field-label">
+              Amount
+              <input
+                type="number"
+                min="1"
+                max={balance}
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
+              />
+            </label>
+            <div className="destination-card">
+              <Icon name="card" />
+              <div>
+                <span>Destination</span>
+                <strong>{primary?.vpa}</strong>
+              </div>
+            </div>
+            <button
+              className="primary-button"
+              disabled={busy || Number(amount) <= 0 || Number(amount) > balance}
+              onClick={async () => {
+                await onCashout(Number(amount))
+                setShowCashout(false)
+              }}
+            >
+              {busy ? <span className="button-spinner dark" /> : `Request ${money(amount)}`}
+            </button>
+          </AccessibleDialog>
         )}
       </section>
     </PullToRefresh>
@@ -897,158 +904,145 @@ function AccountPage({
           <Icon name="logout" /> Sign out of driver app
         </button>
         {updateSheet && (
-          <div
-            className="modal-backdrop"
-            role="dialog"
-            aria-modal="true"
-            onClick={() => setUpdateSheet(false)}
+          <AccessibleDialog
+            className="sheet"
+            labelledBy="driver-update-title"
+            onClose={() => setUpdateSheet(false)}
           >
-            <section className="sheet" onClick={(event) => event.stopPropagation()}>
-              <header className="sheet-header">
-                <div>
-                  <span className="eyebrow">Driver app</span>
-                  <h2>{t.settings.checkForUpdates}</h2>
-                </div>
-                <button
-                  className="icon-button"
-                  onClick={() => setUpdateSheet(false)}
-                  aria-label="Close"
-                >
-                  <Icon name="close" />
-                </button>
-              </header>
-              <p>
-                {checkingUpdate
-                  ? 'Checking for the latest driver app…'
-                  : availableUpdate
-                    ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
-                    : updateError || 'You are using the latest available version.'}
-              </p>
-              <div className="software-actions">
-                <button
-                  className="secondary-button"
-                  disabled={checkingUpdate || installingUpdate}
-                  onClick={() => void onCheckUpdate()}
-                >
-                  {checkingUpdate ? 'Checking…' : 'Check again'}
-                </button>
-                <button
-                  className="primary-button"
-                  disabled={!availableUpdate || checkingUpdate || installingUpdate}
-                  onClick={() => void onInstallUpdate()}
-                >
-                  {installingUpdate
-                    ? 'Opening installer…'
-                    : availableUpdate
-                      ? `Update to ${availableUpdate.versionName}`
-                      : 'App is up to date'}
-                </button>
+            <header className="sheet-header">
+              <div>
+                <span className="eyebrow">Driver app</span>
+                <h2 id="driver-update-title">{t.settings.checkForUpdates}</h2>
               </div>
-              {updateError && availableUpdate && <p className="software-error">{updateError}</p>}
-            </section>
-          </div>
+              <button
+                className="icon-button"
+                onClick={() => setUpdateSheet(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </header>
+            <p>
+              {checkingUpdate
+                ? 'Checking for the latest driver app…'
+                : availableUpdate
+                  ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
+                  : updateError || 'You are using the latest available version.'}
+            </p>
+            <div className="software-actions">
+              <button
+                className="secondary-button"
+                disabled={checkingUpdate || installingUpdate}
+                onClick={() => void onCheckUpdate()}
+              >
+                {checkingUpdate ? 'Checking…' : 'Check again'}
+              </button>
+              <button
+                className="primary-button"
+                disabled={!availableUpdate || checkingUpdate || installingUpdate}
+                onClick={() => void onInstallUpdate()}
+              >
+                {installingUpdate
+                  ? 'Opening installer…'
+                  : availableUpdate
+                    ? `Update to ${availableUpdate.versionName}`
+                    : 'App is up to date'}
+              </button>
+            </div>
+            {updateError && availableUpdate && <p className="software-error">{updateError}</p>}
+          </AccessibleDialog>
         )}
 
         {passwordSheet && (
-          <div
-            className="modal-backdrop"
-            role="dialog"
-            aria-modal="true"
-            onClick={() => setPasswordSheet(false)}
+          <AccessibleDialog
+            className="sheet"
+            labelledBy="driver-password-title"
+            onClose={() => setPasswordSheet(false)}
           >
-            <section className="sheet" onClick={(event) => event.stopPropagation()}>
-              <header className="sheet-header">
-                <div>
-                  <span className="eyebrow">Account security</span>
-                  <h2>{t.settings.changePassword}</h2>
-                </div>
-                <button
-                  className="icon-button"
-                  onClick={() => setPasswordSheet(false)}
-                  aria-label="Close"
-                >
-                  <Icon name="close" />
-                </button>
-              </header>
-              <p>Keep your driver account secure with a new sign-in password.</p>
-              <ChangePasswordForm onChangePassword={onChangePassword} />
-            </section>
-          </div>
+            <header className="sheet-header">
+              <div>
+                <span className="eyebrow">Account security</span>
+                <h2 id="driver-password-title">{t.settings.changePassword}</h2>
+              </div>
+              <button
+                className="icon-button"
+                onClick={() => setPasswordSheet(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </header>
+            <p>Keep your driver account secure with a new sign-in password.</p>
+            <ChangePasswordForm onChangePassword={onChangePassword} />
+          </AccessibleDialog>
         )}
 
         {languageSheet && (
-          <div
-            className="modal-backdrop"
-            role="dialog"
-            aria-modal="true"
-            onClick={() => setLanguageSheet(false)}
+          <AccessibleDialog
+            className="sheet"
+            labelledBy="driver-language-title"
+            onClose={() => setLanguageSheet(false)}
           >
-            <section className="sheet" onClick={(event) => event.stopPropagation()}>
-              <header className="sheet-header">
-                <div>
-                  <span className="eyebrow">App language</span>
-                  <h2>{t.settings.chooseLanguage}</h2>
-                </div>
-                <button
-                  className="icon-button"
-                  onClick={() => setLanguageSheet(false)}
-                  aria-label="Close"
-                >
-                  <Icon name="close" />
-                </button>
-              </header>
-              <div className="language-list">
-                {languages.map((option) => (
-                  <button
-                    key={option.code}
-                    className={language === option.code ? 'selected' : ''}
-                    onClick={() => {
-                      setLanguage(option.code)
-                      setLanguageSheet(false)
-                    }}
-                  >
-                    <span>{option.nativeName}</span>
-                    {language === option.code && <Icon name="check" />}
-                  </button>
-                ))}
+            <header className="sheet-header">
+              <div>
+                <span className="eyebrow">App language</span>
+                <h2 id="driver-language-title">{t.settings.chooseLanguage}</h2>
               </div>
-            </section>
-          </div>
+              <button
+                className="icon-button"
+                onClick={() => setLanguageSheet(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </header>
+            <div className="language-list">
+              {languages.map((option) => (
+                <button
+                  key={option.code}
+                  className={language === option.code ? 'selected' : ''}
+                  onClick={() => {
+                    setLanguage(option.code)
+                    setLanguageSheet(false)
+                  }}
+                >
+                  <span>{option.nativeName}</span>
+                  {language === option.code && <Icon name="check" />}
+                </button>
+              ))}
+            </div>
+          </AccessibleDialog>
         )}
 
         {confirmLogout && (
-          <div
-            className="modal-backdrop"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="driver-logout-title"
-            onClick={() => setConfirmLogout(false)}
+          <AccessibleDialog
+            className="sheet"
+            labelledBy="driver-logout-title"
+            onClose={() => setConfirmLogout(false)}
           >
-            <section className="sheet" onClick={(event) => event.stopPropagation()}>
-              <header className="sheet-header">
-                <div>
-                  <span className="eyebrow">Confirm sign out</span>
-                  <h2 id="driver-logout-title">Really sign out?</h2>
-                </div>
-                <button
-                  className="icon-button"
-                  onClick={() => setConfirmLogout(false)}
-                  aria-label="Close"
-                >
-                  <Icon name="close" />
-                </button>
-              </header>
-              <p>You will be signed out of the driver app. You can sign back in anytime.</p>
-              <div className="form-grid" style={{ marginTop: 12, gap: 10 }}>
-                <button className="secondary-button" onClick={() => setConfirmLogout(false)}>
-                  Cancel
-                </button>
-                <button className="primary-button" onClick={onLogout}>
-                  <Icon name="logout" /> Sign out
-                </button>
+            <header className="sheet-header">
+              <div>
+                <span className="eyebrow">Confirm sign out</span>
+                <h2 id="driver-logout-title">Really sign out?</h2>
               </div>
-            </section>
-          </div>
+              <button
+                className="icon-button"
+                onClick={() => setConfirmLogout(false)}
+                aria-label="Close"
+              >
+                <Icon name="close" />
+              </button>
+            </header>
+            <p>You will be signed out of the driver app. You can sign back in anytime.</p>
+            <div className="form-grid" style={{ marginTop: 12, gap: 10 }}>
+              <button className="secondary-button" onClick={() => setConfirmLogout(false)}>
+                Cancel
+              </button>
+              <button className="primary-button" onClick={onLogout}>
+                <Icon name="logout" /> Sign out
+              </button>
+            </div>
+          </AccessibleDialog>
         )}
       </section>
     </PullToRefresh>
@@ -1249,40 +1243,43 @@ function OtpSheet({
 }) {
   const [otp, setOtp] = useState('')
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <section className="sheet otp-sheet">
-        <header>
-          <div>
-            <span className="eyebrow">Secure handoff</span>
-            <h2>Enter customer OTP</h2>
-          </div>
-          <button className="icon-button" onClick={onClose}>
-            <Icon name="close" />
-          </button>
-        </header>
-        <p>
-          Ask the customer for the 6-digit delivery code before handing over the order. The code
-          appears on their order screen from the moment you pick up the food.
-        </p>
-        <input
-          className="otp-input"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          maxLength={6}
-          value={otp}
-          onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
-          placeholder="000000"
-          autoFocus
-        />
-        <button
-          className="primary-button"
-          disabled={busy || otp.length !== 6}
-          onClick={() => onSubmit(otp)}
-        >
-          {busy ? <span className="button-spinner dark" /> : 'Verify and complete delivery'}
+    <AccessibleDialog
+      className="sheet otp-sheet"
+      labelledBy="delivery-otp-title"
+      closeOnBackdrop={false}
+      onClose={onClose}
+    >
+      <header>
+        <div>
+          <span className="eyebrow">Secure handoff</span>
+          <h2 id="delivery-otp-title">Enter customer OTP</h2>
+        </div>
+        <button className="icon-button" onClick={onClose} aria-label="Close">
+          <Icon name="close" />
         </button>
-      </section>
-    </div>
+      </header>
+      <p>
+        Ask the customer for the 6-digit delivery code before handing over the order. The code
+        appears on their order screen from the moment you pick up the food.
+      </p>
+      <input
+        className="otp-input"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        maxLength={6}
+        value={otp}
+        onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
+        placeholder="000000"
+        autoFocus
+      />
+      <button
+        className="primary-button"
+        disabled={busy || otp.length !== 6}
+        onClick={() => onSubmit(otp)}
+      >
+        {busy ? <span className="button-spinner dark" /> : 'Verify and complete delivery'}
+      </button>
+    </AccessibleDialog>
   )
 }
 

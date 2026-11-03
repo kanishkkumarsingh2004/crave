@@ -2,23 +2,23 @@
 @import '@crave/design-tokens/tokens.css';
 
 :root {
-  color: #f5f7f5;
-  background: #07100b;
+  color: var(--theme-dark-ink);
+  background: var(--theme-dark-canvas);
   font-family: var(--font-ui);
   font-synthesis: none;
   --lime: var(--brand-primary);
   --lime-dark: #91aa20;
-  --surface: #101914;
-  --surface-2: #18231c;
-  --ink: #f5f7f5;
-  --muted: #829087;
-  --line: #28372d;
+  --surface: var(--theme-dark-surface);
+  --surface-2: var(--theme-dark-raised);
+  --ink: var(--theme-dark-ink);
+  --muted: var(--theme-dark-muted);
+  --line: var(--theme-dark-line);
   --success: #78e5a4;
   --danger: #ff8e9d;
   --input-bg: #08110c;
   --input-text: #f5f7f5;
   --input-border: #304137;
-  --app-bg: #07100b;
+  --app-bg: var(--theme-dark-canvas);
   --chrome-bg: rgb(7 16 11 / 94%);
   --overlay-bg: rgb(2 7 4 / 78%);
   --on-accent: #10160d;
@@ -34,7 +34,7 @@ body,
   min-width: 320px;
   min-height: 100%;
   margin: 0;
-  background: #07100b;
+  background: var(--theme-dark-canvas);
 }
 body {
   overscroll-behavior: none;
@@ -68,6 +68,7 @@ svg {
 .app-shell {
   height: 100vh;
   height: 100dvh;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -2159,7 +2160,7 @@ html[data-theme='dark'] .address-map-fallback {
   min-height: 0;
   flex: 1 1 auto;
   overflow-y: auto;
-  padding-bottom: calc(68px + env(safe-area-inset-bottom));
+  scrollbar-gutter: stable;
   overscroll-behavior: contain;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
@@ -2199,24 +2200,20 @@ html[data-theme='dark'] .address-map-fallback {
 
 /* Compact control-center alignment and explicit scroll ownership. */
 .app-shell {
-  min-height: 100dvh;
+  height: 100dvh;
+  min-height: 0;
 }
 .app-header {
   min-height: calc(var(--app-header-height) + var(--safe-top));
   padding-top: max(var(--space-3), var(--safe-top));
 }
 .app-content {
-  min-height: 0;
-  flex: 1 1 auto;
   width: min(100%, var(--content-max));
   margin: 0 auto;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: visible;
   padding: var(--space-5) var(--space-4)
     calc(var(--app-nav-height) + var(--safe-bottom) + var(--space-6));
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-  -webkit-overflow-scrolling: touch;
 }
 .hero-card h1,
 .page-heading h1 {
@@ -2277,6 +2274,29 @@ html[data-theme='dark'] .address-map-fallback {
 }
 .bottom-nav {
   height: calc(var(--app-nav-height) + var(--safe-bottom));
+}
+@media (max-width: 639px) {
+  .bottom-nav {
+    justify-content: flex-start;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  .bottom-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .bottom-nav button,
+  .bottom-nav > div {
+    flex: 0 0 64px;
+    min-width: 64px;
+  }
+  .bottom-nav small {
+    max-width: 60px;
+    overflow: hidden;
+    font-size: 9px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 @media (max-width: 639px) {
   .hero-card,

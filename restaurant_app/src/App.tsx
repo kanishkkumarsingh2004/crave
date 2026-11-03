@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import { Network } from '@capacitor/network'
 import { SplashScreen } from '@capacitor/splash-screen'
+import { AccessibleDialog } from '@crave/mobile-core'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { PullToRefresh } from './components/PullToRefresh'
 import appLogo from '../assets/logo.svg'
@@ -506,128 +507,131 @@ function MenuEditor({
   }
 
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <section className="sheet menu-editor-sheet">
-        <header className="sheet-header">
-          <div>
-            <span className="eyebrow">Menu management</span>
-            <h2>{value.id ? 'Edit dish' : 'Add a new dish'}</h2>
-          </div>
-          <button className="icon-button" onClick={onClose} aria-label="Close">
-            <Icon name="close" />
-          </button>
-        </header>
-        <div className="sheet-body form-grid">
-          <label className="field-wide">
-            Dish name
-            <input
-              value={value.name}
-              onChange={(event) => onChange({ ...value, name: event.target.value })}
-              placeholder="e.g. Paneer Tikka Bowl"
-            />
-          </label>
-          <CategoryPicker
-            value={value.category}
-            onChange={(category) => onChange({ ...value, category })}
-          />
-          <label>
-            Portion / unit
-            <input
-              value={value.unit}
-              onChange={(event) => onChange({ ...value, unit: event.target.value })}
-              placeholder="Serves 1"
-            />
-          </label>
-          <label>
-            {value.useSizes ? 'Small price' : 'Restaurant price'}
-            <input
-              inputMode="numeric"
-              value={value.restaurantPrice}
-              onChange={(event) => updateBasePrice(event.target.value)}
-              placeholder="₹0"
-            />
-            <small className="price-helper">
-              Your customer price is calculated automatically from the restaurant contract.
-            </small>
-          </label>
-          <div className="choice-row field-wide">
-            <button
-              className={value.isVeg ? 'choice active' : 'choice'}
-              onClick={() => onChange({ ...value, isVeg: !value.isVeg })}
-            >
-              <span className="veg-dot" /> {value.isVeg ? 'Vegetarian' : 'Non-vegetarian'}
-            </button>
-            <button
-              className={value.inStock ? 'choice active' : 'choice'}
-              onClick={() => onChange({ ...value, inStock: !value.inStock })}
-            >
-              <Icon name="check" /> {value.inStock ? 'Available' : 'Unavailable'}
-            </button>
-            <button className={value.useSizes ? 'choice active' : 'choice'} onClick={toggleSizes}>
-              <Icon name="menu" /> Small / Medium / Large
-            </button>
-          </div>
-          {value.useSizes && (
-            <div className="variant-editor field-wide">
-              <div className="variant-title">
-                <strong>Medium and large prices</strong>
-                <span>Small uses the price entered above.</span>
-              </div>
-              {value.variants
-                .filter((variant) => variant.name.toLowerCase() !== 'small')
-                .map((variant) => (
-                  <div className="variant-row" key={variant.id}>
-                    <strong>{variant.name}</strong>
-                    <input
-                      inputMode="numeric"
-                      value={variant.restaurant_price}
-                      onChange={(event) =>
-                        updateVariant(variant.id, {
-                          restaurant_price: Number(event.target.value || 0),
-                          price: Number(event.target.value || 0),
-                        })
-                      }
-                      aria-label={`${variant.name} restaurant price`}
-                      placeholder="₹0"
-                    />
-                  </div>
-                ))}
-            </div>
-          )}
-          <label>
-            Image URL
-            <input
-              value={value.image}
-              onChange={(event) => onChange({ ...value, image: event.target.value })}
-              placeholder="https://..."
-            />
-          </label>
-          <label className="field-wide">
-            Description
-            <textarea
-              value={value.description}
-              onChange={(event) => onChange({ ...value, description: event.target.value })}
-              placeholder="Ingredients and short description"
-              rows={3}
-            />
-          </label>
+    <AccessibleDialog
+      className="sheet menu-editor-sheet"
+      labelledBy="menu-editor-title"
+      closeOnBackdrop={false}
+      onClose={onClose}
+    >
+      <header className="sheet-header">
+        <div>
+          <span className="eyebrow">Menu management</span>
+          <h2 id="menu-editor-title">{value.id ? 'Edit dish' : 'Add a new dish'}</h2>
         </div>
-        <footer className="sheet-footer">
-          <button className="secondary-button" onClick={onClose}>
-            Cancel
+        <button className="icon-button" onClick={onClose} aria-label="Close">
+          <Icon name="close" />
+        </button>
+      </header>
+      <div className="sheet-body form-grid">
+        <label className="field-wide">
+          Dish name
+          <input
+            value={value.name}
+            onChange={(event) => onChange({ ...value, name: event.target.value })}
+            placeholder="e.g. Paneer Tikka Bowl"
+          />
+        </label>
+        <CategoryPicker
+          value={value.category}
+          onChange={(category) => onChange({ ...value, category })}
+        />
+        <label>
+          Portion / unit
+          <input
+            value={value.unit}
+            onChange={(event) => onChange({ ...value, unit: event.target.value })}
+            placeholder="Serves 1"
+          />
+        </label>
+        <label>
+          {value.useSizes ? 'Small price' : 'Restaurant price'}
+          <input
+            inputMode="numeric"
+            value={value.restaurantPrice}
+            onChange={(event) => updateBasePrice(event.target.value)}
+            placeholder="₹0"
+          />
+          <small className="price-helper">
+            Your customer price is calculated automatically from the restaurant contract.
+          </small>
+        </label>
+        <div className="choice-row field-wide">
+          <button
+            className={value.isVeg ? 'choice active' : 'choice'}
+            onClick={() => onChange({ ...value, isVeg: !value.isVeg })}
+          >
+            <span className="veg-dot" /> {value.isVeg ? 'Vegetarian' : 'Non-vegetarian'}
           </button>
-          <button className="primary-button" disabled={saving} onClick={onSave}>
-            {saving ? (
-              <span className="button-spinner dark" />
-            ) : value.id ? (
-              'Save changes'
-            ) : (
-              'Add dish'
-            )}
+          <button
+            className={value.inStock ? 'choice active' : 'choice'}
+            onClick={() => onChange({ ...value, inStock: !value.inStock })}
+          >
+            <Icon name="check" /> {value.inStock ? 'Available' : 'Unavailable'}
           </button>
-        </footer>
-      </section>
-    </div>
+          <button className={value.useSizes ? 'choice active' : 'choice'} onClick={toggleSizes}>
+            <Icon name="menu" /> Small / Medium / Large
+          </button>
+        </div>
+        {value.useSizes && (
+          <div className="variant-editor field-wide">
+            <div className="variant-title">
+              <strong>Medium and large prices</strong>
+              <span>Small uses the price entered above.</span>
+            </div>
+            {value.variants
+              .filter((variant) => variant.name.toLowerCase() !== 'small')
+              .map((variant) => (
+                <div className="variant-row" key={variant.id}>
+                  <strong>{variant.name}</strong>
+                  <input
+                    inputMode="numeric"
+                    value={variant.restaurant_price}
+                    onChange={(event) =>
+                      updateVariant(variant.id, {
+                        restaurant_price: Number(event.target.value || 0),
+                        price: Number(event.target.value || 0),
+                      })
+                    }
+                    aria-label={`${variant.name} restaurant price`}
+                    placeholder="₹0"
+                  />
+                </div>
+              ))}
+          </div>
+        )}
+        <label>
+          Image URL
+          <input
+            value={value.image}
+            onChange={(event) => onChange({ ...value, image: event.target.value })}
+            placeholder="https://..."
+          />
+        </label>
+        <label className="field-wide">
+          Description
+          <textarea
+            value={value.description}
+            onChange={(event) => onChange({ ...value, description: event.target.value })}
+            placeholder="Ingredients and short description"
+            rows={3}
+          />
+        </label>
+      </div>
+      <footer className="sheet-footer">
+        <button className="secondary-button" onClick={onClose}>
+          Cancel
+        </button>
+        <button className="primary-button" disabled={saving} onClick={onSave}>
+          {saving ? (
+            <span className="button-spinner dark" />
+          ) : value.id ? (
+            'Save changes'
+          ) : (
+            'Add dish'
+          )}
+        </button>
+      </footer>
+    </AccessibleDialog>
   )
 }
 
@@ -1868,259 +1872,244 @@ export default function App() {
       </PullToRefresh>
 
       {updateSheet && (
-        <div
-          className="modal-backdrop"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setUpdateSheet(false)}
+        <AccessibleDialog
+          className="sheet"
+          labelledBy="restaurant-update-title"
+          onClose={() => setUpdateSheet(false)}
         >
-          <section className="sheet" onClick={(event) => event.stopPropagation()}>
-            <header className="sheet-header">
+          <header className="sheet-header">
+            <div>
+              <span className="eyebrow">Restaurant app</span>
+              <h2 id="restaurant-update-title">{t.settings.checkForUpdates}</h2>
+            </div>
+            <button
+              className="icon-button"
+              onClick={() => setUpdateSheet(false)}
+              aria-label="Close"
+            >
+              <Icon name="close" />
+            </button>
+          </header>
+          <article className={`settings-card software-card ${availableUpdate ? 'ready' : ''}`}>
+            <div className="card-title">
+              <span>
+                <Icon name="download" />
+              </span>
               <div>
-                <span className="eyebrow">Restaurant app</span>
-                <h2>{t.settings.checkForUpdates}</h2>
-              </div>
-              <button
-                className="icon-button"
-                onClick={() => setUpdateSheet(false)}
-                aria-label="Close"
-              >
-                <Icon name="close" />
-              </button>
-            </header>
-            <article className={`settings-card software-card ${availableUpdate ? 'ready' : ''}`}>
-              <div className="card-title">
-                <span>
-                  <Icon name="download" />
-                </span>
-                <div>
-                  <h2>App update</h2>
-                  <p>
-                    {checkingUpdate
-                      ? 'Checking for the latest restaurant app…'
-                      : availableUpdate
-                        ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
-                        : updateError || 'You are using the latest available version.'}
-                  </p>
-                </div>
-              </div>
-              <div className="software-actions">
-                <button
-                  className="secondary-button"
-                  disabled={checkingUpdate || installingUpdate}
-                  onClick={() => void refreshUpdateStatus()}
-                >
-                  {checkingUpdate ? 'Checking…' : 'Check again'}
-                </button>
-                <button
-                  className="primary-button"
-                  disabled={!availableUpdate || checkingUpdate || installingUpdate}
-                  onClick={() => void installUpdate()}
-                >
-                  {installingUpdate
-                    ? 'Opening installer…'
+                <h2>App update</h2>
+                <p>
+                  {checkingUpdate
+                    ? 'Checking for the latest restaurant app…'
                     : availableUpdate
-                      ? `Update to ${availableUpdate.versionName}`
-                      : 'App is up to date'}
-                </button>
+                      ? `Version ${availableUpdate.versionName} is available. ${availableUpdate.releaseNotes}`
+                      : updateError || 'You are using the latest available version.'}
+                </p>
               </div>
-              {updateError && availableUpdate && (
-                <div className="software-error">{updateError}</div>
-              )}
-            </article>{' '}
-          </section>
-        </div>
+            </div>
+            <div className="software-actions">
+              <button
+                className="secondary-button"
+                disabled={checkingUpdate || installingUpdate}
+                onClick={() => void refreshUpdateStatus()}
+              >
+                {checkingUpdate ? 'Checking…' : 'Check again'}
+              </button>
+              <button
+                className="primary-button"
+                disabled={!availableUpdate || checkingUpdate || installingUpdate}
+                onClick={() => void installUpdate()}
+              >
+                {installingUpdate
+                  ? 'Opening installer…'
+                  : availableUpdate
+                    ? `Update to ${availableUpdate.versionName}`
+                    : 'App is up to date'}
+              </button>
+            </div>
+            {updateError && availableUpdate && <div className="software-error">{updateError}</div>}
+          </article>{' '}
+        </AccessibleDialog>
       )}
 
       {passwordSheet && (
-        <div
-          className="modal-backdrop"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setPasswordSheet(false)}
+        <AccessibleDialog
+          className="sheet"
+          labelledBy="restaurant-password-title"
+          onClose={() => setPasswordSheet(false)}
         >
-          <section className="sheet" onClick={(event) => event.stopPropagation()}>
-            <header className="sheet-header">
-              <div>
-                <span className="eyebrow">Account security</span>
-                <h2>{t.settings.changePassword}</h2>
-              </div>
-              <button
-                className="icon-button"
-                onClick={() => setPasswordSheet(false)}
-                aria-label="Close"
-              >
-                <Icon name="close" />
-              </button>
-            </header>
-            <p>Keep your restaurant partner account secure with a new sign-in password.</p>
-            <form className="password-form" onSubmit={changePassword} noValidate>
-              <label>
-                Current password
-                <span className="password-field">
-                  <input
-                    type={showCurrentPassword ? 'text' : 'password'}
-                    value={currentPassword}
-                    onChange={(event) => setCurrentPassword(event.target.value)}
-                    placeholder="Enter current password"
-                    autoComplete="current-password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword((value) => !value)}
-                    aria-label={
-                      showCurrentPassword ? 'Hide current password' : 'Show current password'
-                    }
-                  >
-                    {showCurrentPassword ? 'Hide' : 'Show'}
-                  </button>
-                </span>
-              </label>
-              <label>
-                New password
-                <span className="password-field">
-                  <input
-                    type={showNewPassword ? 'text' : 'password'}
-                    value={newPassword}
-                    onChange={(event) => setNewPassword(event.target.value)}
-                    placeholder="8–256 characters"
-                    autoComplete="new-password"
-                    minLength={8}
-                    maxLength={256}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword((value) => !value)}
-                    aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
-                  >
-                    {showNewPassword ? 'Hide' : 'Show'}
-                  </button>
-                </span>
-              </label>
-              <label>
-                Confirm new password
-                <span className="password-field">
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
-                    placeholder="Re-enter new password"
-                    autoComplete="new-password"
-                    minLength={8}
-                    maxLength={256}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword((value) => !value)}
-                    aria-label={
-                      showConfirmPassword
-                        ? 'Hide confirmation password'
-                        : 'Show confirmation password'
-                    }
-                  >
-                    {showConfirmPassword ? 'Hide' : 'Show'}
-                  </button>
-                </span>
-              </label>
-              <p className="password-helper">New passwords must be 8–256 characters long.</p>
-              {passwordFeedback && (
-                <p
-                  className={`password-feedback ${passwordFeedback.type}`}
-                  role={passwordFeedback.type === 'error' ? 'alert' : 'status'}
+          <header className="sheet-header">
+            <div>
+              <span className="eyebrow">Account security</span>
+              <h2 id="restaurant-password-title">{t.settings.changePassword}</h2>
+            </div>
+            <button
+              className="icon-button"
+              onClick={() => setPasswordSheet(false)}
+              aria-label="Close"
+            >
+              <Icon name="close" />
+            </button>
+          </header>
+          <p>Keep your restaurant partner account secure with a new sign-in password.</p>
+          <form className="password-form" onSubmit={changePassword} noValidate>
+            <label>
+              Current password
+              <span className="password-field">
+                <input
+                  type={showCurrentPassword ? 'text' : 'password'}
+                  value={currentPassword}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                  placeholder="Enter current password"
+                  autoComplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword((value) => !value)}
+                  aria-label={
+                    showCurrentPassword ? 'Hide current password' : 'Show current password'
+                  }
                 >
-                  {passwordFeedback.message}
-                </p>
+                  {showCurrentPassword ? 'Hide' : 'Show'}
+                </button>
+              </span>
+            </label>
+            <label>
+              New password
+              <span className="password-field">
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                  placeholder="8–256 characters"
+                  autoComplete="new-password"
+                  minLength={8}
+                  maxLength={256}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword((value) => !value)}
+                  aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                >
+                  {showNewPassword ? 'Hide' : 'Show'}
+                </button>
+              </span>
+            </label>
+            <label>
+              Confirm new password
+              <span className="password-field">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  placeholder="Re-enter new password"
+                  autoComplete="new-password"
+                  minLength={8}
+                  maxLength={256}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((value) => !value)}
+                  aria-label={
+                    showConfirmPassword
+                      ? 'Hide confirmation password'
+                      : 'Show confirmation password'
+                  }
+                >
+                  {showConfirmPassword ? 'Hide' : 'Show'}
+                </button>
+              </span>
+            </label>
+            <p className="password-helper">New passwords must be 8–256 characters long.</p>
+            {passwordFeedback && (
+              <p
+                className={`password-feedback ${passwordFeedback.type}`}
+                role={passwordFeedback.type === 'error' ? 'alert' : 'status'}
+              >
+                {passwordFeedback.message}
+              </p>
+            )}
+            <button className="primary-button" type="submit" disabled={changingPassword}>
+              {changingPassword ? (
+                <>
+                  <span className="button-spinner dark" /> Updating password…
+                </>
+              ) : (
+                'Change password'
               )}
-              <button className="primary-button" type="submit" disabled={changingPassword}>
-                {changingPassword ? (
-                  <>
-                    <span className="button-spinner dark" /> Updating password…
-                  </>
-                ) : (
-                  'Change password'
-                )}
-              </button>
-            </form>{' '}
-          </section>
-        </div>
+            </button>
+          </form>{' '}
+        </AccessibleDialog>
       )}
 
       {languageSheet && (
-        <div
-          className="modal-backdrop"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setLanguageSheet(false)}
+        <AccessibleDialog
+          className="sheet"
+          labelledBy="restaurant-language-title"
+          onClose={() => setLanguageSheet(false)}
         >
-          <section className="sheet" onClick={(event) => event.stopPropagation()}>
-            <header className="sheet-header">
-              <div>
-                <span className="eyebrow">App language</span>
-                <h2>{t.settings.chooseLanguage}</h2>
-              </div>
-              <button
-                className="icon-button"
-                onClick={() => setLanguageSheet(false)}
-                aria-label="Close"
-              >
-                <Icon name="close" />
-              </button>
-            </header>
-            <div className="language-list">
-              {languages.map((option) => (
-                <button
-                  key={option.code}
-                  className={language === option.code ? 'selected' : ''}
-                  onClick={() => {
-                    setLanguage(option.code)
-                    setLanguageSheet(false)
-                  }}
-                >
-                  <span>{option.nativeName}</span>
-                  {language === option.code && <Icon name="check" />}
-                </button>
-              ))}
+          <header className="sheet-header">
+            <div>
+              <span className="eyebrow">App language</span>
+              <h2 id="restaurant-language-title">{t.settings.chooseLanguage}</h2>
             </div>
-          </section>
-        </div>
+            <button
+              className="icon-button"
+              onClick={() => setLanguageSheet(false)}
+              aria-label="Close"
+            >
+              <Icon name="close" />
+            </button>
+          </header>
+          <div className="language-list">
+            {languages.map((option) => (
+              <button
+                key={option.code}
+                className={language === option.code ? 'selected' : ''}
+                onClick={() => {
+                  setLanguage(option.code)
+                  setLanguageSheet(false)
+                }}
+              >
+                <span>{option.nativeName}</span>
+                {language === option.code && <Icon name="check" />}
+              </button>
+            ))}
+          </div>
+        </AccessibleDialog>
       )}
 
       {confirmLogout && (
-        <div
-          className="modal-backdrop"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="restaurant-logout-title"
-          onClick={() => setConfirmLogout(false)}
+        <AccessibleDialog
+          className="sheet"
+          labelledBy="restaurant-logout-title"
+          onClose={() => setConfirmLogout(false)}
         >
-          <section className="sheet" onClick={(event) => event.stopPropagation()}>
-            <header className="sheet-header">
-              <div>
-                <span className="eyebrow">Confirm sign out</span>
-                <h2 id="restaurant-logout-title">Really sign out?</h2>
-              </div>
-              <button
-                className="icon-button"
-                onClick={() => setConfirmLogout(false)}
-                aria-label="Close"
-              >
-                <Icon name="close" />
-              </button>
-            </header>
-            <p>You will be signed out of the restaurant app. You can sign back in anytime.</p>
-            <div className="form-grid" style={{ marginTop: 12, gap: 10 }}>
-              <button className="secondary-button" onClick={() => setConfirmLogout(false)}>
-                Cancel
-              </button>
-              <button className="primary-button" onClick={() => void logout()}>
-                <Icon name="logout" /> Sign out
-              </button>
+          <header className="sheet-header">
+            <div>
+              <span className="eyebrow">Confirm sign out</span>
+              <h2 id="restaurant-logout-title">Really sign out?</h2>
             </div>
-          </section>
-        </div>
+            <button
+              className="icon-button"
+              onClick={() => setConfirmLogout(false)}
+              aria-label="Close"
+            >
+              <Icon name="close" />
+            </button>
+          </header>
+          <p>You will be signed out of the restaurant app. You can sign back in anytime.</p>
+          <div className="form-grid" style={{ marginTop: 12, gap: 10 }}>
+            <button className="secondary-button" onClick={() => setConfirmLogout(false)}>
+              Cancel
+            </button>
+            <button className="primary-button" onClick={() => void logout()}>
+              <Icon name="logout" /> Sign out
+            </button>
+          </div>
+        </AccessibleDialog>
       )}
 
       {permissionSheet && (
