@@ -37,6 +37,7 @@ import {
 } from '@/lib/idempotency'
 import { withTiming } from '@/lib/instrumentation'
 import { calculateMenuAppPrice } from '@/lib/menu-pricing'
+import { getMenuItemAvailability, withMenuItemAvailability } from '@/lib/menu-availability'
 import { sendDriverPushToUsers, sendNativePushToUsers } from '@/lib/notifications/driver-push'
 import { getPhaseName, isValidTransition, VALID_TRANSITIONS } from '@/lib/order-state-machine'
 import { maybeTriggerRouteSettlement } from '@/lib/payments/razorpay-split'
@@ -605,13 +606,11 @@ export async function POST(request: Request) {
           )
         }
 
-        // Check stock
-        const hasStockTracking =
-          typeof menuItem.stock_count === 'number' && menuItem.stock_count > 0
-        const hasInsufficientStock = isCraveXPOrder
-          ? typeof menuItem.stock_count !== 'number' || menuItem.stock_count < quantity
-          : hasStockTracking && menuItem.stock_count < quantity
-        if (menuItem.in_stock === false || hasInsufficientStock) {
+        // CraveXP inventory is a separate catalog. Restaurant menu availability
+        // is validated below together with the selected variant.
+        const hasInsufficientStock =
+          typeof menuItem.stock_count !== 'number' || menuItem.stock_count < quantity
+        if (isCraveXPOrder && (menuItem.in_stock === false || hasInsufficientStock)) {
           if (idempotencyKey)
             await releaseIdempotency(idempotencyKey, 'order_checkout', idempotencyFencingToken)
           return NextResponse.json(
@@ -627,17 +626,46 @@ export async function POST(request: Request) {
           variants.length > 0
             ? variantId
               ? variants.find((variant: any) => variant.id === variantId)
-              : variants.find((variant: any) => variant.is_default) || variants[0]
+              : variants.find((variant: any) => variant.is_default && variant.in_stock !== false) ||
+                variants.find((variant: any) => variant.in_stock !== false)
             : null
         if (variants.length > 0 && !selectedVariant) {
+          if (idempotencyKey) {
+            await releaseIdempotency(idempotencyKey, 'order_checkout', idempotencyFencingToken)
+          }
           return NextResponse.json(
-            { error: `Selected size is not available for ${menuItem.name}` },
+            {
+              code: 'ITEM_UNAVAILABLE',
+              error: `Selected size is not available for ${menuItem.name}`,
+            },
             { status: 400 }
           )
         }
         if (selectedVariant?.in_stock === false) {
+          if (idempotencyKey) {
+            await releaseIdempotency(idempotencyKey, 'order_checkout', idempotencyFencingToken)
+          }
           return NextResponse.json(
-            { error: `${menuItem.name} (${selectedVariant.name}) is out of stock` },
+            {
+              code: 'ITEM_UNAVAILABLE',
+              error: `${menuItem.name} (${selectedVariant.name}) is out of stock`,
+            },
+            { status: 400 }
+          )
+        }
+        if (
+          !isCraveXPOrder &&
+          (!getMenuItemAvailability(menuItem, selectedVariant?.id).isOrderable ||
+            hasInsufficientStock)
+        ) {
+          if (idempotencyKey) {
+            await releaseIdempotency(idempotencyKey, 'order_checkout', idempotencyFencingToken)
+          }
+          return NextResponse.json(
+            {
+              code: hasInsufficientStock ? 'INSUFFICIENT_STOCK' : 'ITEM_UNAVAILABLE',
+              error: `Item ${menuItem.name} is out of stock`,
+            },
             { status: 400 }
           )
         }
@@ -1122,13 +1150,14 @@ export async function POST(request: Request) {
 
       // ─── Create Order + Side Effects in Atomic Transaction ─────────────
       let order: any
+      let inventoryCommitted = false
       try {
         order = await prisma.$transaction(async (tx: any) => {
           // 1. Atomic Inventory Decrement:
           // Strictly decrement stock count inside transaction for tracked items to prevent overselling
           for (const { itemId, quantity } of validatedRaw) {
             const item = menuItemMap.get(itemId)
-            if (item && typeof item.stock_count === 'number' && item.stock_count > 0) {
+            if (item && typeof item.stock_count === 'number') {
               const inventory = isCraveXPOrder ? tx.craveXPProduct : tx.menuItem
               const updated = await inventory.updateMany({
                 where: {
@@ -1143,12 +1172,10 @@ export async function POST(request: Request) {
               if (updated.count === 0) {
                 throw new Error(`INSUFFICIENT_STOCK:${item.name || itemId}`)
               }
-              if (isCraveXPOrder && item.stock_count === quantity) {
-                await tx.craveXPProduct.update({
-                  where: { id: itemId },
-                  data: { in_stock: false },
-                })
-              }
+              await inventory.updateMany({
+                where: { id: itemId, stock_count: 0 },
+                data: { in_stock: false },
+              })
             }
           }
 
@@ -1287,6 +1314,7 @@ export async function POST(request: Request) {
 
           return createdOrder
         })
+        inventoryCommitted = true
         mark('db')
       } catch (txErr: any) {
         // Release idempotency lock on failure so the user or client can retry
@@ -1298,7 +1326,10 @@ export async function POST(request: Request) {
         if (txErr?.message?.startsWith('INSUFFICIENT_STOCK:')) {
           const itemName = txErr.message.split(':')[1]
           return NextResponse.json(
-            { error: `Item ${itemName} is out of stock or insufficient quantity available` },
+            {
+              code: 'INSUFFICIENT_STOCK',
+              error: `Item ${itemName} is out of stock or insufficient quantity available`,
+            },
             { status: 400 }
           )
         }
@@ -1374,6 +1405,31 @@ export async function POST(request: Request) {
           }
         } else {
           throw txErr
+        }
+      }
+
+      if (inventoryCommitted && !isCraveXPOrder) {
+        const changedItemIds = Array.from(new Set(validatedRaw.map(({ itemId }) => itemId)))
+        try {
+          const changedItems = await prisma.menuItem.findMany({
+            where: { id: { in: changedItemIds } },
+            include: { variants: { orderBy: { sort_order: 'asc' } } },
+          })
+          const { cacheDel, CacheKeys } = await import('@/lib/cache')
+          if (finalRestaurantId) {
+            await cacheDel(CacheKeys.menus.byRestaurant(finalRestaurantId))
+          }
+          await Promise.all(
+            changedItems.map((item) =>
+              broadcast('menu_items', {
+                type: 'update',
+                item: withMenuItemAvailability(item),
+                timestamp: new Date().toISOString(),
+              })
+            )
+          )
+        } catch (inventorySyncError) {
+          console.error('[POST /api/orders] Inventory synchronization failed:', inventorySyncError)
         }
       }
 

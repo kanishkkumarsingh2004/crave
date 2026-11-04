@@ -46,10 +46,12 @@ cd admin_app/android
 cp app/build/outputs/apk/debug/app-debug.apk ../../android-builds/crave-admin-debug.apk
 ```
 
-The repository-level build copies the current APK to `android-builds/crave-admin-debug.apk` and
-refreshes `android-builds/version.json` and `android-builds/SHA256SUMS.txt`:
+The repository-level release build synchronizes current assets, signs all four APKs with the
+configured private release key, verifies their certificates, and refreshes
+`android-builds/version.json` and `android-builds/SHA256SUMS.txt`:
 
 ```bash
-pnpm build:android          # all four apps, version code raised by one
-KEEP_VERSION=1 pnpm build:android   # publish the version in build.gradle unchanged
+pnpm build:android                # verified release-signed APKs, version code +1
+pnpm build:android:debug          # local Android-debug-certificate APKs
+KEEP_VERSION=1 pnpm build:android # sign the existing version code unchanged
 ```

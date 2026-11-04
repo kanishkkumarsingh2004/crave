@@ -11,7 +11,6 @@ import { MenuItemRecord } from '@/components/menu/types'
 import { VendorMenuSkeleton } from '@/components/ui/SkeletonLoaders'
 import { useAuth } from '@/lib/auth-context'
 import { useToast } from '@/lib/toast-context'
-import { publishLiveEvent } from '@/lib/websocket'
 
 function formatMenuItem(item: any, fallbackRestaurantId: string): MenuItemRecord {
   return {
@@ -23,6 +22,8 @@ function formatMenuItem(item: any, fallbackRestaurantId: string): MenuItemRecord
     restaurant_price: Number(item.restaurant_price ?? item.price),
     description: item.description ?? '',
     in_stock: item.in_stock ?? true,
+    availability_status: item.availability_status,
+    is_orderable: item.is_orderable,
     image:
       item.image ||
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
@@ -172,20 +173,16 @@ export default function VendorMenuPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, in_stock: nextStock }),
       })
-      if (!res.ok) throw new Error(await res.text())
-      setMenuItems((prev) => prev.map((i) => (i.id === id ? { ...i, in_stock: nextStock } : i)))
-      publishLiveEvent('menu_items', {
-        type: 'update',
-        item: {
-          id,
-          in_stock: nextStock,
-          stock_count: nextStock ? 10 : 0,
-          restaurant_id: restaurantId,
-        },
-      })
-      toast(`Dish availability updated to ${nextStock ? 'In Stock' : 'Out of Stock'}`, 'success')
-    } catch {
-      toast('Could not update availability.', 'error')
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error || 'Could not update availability.')
+      const savedItem = formatMenuItem(result.item, restaurantId || '')
+      setMenuItems((prev) => prev.map((item) => (item.id === id ? savedItem : item)))
+      toast(
+        `Dish availability updated to ${savedItem.in_stock ? 'In Stock' : 'Out of Stock'}`,
+        'success'
+      )
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Could not update availability.', 'error')
     }
   }
 
@@ -195,13 +192,6 @@ export default function VendorMenuPage() {
       const res = await fetch(`/api/menu-items?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
       if (!res.ok) throw new Error(await res.text())
       setMenuItems((prev) => prev.filter((i) => i.id !== id))
-      publishLiveEvent('menu_items', {
-        type: 'delete',
-        item: {
-          id,
-          restaurant_id: restaurantId,
-        },
-      })
       toast(`Deleted '${name}' from menu.`, 'success')
     } catch {
       toast('Could not delete the menu item.', 'error')

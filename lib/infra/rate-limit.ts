@@ -115,11 +115,10 @@ export async function checkRateLimit(
     }
   }
 
-  if (
-    DISTRIBUTED_REQUIRED_TIERS.has(tier) &&
-    process.env.NODE_ENV === 'production' &&
-    process.env.REDIS_DISABLED !== 'true'
-  ) {
+  if (DISTRIBUTED_REQUIRED_TIERS.has(tier) && process.env.NODE_ENV === 'production') {
+    // In production, critical rate limits must never fall back to a per-process
+    // in-memory store (which an attacker can bypass by rotating processes/IPs).
+    // Fail closed when Redis is not actually serving the limit.
     return {
       allowed: false,
       remaining: 0,

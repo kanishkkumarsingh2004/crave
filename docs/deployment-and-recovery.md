@@ -1,7 +1,7 @@
 # CRAVE — Deployment, Database Operations & Disaster Recovery Guide
 
 > **Current state — 21 October 2026.**
-> `pnpm build:android` builds and releases the four native apps and refreshes `android-builds/version.json`; `KEEP_VERSION=1 pnpm build:android` publishes the version in `build.gradle` unchanged, and `bash scripts/clean-native-builds.sh` wipes the build output and the published artefacts for a from-scratch release.
+> `pnpm build:android` builds and verifies release-signed APKs for the four native apps and refreshes `android-builds/version.json`; it fails closed when the release keystore or signing credentials are unavailable. `pnpm build:android:debug` is the explicit local debug build, `KEEP_VERSION=1 pnpm build:android` signs the version in `build.gradle` unchanged, and `bash scripts/clean-native-builds.sh` wipes the build output and published artefacts for a from-scratch release.
 
 **Date:** October 2026  
 **Auditor:** Principal SRE & Database Architect  

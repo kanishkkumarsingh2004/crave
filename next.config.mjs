@@ -3,7 +3,7 @@ const isDevelopment = !isProduction
 
 const contentSecurityPolicy = `
   default-src 'self';
-  script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://*.razorpay.com ${isDevelopment ? "'unsafe-eval'" : ''};
+  script-src 'self' https://checkout.razorpay.com https://*.razorpay.com ${isDevelopment ? "'unsafe-inline' 'unsafe-eval'" : ''};
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   img-src 'self' data: blob: https:;
   font-src 'self' data: https://fonts.gstatic.com;

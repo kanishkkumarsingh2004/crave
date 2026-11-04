@@ -20,7 +20,7 @@ export default function Footer({ className = '' }: { className?: string }) {
               Food delivery from your favorite neighbourhood restaurants and 15-minute essentials.
               Fresh ingredients, transparent pricing, and fast doorstep delivery.
             </p>
-            <div className="flex items-center gap-2 text-[11px] font-mono tracking-wider text-stone-500 pt-1">
+            <div className="flex items-center gap-2 text-[11px] font-mono tracking-wider text-stone-400 pt-1">
               <span className="size-1.5 rounded-full bg-[#d9f447]" />
               <span>Bengaluru, Karnataka</span>
             </div>
@@ -28,9 +28,9 @@ export default function Footer({ className = '' }: { className?: string }) {
 
           {/* Column 2: Order & Services (2 cols on lg) */}
           <div className="lg:col-span-2 space-y-3">
-            <h4 className="font-mono text-[11px] font-extrabold uppercase tracking-widest text-white">
+            <h2 className="font-mono text-[11px] font-extrabold uppercase tracking-widest text-white">
               Order
-            </h4>
+            </h2>
             <ul className="flex flex-col gap-2.5 font-medium">
               <li>
                 <Link href="/user/explore" className="hover:text-white transition-colors">
@@ -52,9 +52,9 @@ export default function Footer({ className = '' }: { className?: string }) {
 
           {/* Column 3: Portals & Access (3 cols on lg) */}
           <div className="lg:col-span-3 space-y-3">
-            <h4 className="font-mono text-[11px] font-extrabold uppercase tracking-widest text-white">
+            <h2 className="font-mono text-[11px] font-extrabold uppercase tracking-widest text-white">
               Portals
-            </h4>
+            </h2>
             <ul className="flex flex-col gap-2.5 font-medium">
               <li>
                 <Link href="/user/dashboard" className="hover:text-white transition-colors">
@@ -81,9 +81,9 @@ export default function Footer({ className = '' }: { className?: string }) {
 
           {/* Column 4: Trust & Support (2 cols on lg) */}
           <div className="lg:col-span-2 space-y-3">
-            <h4 className="font-mono text-[11px] font-extrabold uppercase tracking-widest text-white">
+            <h2 className="font-mono text-[11px] font-extrabold uppercase tracking-widest text-white">
               Support
-            </h4>
+            </h2>
             <ul className="flex flex-col gap-2.5 font-medium">
               <li>
                 <Link href="/policies" className="hover:text-white transition-colors">
@@ -108,7 +108,7 @@ export default function Footer({ className = '' }: { className?: string }) {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-stone-500 font-medium">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-stone-400 font-medium">
           <p>© 2026 Crave. All rights reserved.</p>
           <div className="flex items-center gap-2 text-stone-400">
             <span className="font-mono tracking-wider text-[10px] uppercase">

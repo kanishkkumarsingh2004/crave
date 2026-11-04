@@ -120,7 +120,7 @@ export default function LanguageSwitcher({
                 >
                   <span className="text-sm">{lang.flag}</span>
                   <span className="flex-1 text-left">{lang.nativeName}</span>
-                  <span className="text-[10px] text-[#78827c] font-normal">{lang.name}</span>
+                  <span className="text-[10px] text-[#5f6963] font-normal">{lang.name}</span>
                   {isActive && <Check className="size-3.5 text-[#5a6e0c] shrink-0" />}
                 </button>
               )
@@ -148,11 +148,11 @@ export default function LanguageSwitcher({
             </span>
             <div className="text-left">
               <p className="text-sm font-bold text-[#18201c]">{currentLang.nativeName}</p>
-              <p className="text-[11px] text-[#78827c]">{t.settings.languageDescription}</p>
+              <p className="text-[11px] text-[#5f6963]">{t.settings.languageDescription}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {saving && <span className="text-[11px] text-[#78827c]">{t.language.saving}</span>}
+            {saving && <span className="text-[11px] text-[#5f6963]">{t.language.saving}</span>}
             <ChevronDown
               className={`size-4 text-[#88928a] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
             />
@@ -179,7 +179,7 @@ export default function LanguageSwitcher({
                 >
                   <span className="text-base">{lang.flag}</span>
                   <span className="flex-1 text-left">{lang.nativeName}</span>
-                  <span className="text-xs text-[#78827c] font-normal">{lang.name}</span>
+                  <span className="text-xs text-[#5f6963] font-normal">{lang.name}</span>
                   {isActive && <Check className="size-4 text-[#5a6e0c] shrink-0" />}
                 </button>
               )

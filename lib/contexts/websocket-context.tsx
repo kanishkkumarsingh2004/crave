@@ -51,6 +51,11 @@ export function useWebSocket({
   const wsRef: any = useRef(null)
   const reconnectRef: any = useRef(null)
   const hasConnectedOnceRef = useRef(false)
+  const callbacksRef = useRef({ onMessage, onConnect, onReconnect, onDisconnect })
+
+  useEffect(() => {
+    callbacksRef.current = { onMessage, onConnect, onReconnect, onDisconnect }
+  }, [onMessage, onConnect, onReconnect, onDisconnect])
 
   useEffect(() => {
     if (!channels.length) return
@@ -60,7 +65,7 @@ export function useWebSocket({
       try {
         const msg: WSMessage = event.data
         if (channels.includes(msg.channel)) {
-          onMessage?.(msg)
+          callbacksRef.current.onMessage?.(msg)
         }
       } catch (e) {}
     }
@@ -91,9 +96,9 @@ export function useWebSocket({
           const isReconnect = hasConnectedOnceRef.current
           hasConnectedOnceRef.current = true
           attemptCount = 0
-          onConnect?.()
+          callbacksRef.current.onConnect?.()
           if (isReconnect) {
-            onReconnect?.()
+            callbacksRef.current.onReconnect?.()
           }
           try {
             ws.send(
@@ -111,13 +116,13 @@ export function useWebSocket({
         ws.onmessage = (event) => {
           try {
             const msg: WSMessage = JSON.parse(event.data)
-            onMessage?.(msg)
+            callbacksRef.current.onMessage?.(msg)
           } catch (e) {}
         }
 
         ws.onclose = () => {
           setConnected(false)
-          onDisconnect?.()
+          callbacksRef.current.onDisconnect?.()
           if (wsRef.current === ws) {
             wsRef.current = null
           }
@@ -400,24 +405,31 @@ export function useMenuItemUpdates(
   restaurantId: string | undefined,
   onItemUpdate: (item: any) => void
 ) {
+  const onItemUpdateRef = useRef(onItemUpdate)
+  useEffect(() => {
+    onItemUpdateRef.current = onItemUpdate
+  }, [onItemUpdate])
+
   // Adaptive polling fallback every 4s when a restaurant menu is open
   useEffect(() => {
     if (!restaurantId || typeof window === 'undefined') return
     const syncMenu = () => {
-      fetch(`/api/menu-items?restaurantId=${encodeURIComponent(restaurantId)}`, {
-        cache: 'no-store',
-      })
+      fetch(
+        `/api/menu-items?restaurantId=${encodeURIComponent(restaurantId)}&availabilityOnly=true`,
+        { cache: 'no-store' }
+      )
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data?.items && Array.isArray(data.items)) {
-            data.items.forEach((item: any) => onItemUpdate(item))
+            data.items.forEach((item: any) => onItemUpdateRef.current(item))
           }
         })
         .catch(() => {})
     }
+    syncMenu()
     const interval = setInterval(syncMenu, 4000)
     return () => clearInterval(interval)
-  }, [restaurantId, onItemUpdate])
+  }, [restaurantId])
 
   return useWebSocket({
     channels: ['menu_items'],
@@ -426,7 +438,7 @@ export function useMenuItemUpdates(
         const data = msg.data as any
         const item = data?.item || data
         if (!restaurantId || !item?.restaurant_id || item.restaurant_id === restaurantId) {
-          onItemUpdate(item)
+          onItemUpdateRef.current(item)
         }
       }
     },

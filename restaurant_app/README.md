@@ -37,7 +37,8 @@ Android uses immersive sticky mode to hide the status and navigation bars. iOS h
 bar and automatically hides the home indicator. Users can reveal system navigation temporarily
 with the operating system gesture.
 
-Build the Android APK from the repository root with `pnpm build:android` — that raises the
-Android `versionCode` by one so installed apps recognise the new build. `KEEP_VERSION=1 pnpm
-build:android` publishes the version already in `build.gradle` unchanged, which is what a fresh
-`1.0.0` release wants.
+Build verified release-signed Android APKs from the repository root with `pnpm build:android`;
+the command requires the private release keystore credentials and raises Android `versionCode` by
+one so installed apps recognise the new build. Use `pnpm build:android:debug` only for local
+debug-certificate APKs. `KEEP_VERSION=1 pnpm build:android` signs the version already in
+`build.gradle` unchanged.

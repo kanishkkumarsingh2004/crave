@@ -1,60 +1,58 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
+import {
+  getMenuItemAvailability,
+  validateMenuItemAvailability,
+  withMenuItemAvailability,
+} from '../lib/menu-availability'
 
-test('Real-time stock sync: stock status toggling and payload validation', () => {
-  // Simulating the vendor toggling an item out of stock
-  const initialItem = {
-    id: 'item_sg_01',
-    name: 'Butter Chicken Gourmet Bowl',
-    in_stock: true,
-    stock_count: 10,
-    restaurant_id: 'rest_01',
-  }
-
-  // Next stock status on vendor toggle
-  const nextStock = !initialItem.in_stock
-  const updatePayload = {
-    type: 'update',
-    item: {
-      id: initialItem.id,
-      in_stock: nextStock,
-      stock_count: nextStock ? 10 : 0,
-      restaurant_id: initialItem.restaurant_id,
-    },
-  }
-
-  assert.strictEqual(updatePayload.item.in_stock, false)
-  assert.strictEqual(updatePayload.item.stock_count, 0)
-
-  // Customer UI updater simulation
-  const customerList = [
-    { ...initialItem, price: 320, category: 'Main Course' },
-    {
-      id: 'item_sg_02',
-      name: 'Paneer Butter Masala',
-      in_stock: true,
-      price: 280,
-      category: 'Main Course',
-    },
-  ]
-
-  const updatedList = customerList.map((item) => {
-    if (item.id === updatePayload.item.id) {
-      const isNowInStock =
-        updatePayload.item.in_stock !== false &&
-        (updatePayload.item.stock_count == null || updatePayload.item.stock_count > 0)
-      return {
-        ...item,
-        in_stock: isNowInStock,
-        stock_count: updatePayload.item.stock_count,
-      }
-    }
-    return item
+test('canonical menu availability rejects available tracked items with no stock', () => {
+  const item = { in_stock: true, stock_count: 0 }
+  assert.deepStrictEqual(getMenuItemAvailability(item), {
+    inventoryMode: 'TRACKED',
+    status: 'SOLD_OUT',
+    stockCount: 0,
+    isOrderable: false,
   })
+  assert.match(validateMenuItemAvailability(item) || '', /at least one unit/i)
+})
 
-  assert.strictEqual(updatedList[0].in_stock, false)
-  assert.strictEqual(updatedList[0].stock_count, 0)
-  assert.strictEqual(updatedList[1].in_stock, true)
+test('canonical menu availability distinguishes vendor pauses from depleted stock', () => {
+  assert.deepStrictEqual(getMenuItemAvailability({ in_stock: false, stock_count: 8 }), {
+    inventoryMode: 'TRACKED',
+    status: 'PAUSED_BY_VENDOR',
+    stockCount: 8,
+    isOrderable: false,
+  })
+  assert.strictEqual(getMenuItemAvailability({ in_stock: true, stock_count: 8 }).isOrderable, true)
+})
+
+test('canonical menu availability enforces selected variant availability', () => {
+  const item = {
+    in_stock: true,
+    stock_count: 8,
+    variants: [
+      { id: 'small', in_stock: true },
+      { id: 'large', in_stock: false },
+    ],
+  }
+  assert.strictEqual(getMenuItemAvailability(item, 'small').isOrderable, true)
+  assert.strictEqual(getMenuItemAvailability(item, 'large').isOrderable, false)
+  assert.strictEqual(getMenuItemAvailability(item, 'missing').isOrderable, false)
+})
+
+test('canonical menu DTO exposes complete persisted availability without inventing stock', () => {
+  const dto = withMenuItemAvailability({
+    id: 'item_sg_01',
+    in_stock: true,
+    stock_count: 4,
+    variants: [{ id: 'regular', in_stock: true }],
+  })
+  assert.strictEqual(dto.stock_count, 4)
+  assert.strictEqual(dto.inventory_mode, 'TRACKED')
+  assert.strictEqual(dto.availability_status, 'AVAILABLE')
+  assert.strictEqual(dto.is_orderable, true)
+  assert.strictEqual(dto.variants?.[0].is_orderable, true)
 })
 
 test('Restaurant profile delivery ETA and distance calculation', () => {

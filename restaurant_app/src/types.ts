@@ -112,6 +112,7 @@ export interface MenuEditorValue {
   category: string
   description: string
   restaurantPrice: string
+  stockCount: string
   image: string
   isVeg: boolean
   inStock: boolean

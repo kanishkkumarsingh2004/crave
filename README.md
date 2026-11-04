@@ -52,10 +52,23 @@ Public: `/`, `/login`, `/signup`, `/policies/*`.
 
 ### Android apps
 
-Build the Admin, Driver, Restaurant, and CRAVE customer Android apps together with:
+Build release-signed Admin, Driver, Restaurant, and CRAVE customer Android apps together with:
 
 ```bash
 pnpm build:android
+```
+
+The command fails before changing build numbers unless `CRAVE_KEYSTORE_PASS`,
+`CRAVE_KEY_ALIAS`, and `CRAVE_KEY_PASS` are set and the keystore exists at
+`CRAVE_KEYSTORE` (default: `./crave-release.keystore`). It synchronizes the current web assets,
+builds the release variants, verifies every APK with `apksigner`, rejects the Android debug
+certificate, and requires all four APKs to have the same signer. The keystore is ignored by Git and
+must be backed up securely; losing it prevents updates to already installed release apps.
+
+For local development only, build debug-certificate APKs explicitly:
+
+```bash
+pnpm build:android:debug
 ```
 
 The APKs, checksums, installation commands, and build notes are collected in
@@ -80,10 +93,10 @@ APK versions and SHA-256 values are maintained in [`android-builds/version.json`
 All four apps ship the same three-row settings block — _Check for updates_, _Change password_ and
 _Language_ — and the language list comes from `dictionary/`, so the pickers follow the registry.
 
-**Releasing.** `pnpm build:android` raises the Android `versionCode` (and the iOS
-`CURRENT_PROJECT_VERSION`) by one on every build, because the in-app updater only offers a build
-whose number is **higher** than the installed one. To publish the version already in
-`build.gradle` unchanged — a fresh `1.0.0`, for example — build with `KEEP_VERSION=1`:
+**Releasing.** `pnpm build:android` raises each Android `versionCode` by one on every build,
+because the in-app updater only offers a build whose number is **higher** than the installed one.
+To sign the version already in `build.gradle` unchanged — a fresh `1.0.0`, for example — build
+with `KEEP_VERSION=1`:
 
 ```bash
 KEEP_VERSION=1 pnpm build:android
@@ -403,9 +416,10 @@ customer_app/   Customer restaurant and CraveXP shopping experience
 ```
 
 Build or synchronize an individual app with `pnpm --dir <app> build` or
-`pnpm --dir <app> sync`. Use `pnpm build:android` to build all debug APKs and refresh the
-checksums/update manifest. Camera access is declared by the Admin Android manifest and is requested
-when the product scanner starts; Android Settings may be required after a permanent denial.
+`pnpm --dir <app> sync`. Use `pnpm build:android` for verified release-signed APKs, or
+`pnpm build:android:debug` for local debug-certificate APKs; both refresh the checksums/update
+manifest. Camera access is declared by the Admin Android manifest and is requested when the product
+scanner starts; Android Settings may be required after a permanent denial.
 
 ---
 

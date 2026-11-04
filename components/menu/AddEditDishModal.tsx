@@ -40,7 +40,7 @@ export default function AddEditDishModal({
   const [image, setImage] = useState('')
   const [isVeg, setIsVeg] = useState(true)
   const [inStock, setInStock] = useState(true)
-  const [stockCount, setStockCount] = useState<number | ''>(50)
+  const [stockCount, setStockCount] = useState<number | ''>('')
   const [unit, setUnit] = useState('Serves 1')
   const [skuCode, setSkuCode] = useState('')
   const [expiryDate, setExpiryDate] = useState('')
@@ -69,7 +69,7 @@ export default function AddEditDishModal({
       setImage(editingItem.image || '')
       setIsVeg(editingItem.veg !== false)
       setInStock(editingItem.in_stock !== false)
-      setStockCount(editingItem.stock_count != null ? editingItem.stock_count : 50)
+      setStockCount(editingItem.stock_count != null ? editingItem.stock_count : '')
       setUnit(editingItem.unit || '')
       setSkuCode(editingItem.sku_code || '')
       setHsnSac(editingItem.hsn_sac_code || '996331')
@@ -87,7 +87,7 @@ export default function AddEditDishModal({
       setImage('')
       setIsVeg(true)
       setInStock(true)
-      setStockCount(50)
+      setStockCount('')
       setUnit('Serves 1')
       setSkuCode('')
       setHsnSac('996331')
@@ -136,6 +136,15 @@ export default function AddEditDishModal({
       toast('App selling price cannot be lower than restaurant price.', 'error')
       return
     }
+    const normalizedStockCount = Number(stockCount)
+    if (!Number.isInteger(normalizedStockCount) || normalizedStockCount < 0) {
+      toast('Stock units must be a non-negative whole number.', 'error')
+      return
+    }
+    if (inStock && normalizedStockCount <= 0) {
+      toast('Enter at least one stock unit before marking this dish available.', 'error')
+      return
+    }
     if (
       variants.some((v) => !v.name.trim() || v.restaurant_price < 0 || v.price < v.restaurant_price)
     ) {
@@ -166,7 +175,7 @@ export default function AddEditDishModal({
       image: image.trim() || defaultImg,
       veg: isVeg,
       unit: unit.trim() || null,
-      stock_count: stockCount !== '' ? Number(stockCount) : 0,
+      stock_count: normalizedStockCount,
       sku_code: skuCode.trim() || null,
       hsn_sac_code: hsnSac.trim() || '996331',
       price_tax_mode: priceTaxMode,
@@ -205,11 +214,10 @@ export default function AddEditDishModal({
         body: JSON.stringify(payload),
       })
 
-      if (!res.ok) {
-        throw new Error(await res.text())
-      }
-
       const result = await res.json()
+      if (!res.ok) {
+        throw new Error(result.error || 'Failed to save menu item')
+      }
       if (!result.success) {
         throw new Error(result.error || 'Failed to save menu item')
       }
@@ -220,6 +228,10 @@ export default function AddEditDishModal({
           ...itemData,
           price: Number(result.item.price),
           restaurant_price: Number(result.item.restaurant_price ?? result.item.price),
+          in_stock: result.item.in_stock !== false,
+          stock_count: Number(result.item.stock_count),
+          availability_status: result.item.availability_status,
+          is_orderable: result.item.is_orderable,
           variants: Array.isArray(result.item.variants)
             ? result.item.variants.map((v: any) => ({
                 id: v.id,

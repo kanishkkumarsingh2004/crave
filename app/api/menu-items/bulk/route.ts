@@ -2,6 +2,7 @@ import { handleApiAuthError, requireAuthApi } from '@/lib/api-auth'
 import { CacheKeys, cacheDel } from '@/lib/cache'
 import { prisma } from '@/lib/prisma'
 import { broadcast } from '@/lib/ws-server'
+import { validateMenuItemAvailability } from '@/lib/menu-availability'
 import { NextResponse } from 'next/server'
 
 type BulkVariant = {
@@ -144,7 +145,7 @@ function normalizeItem(
   }
   const priceTaxMode = rawPriceTaxMode as 'TAX_INCLUSIVE' | 'TAX_EXCLUSIVE'
 
-  return {
+  const item: BulkItem = {
     id: crypto.randomUUID(),
     restaurant_id: restaurantId,
     name,
@@ -163,6 +164,11 @@ function normalizeItem(
     expiry_date: optionalDate(raw.expiry_date, 'expiry_date', row),
     variants,
   }
+  const availabilityError = validateMenuItemAvailability(item)
+  if (availabilityError) {
+    throw new BulkImportValidationError(`Row ${row}: ${availabilityError}`)
+  }
+  return item
 }
 
 export async function POST(request: Request) {
@@ -250,7 +256,9 @@ export async function POST(request: Request) {
       if (variants.length > 0) await tx.menuItemVariant.createMany({ data: variants })
     })
 
-    await cacheDel(CacheKeys.menus.byRestaurant(restaurantId)).catch(() => {})
+    await cacheDel(CacheKeys.menus.byRestaurant(restaurantId)).catch((cacheError) =>
+      console.error('[POST /api/menu-items/bulk] Cache invalidation failed:', cacheError)
+    )
     await broadcast('menu_items', {
       type: 'bulk_create',
       restaurantId,

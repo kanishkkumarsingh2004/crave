@@ -35,7 +35,35 @@ export async function getAuthActor(request: Request): Promise<JWTPayload | null>
         ''
     } catch {}
   }
-  return token ? verifyToken(token) : null
+  const actor = token ? await verifyToken(token) : null
+  if (!actor) return null
+
+  // Recheck the current database role so a JWT cannot retain privileges after a
+  // role change or deactivation in the database.
+  if (!(await revalidateActorRole(actor))) return null
+
+  return actor
+}
+
+/**
+ * Re-verify the authenticated actor's role against the current database record.
+ * JWT role claims are signed but otherwise trusted; this function ensures a role
+ * change (e.g. demotion or deactivation) in the database is enforced on every
+ * authenticated request. Fails closed: returns false if the user cannot be found,
+ * the stored role differs from the JWT claim, or the database is unreachable.
+ */
+export async function revalidateActorRole(actor: JWTPayload): Promise<boolean> {
+  try {
+    const { prisma } = await import('@/lib/prisma')
+    const dbUser = await prisma.user.findUnique({
+      where: { id: actor.id },
+      select: { role: true },
+    })
+    return !!dbUser && dbUser.role === actor.role
+  } catch {
+    // Database unreachable -> do not trust a stale JWT role claim.
+    return false
+  }
 }
 
 /**

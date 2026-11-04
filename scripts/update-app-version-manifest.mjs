@@ -9,9 +9,6 @@ const artifactBaseUrl = process.env.ANDROID_RELEASE_BASE_URL?.replace(/\/$/, '')
 const flavorArgIndex = process.argv.indexOf('--flavor')
 const flavor =
   flavorArgIndex !== -1 && process.argv[flavorArgIndex + 1] === 'release' ? 'release' : 'debug'
-if (flavor === 'release' && !artifactBaseUrl) {
-  throw new Error('ANDROID_RELEASE_BASE_URL is required for a release manifest')
-}
 const downloadBaseUrl =
   artifactBaseUrl ||
   'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds'

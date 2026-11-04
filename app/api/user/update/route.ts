@@ -1,35 +1,16 @@
+import { randomUUID } from 'crypto'
 import { updateUser } from '@/lib/dal'
 import { PUBLIC_USER_SELECT } from '@/lib/dal/users'
 import { resolveCoordinates } from '@/lib/dal/addresses'
 import { prisma } from '@/lib/prisma'
-import { verifyToken } from '@/lib/jwt'
+import { getAuthActor } from '@/lib/auth-helpers'
 import { broadcast } from '@/lib/ws-server'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 
-async function resolveUserId(request: Request): Promise<string | null> {
-  let token = ''
-
-  const authHeader = request.headers.get('authorization')
-  if (authHeader?.startsWith('Bearer ')) {
-    token = authHeader.slice(7)
-  }
-
-  if (!token) {
-    const cookieStore = await cookies()
-    const cookie = cookieStore.get('crave_auth_token') ?? cookieStore.get('drop_auth_token')
-    if (cookie) token = cookie.value
-  }
-
-  if (!token) return null
-
-  const payload = await verifyToken(token)
-  return payload?.id ?? null
-}
-
 export async function PATCH(request: Request) {
-  const userId = await resolveUserId(request)
+  const actor = await getAuthActor(request)
+  const userId = actor?.id ?? null
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -48,15 +29,9 @@ export async function PATCH(request: Request) {
     if ('name' in b) updates.name = String(b.name)
     if ('phone' in b) updates.phone = b.phone ? String(b.phone) : null
     if ('address' in b) updates.address = b.address ? String(b.address) : null
-    if ('password' in b || 'newPassword' in b) {
-      const pwd = String(b.password || b.newPassword)
-      if (pwd.length >= 8) {
-        const crypto = require('crypto')
-        const salt = crypto.randomBytes(16).toString('hex')
-        const hash = crypto.scryptSync(pwd, salt, 64).toString('hex')
-        updates.password_hash = `${salt}:${hash}`
-      }
-    }
+    // Password changes are intentionally NOT allowed here. They must go through
+    // PATCH /api/user/change-password, which verifies the current password and
+    // revokes all existing sessions after a successful rotation.
   }
 
   if (Object.keys(updates).length === 0) {
@@ -94,7 +69,7 @@ export async function PATCH(request: Request) {
           })
           await tx.customerAddress.create({
             data: {
-              id: crypto.randomUUID(),
+              id: randomUUID(),
               customer_id: userId,
               label: 'Home',
               address,

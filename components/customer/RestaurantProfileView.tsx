@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import type { CartItem, LatLngCoords, MenuItem, MenuItemVariant, Restaurant } from './types'
 import { useMenuItemUpdates } from '@/lib/websocket'
+import { getMenuItemAvailability } from '@/lib/menu-availability'
 
 interface RestaurantProfileViewProps {
   restaurant: Restaurant
@@ -97,19 +98,29 @@ export default function RestaurantProfileView({
   }, [initialMenuItems])
 
   // Instant real-time WebSocket listener when vendor marks out-of-stock
-  useMenuItemUpdates(restaurant.id, (updatedItem: any) => {
+  const handleMenuItemUpdate = React.useCallback((updatedItem: any) => {
     if (!updatedItem?.id) return
+    if (updatedItem.deleted) {
+      setLiveItems((prev) => prev.filter((item) => item.id !== updatedItem.id))
+      return
+    }
     setLiveItems((prev) =>
       prev.map((item) => {
         if (item.id === updatedItem.id) {
-          const isNowInStock =
-            updatedItem.in_stock !== false &&
-            (updatedItem.stock_count == null || updatedItem.stock_count > 0)
+          if (
+            typeof updatedItem.in_stock !== 'boolean' ||
+            typeof updatedItem.stock_count !== 'number'
+          ) {
+            return item
+          }
+          const isNowOrderable = getMenuItemAvailability(updatedItem).isOrderable
           return {
             ...item,
-            in_stock: isNowInStock,
-            inStock: isNowInStock,
-            stock_count: updatedItem.stock_count ?? item.stock_count,
+            in_stock: updatedItem.in_stock,
+            inStock: isNowOrderable,
+            is_orderable: isNowOrderable,
+            availability_status: updatedItem.availability_status,
+            stock_count: updatedItem.stock_count,
             price: updatedItem.price != null ? Number(updatedItem.price) : item.price,
             name: updatedItem.name || item.name,
             detail: updatedItem.description || item.detail,
@@ -118,7 +129,8 @@ export default function RestaurantProfileView({
         return item
       })
     )
-  })
+  }, [])
+  useMenuItemUpdates(restaurant.id, handleMenuItemUpdate)
 
   // Dynamic distance & average preparation time calculation
   const distanceKm = useMemo(() => {
@@ -143,14 +155,23 @@ export default function RestaurantProfileView({
   const handleOpenVariantPicker = (item: MenuItem) => {
     setVariantPickerItem(item)
     if (item.variants && item.variants.length > 0) {
-      const defaultVar = item.variants.find((v) => v.isDefault) || item.variants[0]
-      setSelectedVariantId(defaultVar.id)
+      const defaultVar =
+        item.variants.find((variant) => variant.isDefault && variant.inStock) ||
+        item.variants.find((variant) => variant.inStock)
+      setSelectedVariantId(defaultVar?.id || '')
     }
   }
 
   const handleConfirmVariant = () => {
     if (!variantPickerItem) return
     const chosenVariant = variantPickerItem.variants?.find((v) => v.id === selectedVariantId)
+    if (
+      !chosenVariant ||
+      !getMenuItemAvailability(variantPickerItem, chosenVariant.id).isOrderable
+    ) {
+      triggerToast?.('Please select an available size.')
+      return
+    }
     onAddToCart(variantPickerItem, chosenVariant)
     setVariantPickerItem(null)
   }
@@ -506,10 +527,7 @@ export default function RestaurantProfileView({
                       : []
                     const variantQtyTotal = variantItemsInCart.reduce((sum, c) => sum + c.qty, 0)
                     const inCart = hasVariants ? undefined : cart.find((i) => i.id === item.id)
-                    const isOutOfStock =
-                      item.in_stock === false ||
-                      item.inStock === false ||
-                      (item.stock_count != null && item.stock_count <= 0)
+                    const isOutOfStock = !getMenuItemAvailability(item).isOrderable
 
                     return (
                       <div

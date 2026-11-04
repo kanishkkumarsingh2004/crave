@@ -14,36 +14,12 @@
 
 import { isSupportedLocale } from '@/dictionary'
 import { updateUser, findUserById } from '@/lib/dal'
-import { verifyToken } from '@/lib/jwt'
-import { cookies } from 'next/headers'
+import { getAuthActor } from '@/lib/auth-helpers'
 import { NextResponse } from 'next/server'
 
-// ── Shared auth helper ────────────────────────────────────────
-
-async function resolveUserId(request: Request): Promise<string | null> {
-  let token = ''
-
-  const authHeader = request.headers.get('authorization')
-  if (authHeader?.startsWith('Bearer ')) {
-    token = authHeader.slice(7)
-  }
-
-  if (!token) {
-    const cookieStore = await cookies()
-    const cookie = cookieStore.get('crave_auth_token') ?? cookieStore.get('drop_auth_token')
-    if (cookie) token = cookie.value
-  }
-
-  if (!token) return null
-
-  const payload = await verifyToken(token)
-  return payload?.id ?? null
-}
-
-// ── PATCH — save locale ───────────────────────────────────────
-
 export async function PATCH(request: Request) {
-  const userId = await resolveUserId(request)
+  const actor = await getAuthActor(request)
+  const userId = actor?.id ?? null
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -79,7 +55,8 @@ export async function PATCH(request: Request) {
 // ── GET — read stored locale ──────────────────────────────────
 
 export async function GET(request: Request) {
-  const userId = await resolveUserId(request)
+  const actor = await getAuthActor(request)
+  const userId = actor?.id ?? null
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

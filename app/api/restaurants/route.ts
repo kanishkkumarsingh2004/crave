@@ -6,30 +6,11 @@ import {
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifyToken } from '@/lib/jwt'
-import { cookies } from 'next/headers'
-import { getTestUser, isTestRequest, MOCK_TEST_USER } from '@/lib/test-auth'
-
-async function getActor(request: Request) {
-  // Check for test mode first
-  if (isTestRequest(request)) {
-    return getTestUser(request) || MOCK_TEST_USER
-  }
-
-  const authHeader = request.headers?.get ? request.headers.get('authorization') : null
-  let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-  if (!token) {
-    try {
-      const c = await cookies()
-      token = c.get('crave_auth_token')?.value || ''
-    } catch {}
-  }
-  return token ? verifyToken(token) : null
-}
+import { getAuthActor } from '@/lib/auth-helpers'
 
 export async function GET(request: Request) {
   try {
-    const actor = await getActor(request)
+    const actor = await getAuthActor(request)
     const { searchParams } = new URL(request.url)
     const restaurantId = searchParams.get('restaurantId')
     const ownerId = searchParams.get('ownerId')
@@ -82,7 +63,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const actor = await getActor(request)
+    const actor = await getAuthActor(request)
     if (!actor) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
@@ -142,7 +123,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const actor = await getActor(request)
+    const actor = await getAuthActor(request)
     if (!actor) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
@@ -181,12 +162,11 @@ export async function PATCH(request: Request) {
     if (body.cuisine !== undefined) updateData.cuisine = body.cuisine
     if (body.phone !== undefined) updateData.phone = body.phone
     const actorRole = actor.role as string
-    if (
-      actorRole === 'admin' ||
-      actorRole === 'restaurant_vendor' ||
-      actorRole === 'cravexp_store_vendor' ||
-      actorRole === 'vendor'
-    ) {
+    const isAdmin = actorRole === 'admin'
+    // Financial / commercial configuration can only be changed by an admin.
+    // Vendors may update operational details (hours, name, contact, banking) but
+    // never commission, markup, or payment-model terms.
+    if (isAdmin) {
       if (body.commercial_model !== undefined) updateData.commercial_model = body.commercial_model
       if (body.commission_rate !== undefined)
         updateData.commission_rate = Number(body.commission_rate)

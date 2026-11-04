@@ -25,6 +25,7 @@ import {
   showBrowserNotification,
 } from '@/lib/notifications/web-notification'
 import { useToast } from '@/lib/toast-context'
+import { getMenuItemAvailability } from '@/lib/menu-availability'
 import { useDriverLocation, useMenuItemUpdates, useOrderUpdates } from '@/lib/websocket'
 import {
   Bike,
@@ -63,6 +64,7 @@ export default function CustomerDashboard({
     updateItemQty,
     removeItem,
     clearCart,
+    setItems: setCartItems,
     totalCount: totalCartItemCount,
   } = useCart()
 
@@ -344,33 +346,37 @@ export default function CustomerDashboard({
         const json = await res.json()
         const items = json.items || []
         setMenuItemsList(
-          items.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            detail: item.description || '',
-            price: Number(item.price) || 0,
-            image: item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500',
-            veg: Boolean(item.is_veg ?? true),
-            restaurantName: selectedRestaurant.name,
-            restaurantId: selectedRestaurant.id,
-            vendorId: selectedRestaurant.id,
-            category: item.category || 'Recommended',
-            in_stock: item.in_stock !== false && (item.stock_count == null || item.stock_count > 0),
-            inStock: item.in_stock !== false && (item.stock_count == null || item.stock_count > 0),
-            stock_count: item.stock_count ?? 10,
-            bestseller: item.bestseller ?? item.price >= 250,
-            variants: Array.isArray(item.variants)
-              ? item.variants
-                  .filter((v: any) => v.in_stock !== false)
-                  .map((v: any) => ({
+          items.map((item: any) => {
+            const availability = getMenuItemAvailability(item)
+            return {
+              id: item.id,
+              name: item.name,
+              detail: item.description || '',
+              price: Number(item.price) || 0,
+              image:
+                item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500',
+              veg: Boolean(item.is_veg ?? true),
+              restaurantName: selectedRestaurant.name,
+              restaurantId: selectedRestaurant.id,
+              vendorId: selectedRestaurant.id,
+              category: item.category || 'Recommended',
+              in_stock: item.in_stock !== false,
+              inStock: availability.isOrderable,
+              is_orderable: availability.isOrderable,
+              availability_status: item.availability_status ?? availability.status,
+              stock_count: Number(item.stock_count),
+              bestseller: item.bestseller ?? item.price >= 250,
+              variants: Array.isArray(item.variants)
+                ? item.variants.map((v: any) => ({
                     id: v.id,
                     name: v.name,
                     price: Number(v.price) || 0,
                     inStock: v.in_stock !== false,
                     isDefault: v.is_default === true,
                   }))
-              : [],
-          }))
+                : [],
+            }
+          })
         )
       } catch {
         setMenuItemsList([])
@@ -380,28 +386,61 @@ export default function CustomerDashboard({
   }, [selectedRestaurant])
 
   // Real-time synchronization of menu items when vendor toggles out-of-stock
-  useMenuItemUpdates(selectedRestaurant?.id, (updatedItem: any) => {
-    if (!updatedItem?.id) return
-    setMenuItemsList((prev) =>
-      prev.map((item) => {
-        if (item.id === updatedItem.id) {
-          const isNowInStock =
-            updatedItem.in_stock !== false &&
-            (updatedItem.stock_count == null || updatedItem.stock_count > 0)
-          return {
-            ...item,
-            in_stock: isNowInStock,
-            inStock: isNowInStock,
-            stock_count: updatedItem.stock_count ?? item.stock_count,
-            price: updatedItem.price != null ? Number(updatedItem.price) : item.price,
-            name: updatedItem.name || item.name,
-            detail: updatedItem.description || item.detail,
-          }
+  const handleMenuItemUpdate = useCallback(
+    (updatedItem: any) => {
+      if (!updatedItem?.id) return
+      if (updatedItem.deleted) {
+        setMenuItemsList((prev) => prev.filter((item) => item.id !== updatedItem.id))
+        setCartItems((prev) =>
+          prev.filter((item) => (item.menuItemId || item.id) !== updatedItem.id)
+        )
+        return
+      }
+      if (
+        typeof updatedItem.in_stock !== 'boolean' ||
+        typeof updatedItem.stock_count !== 'number'
+      ) {
+        return
+      }
+      const isNowOrderable = getMenuItemAvailability(updatedItem).isOrderable
+      setCartItems((current) => {
+        if (!current.some((item) => (item.menuItemId || item.id) === updatedItem.id)) {
+          return current
         }
-        return item
+        return current.flatMap((cartItem) => {
+          if ((cartItem.menuItemId || cartItem.id) !== updatedItem.id) return [cartItem]
+          const cartAvailability = getMenuItemAvailability(updatedItem, cartItem.variantId)
+          if (!cartAvailability.isOrderable) return []
+          return [
+            {
+              ...cartItem,
+              qty: Math.min(cartItem.qty, updatedItem.stock_count),
+            },
+          ]
+        })
       })
-    )
-  })
+      setMenuItemsList((prev) =>
+        prev.map((item) => {
+          if (item.id === updatedItem.id) {
+            return {
+              ...item,
+              in_stock: updatedItem.in_stock,
+              inStock: isNowOrderable,
+              is_orderable: isNowOrderable,
+              availability_status: updatedItem.availability_status,
+              stock_count: updatedItem.stock_count,
+              price: updatedItem.price != null ? Number(updatedItem.price) : item.price,
+              name: updatedItem.name || item.name,
+              detail: updatedItem.description || item.detail,
+            }
+          }
+          return item
+        })
+      )
+    },
+    [setCartItems]
+  )
+  useMenuItemUpdates(selectedRestaurant?.id, handleMenuItemUpdate)
 
   // Orders State & WebSocket Updates
   const [ordersData, setOrdersData] = useState<any[]>([])
@@ -704,7 +743,7 @@ export default function CustomerDashboard({
 
   // Cart Handlers
   const handleAddToCart = (item: MenuItem, variant?: MenuItemVariant) => {
-    if (item.in_stock === false || item.inStock === false) {
+    if (!getMenuItemAvailability(item, variant?.id).isOrderable) {
       toast(`${item.name} is currently out of stock.`, 'error')
       return
     }

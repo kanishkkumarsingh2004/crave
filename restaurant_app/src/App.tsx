@@ -156,6 +156,7 @@ const EMPTY_EDITOR: MenuEditorValue = {
   category: CATEGORY_OPTIONS[0],
   description: '',
   restaurantPrice: '',
+  stockCount: '',
   image: '',
   isVeg: true,
   inStock: true,
@@ -224,7 +225,7 @@ function formatMenuItem(item: any, restaurantId: string): MenuItem {
     restaurant_price: Number(item.restaurant_price ?? item.price ?? 0),
     description: item.description || '',
     image: item.image || '',
-    in_stock: item.in_stock !== false,
+    in_stock: item.is_orderable ?? (item.in_stock !== false && Number(item.stock_count) > 0),
     is_veg: item.is_veg !== false,
     stock_count: Number(item.stock_count || 0),
     unit: item.unit || null,
@@ -556,6 +557,19 @@ function MenuEditor({
           <small className="price-helper">
             Your customer price is calculated automatically from the restaurant contract.
           </small>
+        </label>
+        <label>
+          Stock units
+          <input
+            type="number"
+            inputMode="numeric"
+            min="0"
+            step="1"
+            value={value.stockCount}
+            onChange={(event) => onChange({ ...value, stockCount: event.target.value })}
+            placeholder="Enter current stock"
+          />
+          <small className="price-helper">Available dishes require at least one unit.</small>
         </label>
         <div className="choice-row field-wide">
           <button
@@ -1081,6 +1095,7 @@ export default function App() {
       category: item.category,
       description: item.description,
       restaurantPrice: String(smallPrice),
+      stockCount: String(item.stock_count),
       image: item.image,
       isVeg: item.is_veg,
       inStock: item.in_stock,
@@ -1093,6 +1108,7 @@ export default function App() {
   async function saveMenuItem() {
     if (!restaurant || !menuEditor) return
     const restaurantPrice = Math.round(Number(menuEditor.restaurantPrice))
+    const stockCount = Number(menuEditor.stockCount)
     if (
       !menuEditor.name.trim() ||
       !menuEditor.category.trim() ||
@@ -1103,6 +1119,14 @@ export default function App() {
     }
     if (restaurantPrice < 0) {
       showToast('Restaurant price must be zero or more.')
+      return
+    }
+    if (!Number.isInteger(stockCount) || stockCount < 0) {
+      showToast('Stock units must be a non-negative whole number.')
+      return
+    }
+    if (menuEditor.inStock && stockCount <= 0) {
+      showToast('Enter at least one stock unit before making this dish available.')
       return
     }
     if (
@@ -1126,6 +1150,7 @@ export default function App() {
         image: menuEditor.image.trim() || null,
         is_veg: menuEditor.isVeg,
         in_stock: menuEditor.inStock,
+        stock_count: stockCount,
         unit: menuEditor.unit.trim() || null,
         hsn_sac_code: '996331',
         price_tax_mode: 'TAX_INCLUSIVE',

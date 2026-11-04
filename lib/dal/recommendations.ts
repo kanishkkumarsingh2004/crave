@@ -7,6 +7,7 @@
 
 import { cacheGet, cacheSet } from '@/lib/cache'
 import { prisma } from '@/lib/prisma'
+import { getMenuItemAvailability } from '@/lib/menu-availability'
 
 export interface RecommendedItem {
   id: string
@@ -151,18 +152,39 @@ export async function getCartCrossSellItems(params: {
 
   const cacheKey = `rec:cross_sell:${restaurantId}:${cartItemIds.sort().join('_')}:veg_${isVegOnly}`
   const cached = await cacheGet<RecommendedItem[]>(cacheKey)
-  if (cached) return cached
+  if (cached) {
+    const liveItems = await prisma.menuItem.findMany({
+      where: {
+        id: { in: cached.map((item) => item.id) },
+        restaurant_id: restaurantId,
+        in_stock: true,
+        stock_count: { gt: 0 },
+      },
+      include: { variants: { select: { id: true, in_stock: true } } },
+    })
+    const availableById = new Map(
+      liveItems
+        .filter((item) => getMenuItemAvailability(item).isOrderable)
+        .map((item) => [item.id, item])
+    )
+    return cached.flatMap((item) => {
+      const liveItem = availableById.get(item.id)
+      return liveItem ? [{ ...item, stock_count: liveItem.stock_count }] : []
+    })
+  }
 
   // 1. Fetch available menu items for this restaurant
   const menuItems = await prisma.menuItem.findMany({
     where: {
       restaurant_id: restaurantId,
       in_stock: true,
+      stock_count: { gt: 0 },
       ...(isVegOnly ? { is_veg: true } : {}),
       id: { notIn: cartItemIds },
     },
     include: {
       restaurant: { select: { id: true, name: true } },
+      variants: { select: { id: true, in_stock: true } },
     },
   })
 
@@ -244,22 +266,25 @@ export async function getCartCrossSellItems(params: {
   // Sort by score descending
   scoredCandidates.sort((a, b) => b.score - a.score)
 
-  const recommendations: RecommendedItem[] = scoredCandidates.slice(0, limit).map((c) => ({
-    id: c.item.id,
-    name: c.item.name,
-    price: c.item.price,
-    description: c.item.description || '',
-    category: c.item.category || 'Add-on',
-    image: c.item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
-    is_veg: Boolean(c.item.is_veg),
-    restaurantId: c.item.restaurant_id || restaurantId,
-    restaurantName: c.item.restaurant?.name || 'Partner Kitchen',
-    in_stock: c.item.in_stock !== false,
-    stock_count: c.item.stock_count ?? 10,
-    recommendationReason: c.reason,
-    liftScore: c.lift,
-    confidenceScore: c.confidence,
-  }))
+  const recommendations: RecommendedItem[] = scoredCandidates
+    .filter((candidate) => getMenuItemAvailability(candidate.item).isOrderable)
+    .slice(0, limit)
+    .map((c) => ({
+      id: c.item.id,
+      name: c.item.name,
+      price: c.item.price,
+      description: c.item.description || '',
+      category: c.item.category || 'Add-on',
+      image: c.item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
+      is_veg: Boolean(c.item.is_veg),
+      restaurantId: c.item.restaurant_id || restaurantId,
+      restaurantName: c.item.restaurant?.name || 'Partner Kitchen',
+      in_stock: c.item.in_stock !== false,
+      stock_count: c.item.stock_count,
+      recommendationReason: c.reason,
+      liftScore: c.lift,
+      confidenceScore: c.confidence,
+    }))
 
   await cacheSet(cacheKey, recommendations, { ttlSeconds: 300 })
   return recommendations

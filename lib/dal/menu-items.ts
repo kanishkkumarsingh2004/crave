@@ -4,6 +4,7 @@
  */
 import { cacheDel, cacheGet, CacheKeys, cacheSet, CacheTTL } from '@/lib/cache'
 import { prisma } from '@/lib/prisma'
+import { getMenuItemAvailability, validateMenuItemAvailability } from '@/lib/menu-availability'
 
 // ─── Queries ─────────────────────────────────────────────
 
@@ -63,7 +64,7 @@ export async function listMenuItems(restaurantId: string) {
 
 export async function listInStockItems(restaurantId: string) {
   const items = await listMenuItems(restaurantId)
-  return items.filter((i: any) => i.in_stock !== false)
+  return items.filter((item: any) => getMenuItemAvailability(item).isOrderable)
 }
 
 export async function searchMenuItems(restaurantId: string, query: string) {
@@ -94,6 +95,11 @@ export async function createMenuItem(data: {
   stock_count?: number
   sku_code?: string
 }) {
+  const availabilityError = validateMenuItemAvailability({
+    in_stock: data.in_stock ?? true,
+    stock_count: data.stock_count ?? 0,
+  })
+  if (availabilityError) throw new Error(availabilityError)
   const created = await prisma.menuItem.create({ data: data as any })
   await cacheDel(CacheKeys.menus.byRestaurant(data.restaurant_id))
   return created
@@ -104,6 +110,14 @@ export async function updateMenuItem(id: string, data: any) {
   let restaurantId: string | null = null
   const item = await prisma.menuItem.findUnique({ where: { id } })
   if (item) restaurantId = item.restaurant_id
+
+  if (item) {
+    const availabilityError = validateMenuItemAvailability({
+      in_stock: data.in_stock ?? item.in_stock,
+      stock_count: data.stock_count ?? item.stock_count,
+    })
+    if (availabilityError) throw new Error(availabilityError)
+  }
 
   const updated = await prisma.menuItem.update({ where: { id }, data })
   if (restaurantId) await cacheDel(CacheKeys.menus.byRestaurant(restaurantId))

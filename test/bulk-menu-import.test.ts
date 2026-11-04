@@ -97,3 +97,31 @@ test('bulk menu CSV rejects unsupported tax modes', () => {
     /price_tax_mode must be TAX_INCLUSIVE or TAX_EXCLUSIVE/
   )
 })
+
+test('bulk menu CSV rejects an available item with zero stock', () => {
+  const values = [
+    'Tea',
+    'Beverages',
+    '',
+    '20',
+    '25',
+    'true',
+    'true',
+    '1 cup',
+    '0',
+    '',
+    '',
+    '996331',
+    'TAX_INCLUSIVE',
+    '',
+    '',
+    '',
+    '',
+    '',
+  ]
+
+  assert.throws(
+    () => rowsToItems(parseCsv([headers.join(','), values.join(',')].join('\n'))),
+    /require at least one stock unit/i
+  )
+})

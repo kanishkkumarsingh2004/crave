@@ -13,11 +13,14 @@ interface DishCardProps {
 
 export default function DishCard({ item, onToggleStock, onEdit, onDelete }: DishCardProps) {
   const [imgFailed, setImgFailed] = useState(false)
+  const isOrderable =
+    item.is_orderable ?? (item.in_stock && (item.stock_count == null || item.stock_count > 0))
+  const isDepleted = item.stock_count != null && item.stock_count <= 0
 
   return (
     <div
       className={`group rounded-3xl border p-4 sm:p-4.5 bg-white dark:bg-[#161617] shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between overflow-hidden ${
-        item.in_stock
+        isOrderable
           ? 'border-black/[0.08] dark:border-white/[0.08]'
           : 'border-rose-500/30 bg-rose-500/[0.02]'
       }`}
@@ -31,7 +34,7 @@ export default function DishCard({ item, onToggleStock, onEdit, onDelete }: Dish
               alt={item.name}
               onError={() => setImgFailed(true)}
               className={`size-full object-cover group-hover:scale-105 transition-transform duration-500 ${
-                !item.in_stock ? 'grayscale opacity-60' : ''
+                !isOrderable ? 'grayscale opacity-60' : ''
               }`}
             />
           ) : (
@@ -55,9 +58,9 @@ export default function DishCard({ item, onToggleStock, onEdit, onDelete }: Dish
             <span>{item.veg !== false ? 'Veg' : 'Non-Veg'}</span>
           </span>
 
-          {!item.in_stock && (
+          {!isOrderable && (
             <span className="absolute inset-0 grid place-items-center bg-black/70 backdrop-blur-xs text-white text-xs font-semibold uppercase tracking-wider">
-              Out of Stock
+              {isDepleted ? 'Sold Out' : 'Out of Stock'}
             </span>
           )}
         </div>
@@ -114,18 +117,22 @@ export default function DishCard({ item, onToggleStock, onEdit, onDelete }: Dish
         <button
           type="button"
           onClick={() => onToggleStock(item.id, item.in_stock)}
+          disabled={isDepleted}
+          title={isDepleted ? 'Add stock in Edit Dish before restoring' : undefined}
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
-            item.in_stock
+            isOrderable
               ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/15'
-              : 'bg-stone-100 dark:bg-white/10 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-white/10 hover:bg-stone-200'
+              : 'bg-stone-100 dark:bg-white/10 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-white/10 hover:bg-stone-200 disabled:cursor-not-allowed disabled:opacity-70'
           }`}
         >
           <span
             className={`size-1.5 rounded-full ${
-              item.in_stock ? 'bg-emerald-500 animate-pulse' : 'bg-stone-400'
+              isOrderable ? 'bg-emerald-500 animate-pulse' : 'bg-stone-400'
             }`}
           />
-          <span>{item.in_stock ? 'In Stock' : 'Out of Stock'}</span>
+          <span>
+            {isDepleted ? 'Sold Out · Add Stock' : item.in_stock ? 'In Stock' : 'Out of Stock'}
+          </span>
         </button>
 
         <div className="flex items-center gap-1.5">

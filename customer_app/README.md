@@ -71,8 +71,8 @@ pnpm --dir customer_app build
 pnpm --dir customer_app sync
 ```
 
-Build the Android APK from the repository root with `pnpm build:android` — that raises the
-Android `versionCode` (and the iOS `CURRENT_PROJECT_VERSION`) by one so installed apps recognise
-the new build. `KEEP_VERSION=1 pnpm build:android` publishes the version already in
-`build.gradle` unchanged, which is what a fresh `1.0.0` release wants. iOS compilation requires
-Xcode on macOS after Capacitor synchronization.
+Build verified release-signed Android APKs from the repository root with `pnpm build:android`;
+the command requires the private release keystore credentials and raises Android `versionCode` by
+one so installed apps recognise the new build. Use `pnpm build:android:debug` only for local
+debug-certificate APKs. `KEEP_VERSION=1 pnpm build:android` signs the version already in
+`build.gradle` unchanged. iOS compilation requires Xcode on macOS after Capacitor synchronization.

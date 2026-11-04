@@ -1,45 +1,14 @@
 import { findUserById, updateUser } from '@/lib/dal'
-import { verifyToken } from '@/lib/jwt'
+import { blacklistAllUserTokens } from '@/lib/jwt'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { hashPassword, verifyPassword } from '@/lib/password'
-import { cookies } from 'next/headers'
+import { getAuthActor } from '@/lib/auth-helpers'
 import { NextResponse } from 'next/server'
-
-async function resolveUserId(request: Request): Promise<string | null> {
-  let token = ''
-
-  const getHeader = (name: string) => {
-    if (request.headers && typeof request.headers.get === 'function') {
-      return request.headers.get(name)
-    }
-    if (request.headers && typeof (request.headers as any)[name] === 'string') {
-      return (request.headers as any)[name]
-    }
-    return null
-  }
-
-  const authHeader = getHeader('authorization')
-  if (authHeader?.startsWith('Bearer ')) {
-    token = authHeader.slice(7)
-  }
-
-  if (!token) {
-    try {
-      const cookieStore = await cookies()
-      const cookie = cookieStore.get('crave_auth_token') ?? cookieStore.get('drop_auth_token')
-      if (cookie) token = cookie.value
-    } catch {}
-  }
-
-  if (!token) return null
-
-  const payload = await verifyToken(token)
-  return payload?.id ?? null
-}
 
 export async function POST(request: Request) {
   try {
-    const userId = await resolveUserId(request)
+    const actor = await getAuthActor(request)
+    const userId = actor?.id ?? null
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required. Please sign in.' },
@@ -103,10 +72,12 @@ export async function POST(request: Request) {
       )
     }
 
-    // Update password in database
+    // Update password in database and revoke all existing sessions so the old
+    // JWTs cannot be used after a password rotation.
     await updateUser(userId, {
       password_hash: hashPassword(newPassword),
     })
+    await blacklistAllUserTokens(userId)
 
     return NextResponse.json({
       success: true,

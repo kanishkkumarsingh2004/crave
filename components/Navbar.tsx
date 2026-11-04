@@ -231,6 +231,8 @@ export default function Navbar() {
               onClick={() => setShowMobileMenu(true)}
               className="grid size-9 place-items-center rounded-full border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#18201c] lg:hidden text-[#18201c] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition cursor-pointer"
               aria-label="Open mobile menu"
+              aria-controls="mobile-menu-drawer"
+              aria-expanded={showMobileMenu}
             >
               <Menu className="size-4.5" />
             </button>

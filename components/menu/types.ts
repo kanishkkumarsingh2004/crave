@@ -16,6 +16,8 @@ export interface MenuItemRecord {
   restaurant_price: number
   description: string
   in_stock: boolean
+  availability_status?: 'AVAILABLE' | 'PAUSED_BY_VENDOR' | 'SOLD_OUT'
+  is_orderable?: boolean
   image: string
   veg?: boolean
   unit?: string | null

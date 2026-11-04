@@ -147,16 +147,22 @@ export function rowsToItems(rows: string[][]) {
       throw new Error(`Row ${line}: expiry_date must use YYYY-MM-DD format.`)
     }
 
+    const inStock = booleanValue(record.in_stock, true)
+    const stockCount = optionalNumber(record.stock_count) ?? 0
+    if (inStock && stockCount <= 0) {
+      throw new Error(`Row ${line}: available menu items require at least one stock unit.`)
+    }
+
     return {
       name,
       category,
       description: record.description.trim() || null,
       restaurant_price: restaurantPrice,
       price: appPrice,
-      in_stock: booleanValue(record.in_stock, true),
+      in_stock: inStock,
       is_veg: booleanValue(record.is_veg, true),
       unit: record.unit.trim() || null,
-      stock_count: optionalNumber(record.stock_count) ?? 0,
+      stock_count: stockCount,
       sku_code: record.sku_code.trim() || null,
       image: record.image_url.trim() || null,
       hsn_sac_code: record.hsn_sac_code.trim() || '996331',

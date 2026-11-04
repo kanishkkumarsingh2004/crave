@@ -27,6 +27,7 @@ import {
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CartItem, LatLngCoords, MenuItem, MenuItemVariant, Restaurant } from './types'
+import { getMenuItemAvailability } from '@/lib/menu-availability'
 import RestaurantProfileView, { calculateEstimatedDistanceKm } from './RestaurantProfileView'
 import OrderAgainStrip from './OrderAgainStrip'
 
@@ -540,10 +541,7 @@ export default function ExploreView({
                 : []
               const variantQtyTotal = variantItemsInCart.reduce((sum, c) => sum + c.qty, 0)
               const inCart = hasVariants ? undefined : cart.find((i) => i.id === item.id)
-              const isOutOfStock =
-                item.in_stock === false ||
-                item.inStock === false ||
-                (item.stock_count != null && item.stock_count <= 0)
+              const isOutOfStock = !getMenuItemAvailability(item).isOrderable
 
               return (
                 <div

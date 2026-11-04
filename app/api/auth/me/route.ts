@@ -78,7 +78,9 @@ export async function GET(request: Request) {
     const isSecure = getIsSecure()
 
     if (!token) {
-      const res = NextResponse.json({ authenticated: false, user: null }, { status: 401 })
+      // A missing session is the expected state for public pages. Keep this probe
+      // successful so browsers do not report a normal guest visit as a failed request.
+      const res = NextResponse.json({ authenticated: false, user: null })
       clearAllAuthCookies(res, isSecure)
       return res
     }

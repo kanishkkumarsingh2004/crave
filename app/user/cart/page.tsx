@@ -11,6 +11,7 @@ import { autoDetectAndGeocodeLocation, getCachedLocation } from '@/lib/client-lo
 import { CRAVEXP_DARK_STORE_ID } from '@/lib/cravexp-grocery-catalog'
 import { calculateCheckoutPricing, calculateRoadTravelDistanceKm } from '@/lib/distance-pricing'
 import { getLocalPaymentConfig, PaymentConfig } from '@/lib/payment-config'
+import { getMenuItemAvailability } from '@/lib/menu-availability'
 import { checkDeliveryServiceability } from '@/lib/serviceability'
 import { useToast } from '@/lib/toast-context'
 import {
@@ -64,7 +65,15 @@ interface SavedAddress {
 
 export default function CartPage() {
   const { user, isLoading: authLoading } = useAuth()
-  const { items: cart, removeItem, updateItemQty, clearCart, totalCount, addItem } = useCart()
+  const {
+    items: cart,
+    removeItem,
+    updateItemQty,
+    clearCart,
+    totalCount,
+    addItem,
+    setItems,
+  } = useCart()
   const { toast } = useToast()
   const router = useRouter()
 
@@ -642,7 +651,45 @@ export default function CartPage() {
         isSubmittingRef.current = false
       }
     } catch (err: any) {
-      toast(err?.message || 'Error processing your order. Please try again.', 'error')
+      const message = err?.message || 'Error processing your order. Please try again.'
+      if (
+        restaurantId !== CRAVEXP_DARK_STORE_ID &&
+        /out of stock|insufficient quantity/i.test(message)
+      ) {
+        try {
+          const response = await fetch(
+            `/api/menu-items?restaurantId=${encodeURIComponent(restaurantId)}`,
+            { cache: 'no-store' }
+          )
+          const data = response.ok ? await response.json() : null
+          if (Array.isArray(data?.items)) {
+            const menuById = new Map(data.items.map((item: any) => [item.id, item]))
+            setItems((current) =>
+              current.flatMap((cartItem) => {
+                const menuItem: any = menuById.get(cartItem.menuItemId || cartItem.id)
+                if (
+                  !menuItem ||
+                  !getMenuItemAvailability(menuItem, cartItem.variantId).isOrderable
+                ) {
+                  return []
+                }
+                const availableQuantity = Number(menuItem.stock_count)
+                return [
+                  {
+                    ...cartItem,
+                    qty: Number.isInteger(availableQuantity)
+                      ? Math.min(cartItem.qty, availableQuantity)
+                      : cartItem.qty,
+                  },
+                ]
+              })
+            )
+          }
+        } catch (refreshError) {
+          console.error('Failed to refresh cart inventory:', refreshError)
+        }
+      }
+      toast(message, 'error')
       setIsSubmittingOrder(false)
       isSubmittingRef.current = false
     }

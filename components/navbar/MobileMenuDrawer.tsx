@@ -103,10 +103,13 @@ export function MobileMenuDrawer({
       <aside
         ref={mobileMenuRef}
         id="mobile-menu-drawer"
+        role="dialog"
         aria-label="Mobile navigation"
+        aria-modal={isOpen}
         aria-hidden={!isOpen}
+        inert={!isOpen}
         className={`fixed inset-y-0 right-0 z-[90] flex w-[min(20rem,85vw)] flex-col border-l border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#161617] text-[#1D1D1F] dark:text-white shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+          isOpen ? 'translate-x-0' : 'pointer-events-none translate-x-full'
         }`}
       >
         <div className="flex items-center justify-between border-b border-black/[0.06] dark:border-white/[0.06] px-5 py-4">
@@ -164,7 +167,7 @@ export function MobileMenuDrawer({
                   <div className="flex items-center gap-2 min-w-0">
                     <MapPin className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-[9px] font-bold uppercase tracking-wider text-stone-400 dark:text-stone-500">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-stone-600 dark:text-stone-300">
                         DELIVER TO
                       </p>
                       <p className="text-xs font-semibold text-[#1D1D1F] dark:text-white truncate">

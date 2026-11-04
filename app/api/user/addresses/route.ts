@@ -5,35 +5,14 @@ import {
   setDefaultAddress,
   updateCustomerAddress,
 } from '@/lib/dal'
-import { verifyToken } from '@/lib/jwt'
+import { getAuthActor } from '@/lib/auth-helpers'
 import { broadcast } from '@/lib/ws-server'
 import { toAddressRealtimeDto } from '@/lib/realtime/safe-dtos'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
-async function resolveUserId(request: Request): Promise<string | null> {
-  let token = ''
-
-  const authHeader =
-    typeof request.headers?.get === 'function' ? request.headers.get('authorization') : null
-  if (authHeader?.startsWith('Bearer ')) {
-    token = authHeader.slice(7)
-  }
-
-  if (!token) {
-    const cookieStore = await cookies()
-    const cookie = cookieStore.get('crave_auth_token') ?? cookieStore.get('drop_auth_token')
-    if (cookie) token = cookie.value
-  }
-
-  if (!token) return null
-
-  const payload = await verifyToken(token)
-  return payload?.id ?? null
-}
-
 export async function GET(request: Request) {
-  const userId = await resolveUserId(request)
+  const actor = await getAuthActor(request)
+  const userId = actor?.id ?? null
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -48,7 +27,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const userId = await resolveUserId(request)
+  const actor = await getAuthActor(request)
+  const userId = actor?.id ?? null
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -91,7 +71,8 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  const userId = await resolveUserId(request)
+  const actor = await getAuthActor(request)
+  const userId = actor?.id ?? null
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -159,7 +140,8 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const userId = await resolveUserId(request)
+  const actor = await getAuthActor(request)
+  const userId = actor?.id ?? null
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

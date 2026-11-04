@@ -5,11 +5,6 @@ set -Eeuo pipefail
 repository_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 output_directory="${repository_root}/android-builds"
 
-if [[ -z "${ANDROID_RELEASE_BASE_URL:-}" ]]; then
-  echo "ANDROID_RELEASE_BASE_URL is required for a publishable release manifest" >&2
-  exit 1
-fi
-
 # shellcheck source=scripts/app-version.sh
 source "${repository_root}/scripts/app-version.sh"
 
@@ -36,6 +31,7 @@ fi
 export CRAVE_KEYSTORE="${keystore}"
 
 mkdir -p "${output_directory}"
+release_signer_digest=""
 
 for index in "${!app_directories[@]}"; do
   app_name="${app_directories[$index]}"
@@ -49,9 +45,12 @@ for index in "${!app_directories[@]}"; do
   echo "==> Building release ${app_name}"
 
   # Bump versionCode so the in-app updater offers this release to installed devices.
-  bump_android_version "${android_directory}/app/build.gradle"
+  if [[ "${KEEP_VERSION:-0}" != "1" ]]; then
+    bump_android_version "${android_directory}/app/build.gradle"
+  fi
 
   pnpm --dir "${app_directory}" build
+  pnpm --dir "${app_directory}" exec cap sync android
 
   # Assemble the release variant. build.gradle's release signingConfig signs the APK
   # using crave-release.keystore (or $CRAVE_KEYSTORE). Signing secrets must be supplied
@@ -69,7 +68,28 @@ for index in "${!app_directories[@]}"; do
   fi
 
   echo "==> Verifying release signature: ${apk_name}"
-  apksigner verify --verbose --print-certs "${generated_apk}"
+  if ! verification_output="$(apksigner verify --verbose --print-certs "${generated_apk}")"; then
+    echo "${verification_output}" >&2
+    exit 1
+  fi
+  echo "${verification_output}"
+
+  signer_dn="$(sed -n 's/^Signer #1 certificate DN: //p' <<<"${verification_output}" | head -1)"
+  signer_digest="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' <<<"${verification_output}" | head -1)"
+  if [[ -z "${signer_dn}" || -z "${signer_digest}" ]]; then
+    echo "Could not read the signing certificate from ${apk_name}" >&2
+    exit 1
+  fi
+  if [[ "${signer_dn}" == *"CN=Android Debug"* ]]; then
+    echo "Refusing to publish ${apk_name}: it is signed with the Android debug certificate" >&2
+    exit 1
+  fi
+  if [[ -z "${release_signer_digest}" ]]; then
+    release_signer_digest="${signer_digest}"
+  elif [[ "${signer_digest}" != "${release_signer_digest}" ]]; then
+    echo "Release APKs were not signed by the same certificate" >&2
+    exit 1
+  fi
 
   cp -- "${generated_apk}" "${published_apk}"
   echo "==> Saved ${published_apk}"
@@ -86,3 +106,4 @@ echo "All release apps built successfully:"
 ls -lh "${output_directory}"/*-release.apk
 echo "Checksums: ${output_directory}/SHA256SUMS.txt"
 echo "Release manifest: ${output_directory}/version.json"
+echo "Release signer SHA-256: ${release_signer_digest}"

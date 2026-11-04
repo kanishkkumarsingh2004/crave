@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { calculateMenuAppPrice, type MenuPricingSettings } from '@/lib/menu-pricing'
+import { validateMenuItemAvailability, withMenuItemAvailability } from '@/lib/menu-availability'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/jwt'
@@ -131,6 +132,29 @@ export async function GET(request: Request) {
     if (!restaurant) {
       return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 })
     }
+    if (searchParams.get('availabilityOnly') === 'true') {
+      const availabilityItems = await prisma.menuItem.findMany({
+        where: { restaurant_id: restaurantId },
+        orderBy: { id: 'asc' },
+        select: {
+          id: true,
+          restaurant_id: true,
+          name: true,
+          description: true,
+          price: true,
+          in_stock: true,
+          stock_count: true,
+          variants: {
+            orderBy: { sort_order: 'asc' },
+            select: { id: true, in_stock: true },
+          },
+        },
+      })
+      return NextResponse.json({
+        success: true,
+        items: availabilityItems.map((item) => withMenuItemAvailability(item)),
+      })
+    }
     const canViewRestaurantPricing =
       actor?.role === 'admin' ||
       (actor != null &&
@@ -165,7 +189,10 @@ export async function GET(request: Request) {
           }
         })
 
-    return NextResponse.json({ success: true, items: visibleItems })
+    return NextResponse.json({
+      success: true,
+      items: visibleItems.map((item) => withMenuItemAvailability(item)),
+    })
   } catch (error: any) {
     return NextResponse.json(
       { error: error?.message || 'Failed to load menu items' },
@@ -242,8 +269,22 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-    if (!Number.isFinite(stockCount) || stockCount < 0) {
-      return NextResponse.json({ error: 'stock_count must be non-negative' }, { status: 400 })
+    if (!Number.isInteger(stockCount) || stockCount < 0) {
+      return NextResponse.json(
+        { error: 'stock_count must be a non-negative whole number' },
+        { status: 400 }
+      )
+    }
+    if (body.in_stock !== undefined && typeof body.in_stock !== 'boolean') {
+      return NextResponse.json({ error: 'in_stock must be a boolean' }, { status: 400 })
+    }
+    const availabilityError = validateMenuItemAvailability({
+      in_stock: body.in_stock ?? true,
+      stock_count: stockCount,
+      variants,
+    })
+    if (availabilityError) {
+      return NextResponse.json({ error: availabilityError }, { status: 409 })
     }
 
     const item = await prisma.menuItem.create({
@@ -287,12 +328,33 @@ export async function POST(request: Request) {
       try {
         const { cacheDel, CacheKeys } = await import('@/lib/cache')
         await cacheDel(CacheKeys.menus.byRestaurant(body.restaurant_id))
-      } catch {}
+      } catch (cacheError) {
+        console.error('[POST /api/menu-items] Cache invalidation failed:', cacheError)
+      }
     }
 
-    await broadcast('menu_items', { type: 'create', item, timestamp: new Date().toISOString() })
+    const itemDto = withMenuItemAvailability(item)
+    await broadcast('menu_items', {
+      type: 'create',
+      item: itemDto,
+      timestamp: new Date().toISOString(),
+    }).catch((broadcastError) =>
+      console.error('[POST /api/menu-items] Availability broadcast failed:', broadcastError)
+    )
+    console.info('[menu-availability]', {
+      action: 'create',
+      requestId: request.headers.get('x-request-id') || null,
+      actorId: actor?.id || null,
+      itemId: item.id,
+      restaurantId: item.restaurant_id,
+      after: {
+        inStock: item.in_stock,
+        stockCount: item.stock_count,
+        status: itemDto.availability_status,
+      },
+    })
 
-    return NextResponse.json({ success: true, item })
+    return NextResponse.json({ success: true, item: itemDto })
   } catch (error: any) {
     return NextResponse.json(
       { error: error?.message || 'Failed to create menu item' },
@@ -324,6 +386,9 @@ export async function PATCH(request: Request) {
       select: {
         price: true,
         restaurant_price: true,
+        in_stock: true,
+        stock_count: true,
+        variants: { select: { id: true, in_stock: true } },
         restaurant: { select: restaurantPricingSelect },
       },
     })
@@ -379,6 +444,9 @@ export async function PATCH(request: Request) {
     for (const field of allowedFields) {
       if (body[field] !== undefined) data[field] = body[field]
     }
+    if (data.in_stock !== undefined && typeof data.in_stock !== 'boolean') {
+      return NextResponse.json({ error: 'in_stock must be a boolean' }, { status: 400 })
+    }
 
     // Normalize numeric and date fields
     if (data.price != null) data.price = Number(data.price)
@@ -420,6 +488,12 @@ export async function PATCH(request: Request) {
         )
       }
     }
+    if (data.stock_count !== undefined && !Number.isInteger(data.stock_count)) {
+      return NextResponse.json(
+        { error: 'stock_count must be a non-negative whole number' },
+        { status: 400 }
+      )
+    }
 
     const variants = normalizedVariants.variants
     const defaultVariant = variants?.find((variant) => variant.is_default)
@@ -435,6 +509,14 @@ export async function PATCH(request: Request) {
         { error: 'App price must be at least the restaurant price' },
         { status: 400 }
       )
+    }
+    const availabilityError = validateMenuItemAvailability({
+      in_stock: data.in_stock ?? existingItem.in_stock,
+      stock_count: data.stock_count ?? existingItem.stock_count,
+      variants: variants ?? existingItem.variants,
+    })
+    if (availabilityError) {
+      return NextResponse.json({ error: availabilityError }, { status: 409 })
     }
 
     const item = await prisma.$transaction(async (tx) => {
@@ -457,12 +539,37 @@ export async function PATCH(request: Request) {
       try {
         const { cacheDel, CacheKeys } = await import('@/lib/cache')
         await cacheDel(CacheKeys.menus.byRestaurant(item.restaurant_id))
-      } catch {}
+      } catch (cacheError) {
+        console.error('[PATCH /api/menu-items] Cache invalidation failed:', cacheError)
+      }
     }
 
-    await broadcast('menu_items', { type: 'update', item, timestamp: new Date().toISOString() })
+    const itemDto = withMenuItemAvailability(item)
+    await broadcast('menu_items', {
+      type: 'update',
+      item: itemDto,
+      timestamp: new Date().toISOString(),
+    }).catch((broadcastError) =>
+      console.error('[PATCH /api/menu-items] Availability broadcast failed:', broadcastError)
+    )
+    console.info('[menu-availability]', {
+      action: 'update',
+      requestId: request.headers.get('x-request-id') || null,
+      actorId: actor?.id || null,
+      itemId: item.id,
+      restaurantId: item.restaurant_id,
+      before: {
+        inStock: existingItem.in_stock,
+        stockCount: existingItem.stock_count,
+      },
+      after: {
+        inStock: item.in_stock,
+        stockCount: item.stock_count,
+        status: itemDto.availability_status,
+      },
+    })
 
-    return NextResponse.json({ success: true, item })
+    return NextResponse.json({ success: true, item: itemDto })
   } catch (error: any) {
     return NextResponse.json(
       { error: error?.message || 'Failed to update menu item' },
@@ -491,7 +598,10 @@ export async function DELETE(request: Request) {
 
     const existingItem = await prisma.menuItem.findUnique({
       where: { id },
-      select: { restaurant: { select: { owner_id: true, id: true } } },
+      select: {
+        restaurant_id: true,
+        restaurant: { select: { owner_id: true, id: true } },
+      },
     })
     if (!existingItem) {
       return NextResponse.json({ error: 'Menu item not found' }, { status: 404 })
@@ -513,7 +623,22 @@ export async function DELETE(request: Request) {
 
     await prisma.menuItem.delete({ where: { id } })
 
-    await broadcast('menu_items', { type: 'delete', id, timestamp: new Date().toISOString() })
+    if (existingItem.restaurant_id) {
+      try {
+        const { cacheDel, CacheKeys } = await import('@/lib/cache')
+        await cacheDel(CacheKeys.menus.byRestaurant(existingItem.restaurant_id))
+      } catch (cacheError) {
+        console.error('[DELETE /api/menu-items] Cache invalidation failed:', cacheError)
+      }
+    }
+
+    await broadcast('menu_items', {
+      type: 'delete',
+      item: { id, restaurant_id: existingItem.restaurant_id, deleted: true },
+      timestamp: new Date().toISOString(),
+    }).catch((broadcastError) =>
+      console.error('[DELETE /api/menu-items] Availability broadcast failed:', broadcastError)
+    )
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
