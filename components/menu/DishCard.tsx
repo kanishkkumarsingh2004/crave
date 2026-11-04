@@ -13,9 +13,7 @@ interface DishCardProps {
 
 export default function DishCard({ item, onToggleStock, onEdit, onDelete }: DishCardProps) {
   const [imgFailed, setImgFailed] = useState(false)
-  const isOrderable =
-    item.is_orderable ?? (item.in_stock && (item.stock_count == null || item.stock_count > 0))
-  const isDepleted = item.stock_count != null && item.stock_count <= 0
+  const isOrderable = item.is_orderable ?? item.in_stock
 
   return (
     <div
@@ -60,7 +58,7 @@ export default function DishCard({ item, onToggleStock, onEdit, onDelete }: Dish
 
           {!isOrderable && (
             <span className="absolute inset-0 grid place-items-center bg-black/70 backdrop-blur-xs text-white text-xs font-semibold uppercase tracking-wider">
-              {isDepleted ? 'Sold Out' : 'Out of Stock'}
+              Unavailable
             </span>
           )}
         </div>
@@ -79,7 +77,7 @@ export default function DishCard({ item, onToggleStock, onEdit, onDelete }: Dish
           </div>
           <div className="text-right shrink-0">
             <span className="font-bold text-lg text-[#1D1D1F] dark:text-white block">
-              {item.variants.length > 0 ? 'From ' : ''}₹{item.restaurant_price ?? item.price}
+              {item.variants.length > 0 ? 'From ' : ''}₹{item.restaurant_price}
             </span>
           </div>
         </div>
@@ -96,14 +94,9 @@ export default function DishCard({ item, onToggleStock, onEdit, onDelete }: Dish
               key={variant.id}
               className="inline-flex items-center rounded-md bg-stone-100 dark:bg-white/5 border border-stone-200/60 dark:border-white/10 px-2 py-0.5 font-medium text-stone-700 dark:text-stone-300 text-xs"
             >
-              {variant.name}: ₹{variant.price}
+              {variant.name}: ₹{variant.restaurant_price}
             </span>
           ))}
-          {item.stock_count != null && (
-            <span className="inline-flex items-center rounded-md bg-stone-100 dark:bg-white/5 px-2 py-0.5 font-medium text-stone-600 dark:text-stone-400 text-xs">
-              Stock: {item.stock_count} units
-            </span>
-          )}
           {item.sku_code && (
             <span className="inline-flex items-center rounded-md bg-stone-100 dark:bg-white/5 px-2 py-0.5 font-mono font-medium text-stone-500 dark:text-stone-400 text-xs">
               SKU: {item.sku_code}
@@ -117,12 +110,10 @@ export default function DishCard({ item, onToggleStock, onEdit, onDelete }: Dish
         <button
           type="button"
           onClick={() => onToggleStock(item.id, item.in_stock)}
-          disabled={isDepleted}
-          title={isDepleted ? 'Add stock in Edit Dish before restoring' : undefined}
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
             isOrderable
               ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/15'
-              : 'bg-stone-100 dark:bg-white/10 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-white/10 hover:bg-stone-200 disabled:cursor-not-allowed disabled:opacity-70'
+              : 'bg-stone-100 dark:bg-white/10 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-white/10 hover:bg-stone-200'
           }`}
         >
           <span
@@ -130,9 +121,7 @@ export default function DishCard({ item, onToggleStock, onEdit, onDelete }: Dish
               isOrderable ? 'bg-emerald-500 animate-pulse' : 'bg-stone-400'
             }`}
           />
-          <span>
-            {isDepleted ? 'Sold Out · Add Stock' : item.in_stock ? 'In Stock' : 'Out of Stock'}
-          </span>
+          <span>{item.in_stock ? 'Available' : 'Unavailable'}</span>
         </button>
 
         <div className="flex items-center gap-1.5">

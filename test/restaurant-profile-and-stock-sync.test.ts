@@ -27,6 +27,20 @@ test('canonical menu availability distinguishes vendor pauses from depleted stoc
   assert.strictEqual(getMenuItemAvailability({ in_stock: true, stock_count: 8 }).isOrderable, true)
 })
 
+test('made-to-order restaurant food remains orderable without a numeric stock count', () => {
+  assert.deepStrictEqual(getMenuItemAvailability({ in_stock: true, stock_count: null }), {
+    inventoryMode: 'UNTRACKED',
+    status: 'AVAILABLE',
+    stockCount: null,
+    isOrderable: true,
+  })
+  assert.strictEqual(validateMenuItemAvailability({ in_stock: true, stock_count: null }), null)
+  assert.strictEqual(
+    getMenuItemAvailability({ in_stock: false, stock_count: null }).status,
+    'PAUSED_BY_VENDOR'
+  )
+})
+
 test('canonical menu availability enforces selected variant availability', () => {
   const item = {
     in_stock: true,

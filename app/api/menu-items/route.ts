@@ -1,6 +1,12 @@
 import { prisma } from '@/lib/infra/prisma'
 import { calculateMenuAppPrice, type MenuPricingSettings } from '@/lib/menu-pricing'
 import { validateMenuItemAvailability, withMenuItemAvailability } from '@/lib/menu-availability'
+import {
+  toAdminMenuItem,
+  toCustomerMenuItem,
+  toMenuItemRealtimeEvent,
+  toVendorMenuItem,
+} from '@/lib/menu-item-visibility'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/jwt'
@@ -103,6 +109,20 @@ function canManageMenus(role: string): boolean {
   return ['admin', 'restaurant_vendor', 'cravexp_store_vendor', 'vendor'].includes(role)
 }
 
+function isRestaurantVendor(role: string | undefined): boolean {
+  return role === 'restaurant_vendor' || role === 'vendor'
+}
+
+function serializeMenuItem(item: any, actor: any, restaurant: any, ownsRestaurant = false) {
+  if (actor?.role === 'admin') return toAdminMenuItem(item)
+  if (isRestaurantVendor(actor?.role) && ownsRestaurant) return toVendorMenuItem(item)
+
+  const settings = pricingSettings(restaurant)
+  return toCustomerMenuItem(item, (restaurantPrice) =>
+    calculateMenuAppPrice(restaurantPrice, settings)
+  )
+}
+
 async function getActor(request: Request) {
   const authHeader = request.headers?.get ? request.headers.get('authorization') : null
   let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
@@ -132,6 +152,12 @@ export async function GET(request: Request) {
     if (!restaurant) {
       return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 })
     }
+    const ownsRestaurant =
+      actor != null &&
+      (restaurant.owner_id === actor.id ||
+        (actor as any).restaurantId === restaurantId ||
+        (actor as any).restaurant_id === restaurantId)
+
     if (searchParams.get('availabilityOnly') === 'true') {
       const availabilityItems = await prisma.menuItem.findMany({
         where: { restaurant_id: restaurantId },
@@ -142,25 +168,29 @@ export async function GET(request: Request) {
           name: true,
           description: true,
           price: true,
+          restaurant_price: true,
           in_stock: true,
           stock_count: true,
           variants: {
             orderBy: { sort_order: 'asc' },
-            select: { id: true, in_stock: true },
+            select: {
+              id: true,
+              name: true,
+              price: true,
+              restaurant_price: true,
+              in_stock: true,
+              is_default: true,
+            },
           },
         },
       })
       return NextResponse.json({
         success: true,
-        items: availabilityItems.map((item) => withMenuItemAvailability(item)),
+        items: availabilityItems.map((item) =>
+          serializeMenuItem(item, actor, restaurant, ownsRestaurant)
+        ),
       })
     }
-    const canViewRestaurantPricing =
-      actor?.role === 'admin' ||
-      (actor != null &&
-        (restaurant?.owner_id === actor.id ||
-          (actor as any).restaurantId === restaurantId ||
-          (actor as any).restaurant_id === restaurantId))
 
     const items = await prisma.menuItem.findMany({
       where: { restaurant_id: restaurantId },
@@ -168,30 +198,9 @@ export async function GET(request: Request) {
       include: { variants: { orderBy: { sort_order: 'asc' } } },
     })
 
-    const visibleItems = canViewRestaurantPricing
-      ? items
-      : items.map(({ restaurant_price, variants, ...item }) => {
-          const settings = pricingSettings(restaurant)
-          const customerPrice = calculateMenuAppPrice(
-            Number(restaurant_price ?? item.price),
-            settings
-          )
-          return {
-            ...item,
-            price: customerPrice,
-            variants: variants.map(({ restaurant_price: variantRestaurantPrice, ...variant }) => ({
-              ...variant,
-              price: calculateMenuAppPrice(
-                Number(variantRestaurantPrice ?? variant.price),
-                settings
-              ),
-            })),
-          }
-        })
-
     return NextResponse.json({
       success: true,
-      items: visibleItems.map((item) => withMenuItemAvailability(item)),
+      items: items.map((item) => serializeMenuItem(item, actor, restaurant, ownsRestaurant)),
     })
   } catch (error: any) {
     return NextResponse.json(
@@ -253,7 +262,11 @@ export async function POST(request: Request) {
       (calculatePrice && restaurantPrice != null
         ? calculatePrice(restaurantPrice)
         : Number(body.price))
-    const stockCount = Number(body.stock_count ?? 0)
+    const stockCount = shouldCalculateAppPrice
+      ? null
+      : body.stock_count == null || body.stock_count === ''
+        ? null
+        : Number(body.stock_count)
     if (!body.name || !body.category || !Number.isInteger(price) || price < 0) {
       return NextResponse.json(
         { error: 'name, category, and a non-negative price are required' },
@@ -269,7 +282,7 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-    if (!Number.isInteger(stockCount) || stockCount < 0) {
+    if (stockCount != null && (!Number.isInteger(stockCount) || stockCount < 0)) {
       return NextResponse.json(
         { error: 'stock_count must be a non-negative whole number' },
         { status: 400 }
@@ -336,7 +349,7 @@ export async function POST(request: Request) {
     const itemDto = withMenuItemAvailability(item)
     await broadcast('menu_items', {
       type: 'create',
-      item: itemDto,
+      item: toMenuItemRealtimeEvent(item),
       timestamp: new Date().toISOString(),
     }).catch((broadcastError) =>
       console.error('[POST /api/menu-items] Availability broadcast failed:', broadcastError)
@@ -354,7 +367,11 @@ export async function POST(request: Request) {
       },
     })
 
-    return NextResponse.json({ success: true, item: itemDto })
+    return NextResponse.json({
+      success: true,
+      item:
+        actor?.role === 'admin' || actor == null ? toAdminMenuItem(item) : toVendorMenuItem(item),
+    })
   } catch (error: any) {
     return NextResponse.json(
       { error: error?.message || 'Failed to create menu item' },
@@ -470,6 +487,7 @@ export async function PATCH(request: Request) {
       data.expiry_date = data.expiry_date ? new Date(data.expiry_date) : null
     }
     if (calculatePrice) {
+      data.stock_count = null
       if (data.restaurant_price != null) data.price = calculatePrice(data.restaurant_price)
       else delete data.price
     }
@@ -488,7 +506,7 @@ export async function PATCH(request: Request) {
         )
       }
     }
-    if (data.stock_count !== undefined && !Number.isInteger(data.stock_count)) {
+    if (data.stock_count != null && !Number.isInteger(data.stock_count)) {
       return NextResponse.json(
         { error: 'stock_count must be a non-negative whole number' },
         { status: 400 }
@@ -512,7 +530,8 @@ export async function PATCH(request: Request) {
     }
     const availabilityError = validateMenuItemAvailability({
       in_stock: data.in_stock ?? existingItem.in_stock,
-      stock_count: data.stock_count ?? existingItem.stock_count,
+      stock_count:
+        'stock_count' in data ? data.stock_count : (existingItem.stock_count as number | null),
       variants: variants ?? existingItem.variants,
     })
     if (availabilityError) {
@@ -547,7 +566,7 @@ export async function PATCH(request: Request) {
     const itemDto = withMenuItemAvailability(item)
     await broadcast('menu_items', {
       type: 'update',
-      item: itemDto,
+      item: toMenuItemRealtimeEvent(item),
       timestamp: new Date().toISOString(),
     }).catch((broadcastError) =>
       console.error('[PATCH /api/menu-items] Availability broadcast failed:', broadcastError)
@@ -569,7 +588,11 @@ export async function PATCH(request: Request) {
       },
     })
 
-    return NextResponse.json({ success: true, item: itemDto })
+    return NextResponse.json({
+      success: true,
+      item:
+        actor?.role === 'admin' || actor == null ? toAdminMenuItem(item) : toVendorMenuItem(item),
+    })
   } catch (error: any) {
     return NextResponse.json(
       { error: error?.message || 'Failed to update menu item' },

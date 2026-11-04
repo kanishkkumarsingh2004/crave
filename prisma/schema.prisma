@@ -130,7 +130,7 @@ model MenuItem {
   is_veg                 Boolean?          @default(true)
   unit                   String?
   mrp                    Int?
-  stock_count            Int               @default(0)
+  stock_count            Int?
   sku_code               String?
   hsn_sac_code           String?           @default("996331")
   price_tax_mode         PriceTaxMode      @default(TAX_INCLUSIVE)

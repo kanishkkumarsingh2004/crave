@@ -11,6 +11,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Manrope } from 'next/font/google'
 import { headers } from 'next/headers'
 import { connection } from 'next/server'
+import '../src/bones/registry'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })

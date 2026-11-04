@@ -18,8 +18,7 @@ function formatMenuItem(item: any, fallbackRestaurantId: string): MenuItemRecord
     restaurant_id: item.restaurant_id || fallbackRestaurantId,
     name: item.name,
     category: item.category || 'General',
-    price: Number(item.price),
-    restaurant_price: Number(item.restaurant_price ?? item.price),
+    restaurant_price: Number(item.restaurant_price ?? 0),
     description: item.description ?? '',
     in_stock: item.in_stock ?? true,
     availability_status: item.availability_status,
@@ -29,7 +28,6 @@ function formatMenuItem(item: any, fallbackRestaurantId: string): MenuItemRecord
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
     veg: item.is_veg ?? true,
     unit: item.unit ?? null,
-    stock_count: Number(item.stock_count ?? 0),
     sku_code: item.sku_code ?? null,
     hsn_sac_code: item.hsn_sac_code ?? '996331',
     price_tax_mode: item.price_tax_mode ?? 'TAX_INCLUSIVE',
@@ -39,7 +37,6 @@ function formatMenuItem(item: any, fallbackRestaurantId: string): MenuItemRecord
           id: v.id,
           name: v.name,
           restaurant_price: Number(v.restaurant_price),
-          price: Number(v.price),
           in_stock: v.in_stock !== false,
           is_default: v.is_default === true,
         }))
@@ -245,8 +242,8 @@ export default function VendorMenuPage() {
                 {user?.restaurantName || 'Your restaurant'} Dish Catalog
               </h2>
               <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1 font-normal">
-                Manage dishes, categories, dietary types, portion sizes, pricing &amp; live kitchen
-                inventory.
+                Manage dishes, categories, dietary types, portion sizes, pricing &amp; live
+                availability.
               </p>
             </div>
 
@@ -368,6 +365,7 @@ export default function VendorMenuPage() {
           open={showBulkImportModal}
           restaurantId={restaurantId}
           restaurantName={user.restaurantName || 'Your restaurant'}
+          mode="vendor"
           onClose={() => setShowBulkImportModal(false)}
           onImported={refreshMenuAfterImport}
         />

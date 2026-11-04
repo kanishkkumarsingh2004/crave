@@ -43,7 +43,7 @@ export type MenuItem = {
   category?: string
   in_stock?: boolean
   inStock?: boolean
-  stock_count?: number
+  stock_count?: number | null
   availability_status?: 'AVAILABLE' | 'PAUSED_BY_VENDOR' | 'SOLD_OUT'
   is_orderable?: boolean
   rating?: string | number

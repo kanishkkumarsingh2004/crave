@@ -92,12 +92,12 @@ export async function createMenuItem(data: {
   is_veg?: boolean
   unit?: string
   mrp?: number
-  stock_count?: number
+  stock_count?: number | null
   sku_code?: string
 }) {
   const availabilityError = validateMenuItemAvailability({
     in_stock: data.in_stock ?? true,
-    stock_count: data.stock_count ?? 0,
+    stock_count: data.stock_count ?? null,
   })
   if (availabilityError) throw new Error(availabilityError)
   const created = await prisma.menuItem.create({ data: data as any })
@@ -114,7 +114,7 @@ export async function updateMenuItem(id: string, data: any) {
   if (item) {
     const availabilityError = validateMenuItemAvailability({
       in_stock: data.in_stock ?? item.in_stock,
-      stock_count: data.stock_count ?? item.stock_count,
+      stock_count: data.stock_count !== undefined ? data.stock_count : item.stock_count,
     })
     if (availabilityError) throw new Error(availabilityError)
   }

@@ -107,10 +107,7 @@ export default function RestaurantProfileView({
     setLiveItems((prev) =>
       prev.map((item) => {
         if (item.id === updatedItem.id) {
-          if (
-            typeof updatedItem.in_stock !== 'boolean' ||
-            typeof updatedItem.stock_count !== 'number'
-          ) {
+          if (typeof updatedItem.in_stock !== 'boolean') {
             return item
           }
           const isNowOrderable = getMenuItemAvailability(updatedItem).isOrderable

@@ -65,7 +65,6 @@ export interface MenuVariant {
   id: string
   name: string
   restaurant_price: number
-  price: number
   in_stock: boolean
   is_default: boolean
 }
@@ -75,13 +74,11 @@ export interface MenuItem {
   restaurant_id: string
   name: string
   category: string
-  price: number
   restaurant_price: number
   description: string
   image: string
   in_stock: boolean
   is_veg: boolean
-  stock_count: number
   unit?: string | null
   variants: MenuVariant[]
 }
@@ -112,7 +109,6 @@ export interface MenuEditorValue {
   category: string
   description: string
   restaurantPrice: string
-  stockCount: string
   image: string
   isVeg: boolean
   inStock: boolean

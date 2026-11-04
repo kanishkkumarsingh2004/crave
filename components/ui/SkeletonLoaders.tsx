@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { Skeleton as BoneyardSkeleton } from 'boneyard-js/react'
 
 /**
  * Base atomic pulsing skeleton element
@@ -21,127 +22,19 @@ export function SkeletonBlock({
 }
 
 /**
- * Customer Navigation Bar Skeleton
+ * Boneyard-powered Navbar Skeleton
+ * Uses auto-captured bones from boneyard-js
  */
 export function NavbarSkeleton() {
-  return (
-    <div className="w-full border-b border-stone-200/80 dark:border-white/10 bg-white/80 dark:bg-[#0c120e]/80 backdrop-blur-md px-4 py-3 sm:px-6">
-      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4">
-        {/* Left: Logo & Location */}
-        <div className="flex items-center gap-4">
-          <SkeletonBlock className="h-9 w-28 rounded-xl" />
-          <div className="hidden sm:flex items-center gap-2">
-            <SkeletonBlock className="size-8 rounded-full" />
-            <div className="space-y-1">
-              <SkeletonBlock className="h-3 w-16 rounded" />
-              <SkeletonBlock className="h-3.5 w-36 rounded" />
-            </div>
-          </div>
-        </div>
-
-        {/* Center: Search */}
-        <div className="hidden md:block flex-1 max-w-md">
-          <SkeletonBlock className="h-10 w-full rounded-full" />
-        </div>
-
-        {/* Right: Actions */}
-        <div className="flex items-center gap-3">
-          <SkeletonBlock className="h-9 w-20 rounded-full hidden sm:block" />
-          <SkeletonBlock className="size-9 rounded-full" />
-          <SkeletonBlock className="size-9 rounded-full" />
-        </div>
-      </div>
-    </div>
-  )
+  return <BoneyardSkeleton name="Navbar" loading={true}>{null}</BoneyardSkeleton>
 }
 
 /**
- * Full Customer Dashboard / Explore Skeleton Loader
- * Replaces generic spinner with actual layout preview (Header, Banners, Categories, Food Grid)
+ * Boneyard-powered Customer Dashboard / Explore Skeleton
+ * Uses auto-captured bones from boneyard-js for CraveXPView which includes the explore layout
  */
 export function CustomerDashboardSkeleton() {
-  return (
-    <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] pb-24 selection:bg-[#d9f447] selection:text-[#121815]">
-      {/* Header */}
-      <NavbarSkeleton />
-
-      {/* Main Container */}
-      <main className="mx-auto w-full max-w-[1600px] px-3 pt-4 sm:px-6 sm:pt-6 space-y-8">
-        {/* Hero Carousel Banner Skeleton */}
-        <div className="relative w-full h-44 sm:h-64 lg:h-72 rounded-3xl overflow-hidden border border-stone-200/70 dark:border-white/5">
-          <SkeletonBlock className="size-full" />
-          <div className="absolute bottom-6 left-6 space-y-2 max-w-md">
-            <SkeletonBlock className="h-4 w-28 rounded-md bg-stone-300 dark:bg-white/15" />
-            <SkeletonBlock className="h-7 w-3/4 rounded-xl bg-stone-300 dark:bg-white/15" />
-            <SkeletonBlock className="h-3.5 w-1/2 rounded-md bg-stone-300 dark:bg-white/15" />
-          </div>
-        </div>
-
-        {/* Food Categories Circles/Pills Row Skeleton */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <SkeletonBlock className="h-5 w-36 rounded-md" />
-            <SkeletonBlock className="h-4 w-16 rounded-md hidden sm:block" />
-          </div>
-          <div className="flex items-center gap-4 overflow-x-auto pb-2 no-scrollbar">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-              <div key={n} className="flex shrink-0 flex-col items-center gap-2">
-                <SkeletonBlock className="size-16 sm:size-20 rounded-full" />
-                <SkeletonBlock className="h-3 w-14 rounded-md" />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Filter Pills Skeleton */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          <SkeletonBlock className="h-8 w-24 rounded-full" />
-          <SkeletonBlock className="h-8 w-20 rounded-full" />
-          <SkeletonBlock className="h-8 w-28 rounded-full" />
-          <SkeletonBlock className="h-8 w-24 rounded-full" />
-          <SkeletonBlock className="h-8 w-32 rounded-full hidden sm:block" />
-        </div>
-
-        {/* Signature Kitchens / Restaurants Grid Skeleton */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <SkeletonBlock className="h-6 w-48 rounded-lg" />
-            <SkeletonBlock className="h-4 w-20 rounded-md" />
-          </div>
-
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((card) => (
-              <div
-                key={card}
-                className="rounded-3xl border border-stone-200/80 dark:border-white/5 bg-white dark:bg-[#131b15] p-3.5 space-y-3 shadow-xs"
-              >
-                {/* Restaurant Image Skeleton */}
-                <div className="relative h-44 w-full rounded-2xl overflow-hidden">
-                  <SkeletonBlock className="size-full" />
-                  <div className="absolute top-2.5 left-2.5">
-                    <SkeletonBlock className="h-5 w-16 rounded-full bg-white/40 dark:bg-black/40" />
-                  </div>
-                </div>
-
-                {/* Details */}
-                <div className="space-y-2 pt-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <SkeletonBlock className="h-5 w-3/5 rounded-md" />
-                    <SkeletonBlock className="h-5 w-12 rounded-full" />
-                  </div>
-                  <SkeletonBlock className="h-3.5 w-4/5 rounded" />
-                  <div className="flex items-center justify-between pt-1 border-t border-stone-100 dark:border-white/5">
-                    <SkeletonBlock className="h-4 w-20 rounded" />
-                    <SkeletonBlock className="h-4 w-16 rounded" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </main>
-    </div>
-  )
+  return <BoneyardSkeleton name="CraveXPView" loading={true}>{null}</BoneyardSkeleton>
 }
 
 /**
@@ -318,73 +211,11 @@ export function ProfileSkeleton() {
 }
 
 /**
- * Customer Cart Skeleton Loader
+ * Boneyard-powered Customer Cart Skeleton Loader
+ * Uses auto-captured bones from boneyard-js
  */
 export function CartSkeleton() {
-  return (
-    <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] pb-24">
-      <NavbarSkeleton />
-      <main className="mx-auto w-full max-w-[1200px] px-4 pt-6 space-y-6">
-        <SkeletonBlock className="h-7 w-32 rounded-xl" />
-
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Cart items list */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="rounded-3xl border border-stone-200/80 dark:border-white/5 bg-white dark:bg-[#131b15] p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-stone-100 dark:border-white/5 pb-3">
-                <SkeletonBlock className="h-5 w-40 rounded" />
-                <SkeletonBlock className="h-4 w-16 rounded" />
-              </div>
-
-              {[1, 2, 3].map((n) => (
-                <div key={n} className="flex items-center justify-between gap-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <SkeletonBlock className="size-14 rounded-2xl" />
-                    <div className="space-y-1.5">
-                      <SkeletonBlock className="h-4 w-32 rounded" />
-                      <SkeletonBlock className="h-3 w-20 rounded" />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <SkeletonBlock className="h-8 w-24 rounded-full" />
-                    <SkeletonBlock className="h-4 w-12 rounded" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Bill details */}
-          <div className="space-y-4">
-            <div className="rounded-3xl border border-stone-200/80 dark:border-white/5 bg-white dark:bg-[#131b15] p-6 shadow-sm space-y-3">
-              <SkeletonBlock className="h-5 w-28 rounded" />
-              <div className="space-y-2.5 pt-2">
-                <div className="flex justify-between">
-                  <SkeletonBlock className="h-3.5 w-24 rounded" />
-                  <SkeletonBlock className="h-3.5 w-14 rounded" />
-                </div>
-                <div className="flex justify-between">
-                  <SkeletonBlock className="h-3.5 w-28 rounded" />
-                  <SkeletonBlock className="h-3.5 w-14 rounded" />
-                </div>
-                <div className="flex justify-between">
-                  <SkeletonBlock className="h-3.5 w-20 rounded" />
-                  <SkeletonBlock className="h-3.5 w-14 rounded" />
-                </div>
-                <div className="flex justify-between pt-2 border-t border-stone-100 dark:border-white/5">
-                  <SkeletonBlock className="h-5 w-24 rounded" />
-                  <SkeletonBlock className="h-5 w-16 rounded" />
-                </div>
-              </div>
-              <div className="pt-3">
-                <SkeletonBlock className="h-12 w-full rounded-2xl" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
-  )
+  return <BoneyardSkeleton name="CartView" loading={true}>{null}</BoneyardSkeleton>
 }
 
 /**
@@ -598,54 +429,11 @@ export function DriverDashboardSkeleton() {
 }
 
 /**
- * Admin Dashboard & Reports Skeleton Loader
+ * Boneyard-powered Admin Dashboard & Reports Skeleton Loader
+ * Uses auto-captured bones from boneyard-js
  */
 export function AdminDashboardSkeleton() {
-  return (
-    <div className="min-h-screen bg-[#fafbfa] dark:bg-[#0c120e] pb-24">
-      <div className="border-b border-stone-200 dark:border-white/10 bg-white dark:bg-[#111713] px-4 py-4 sm:px-8 flex items-center justify-between">
-        <SkeletonBlock className="h-6 w-36 rounded-lg" />
-        <SkeletonBlock className="size-8 rounded-full" />
-      </div>
-
-      <div className="mx-auto max-w-[1400px] p-4 sm:p-6 lg:p-8 space-y-6">
-        {/* Stats Grid */}
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((c) => (
-            <div
-              key={c}
-              className="rounded-3xl border border-stone-200/80 dark:border-white/5 bg-white dark:bg-[#131b15] p-5 space-y-2 shadow-xs"
-            >
-              <SkeletonBlock className="h-3 w-20 rounded" />
-              <SkeletonBlock className="h-7 w-24 rounded-md" />
-            </div>
-          ))}
-        </div>
-
-        {/* Table Skeleton */}
-        <div className="rounded-3xl border border-stone-200/80 dark:border-white/5 bg-white dark:bg-[#131b15] p-6 space-y-4 shadow-sm">
-          <div className="flex items-center justify-between border-b border-stone-100 dark:border-white/5 pb-3">
-            <SkeletonBlock className="h-5 w-32 rounded" />
-            <SkeletonBlock className="h-8 w-24 rounded-full" />
-          </div>
-
-          <div className="space-y-3 pt-2">
-            {[1, 2, 3, 4, 5].map((row) => (
-              <div
-                key={row}
-                className="flex items-center justify-between py-2 border-b border-stone-100 dark:border-white/5"
-              >
-                <SkeletonBlock className="h-4 w-36 rounded" />
-                <SkeletonBlock className="h-4 w-24 rounded" />
-                <SkeletonBlock className="h-4 w-16 rounded" />
-                <SkeletonBlock className="h-6 w-20 rounded-full" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+  return <BoneyardSkeleton name="AdminDashboard" loading={true}>{null}</BoneyardSkeleton>
 }
 
 /**

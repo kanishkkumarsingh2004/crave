@@ -533,8 +533,8 @@ export async function processPaymentRejectionTx(input: PaymentRejectionInput) {
       const itemId = item.id || item.itemId
       const qty = Number(item.quantity || item.qty || 1)
       if (itemId && qty > 0) {
-        await tx.menuItem.update({
-          where: { id: itemId },
+        await tx.menuItem.updateMany({
+          where: { id: itemId, stock_count: { not: null } },
           data: {
             stock_count: { increment: qty },
             in_stock: true,

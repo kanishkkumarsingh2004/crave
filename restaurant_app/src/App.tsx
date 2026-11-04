@@ -164,7 +164,6 @@ const EMPTY_EDITOR: MenuEditorValue = {
   category: CATEGORY_OPTIONS[0],
   description: '',
   restaurantPrice: '',
-  stockCount: '',
   image: '',
   isVeg: true,
   inStock: true,
@@ -189,20 +188,17 @@ function formatMenuItem(item: any, restaurantId: string): MenuItem {
     restaurant_id: item.restaurant_id || restaurantId,
     name: item.name,
     category: item.category || 'General',
-    price: Number(item.price || 0),
-    restaurant_price: Number(item.restaurant_price ?? item.price ?? 0),
+    restaurant_price: Number(item.restaurant_price ?? 0),
     description: item.description || '',
     image: item.image || '',
-    in_stock: item.is_orderable ?? (item.in_stock !== false && Number(item.stock_count) > 0),
+    in_stock: item.is_orderable ?? item.in_stock !== false,
     is_veg: item.is_veg !== false,
-    stock_count: Number(item.stock_count || 0),
     unit: item.unit || null,
     variants: Array.isArray(item.variants)
       ? item.variants.map((variant: any) => ({
           id: variant.id,
           name: variant.name,
           restaurant_price: Number(variant.restaurant_price || 0),
-          price: Number(variant.price || 0),
           in_stock: variant.in_stock !== false,
           is_default: variant.is_default === true,
         }))
@@ -450,7 +446,6 @@ function MenuEditor({
         id: crypto.randomUUID(),
         name,
         restaurant_price: restaurantPrice,
-        price: restaurantPrice,
         in_stock: true,
         is_default: index === 0,
       })),
@@ -473,7 +468,7 @@ function MenuEditor({
       restaurantPrice,
       variants: value.variants.map((variant) =>
         variant.name.toLowerCase() === 'small'
-          ? { ...variant, restaurant_price: numericPrice, price: numericPrice }
+          ? { ...variant, restaurant_price: numericPrice }
           : variant
       ),
     })
@@ -528,19 +523,6 @@ function MenuEditor({
             Your customer price is calculated automatically from the restaurant contract.
           </small>
         </label>
-        <label>
-          Stock units
-          <input
-            type="number"
-            inputMode="numeric"
-            min="0"
-            step="1"
-            value={value.stockCount}
-            onChange={(event) => onChange({ ...value, stockCount: event.target.value })}
-            placeholder="Enter current stock"
-          />
-          <small className="price-helper">Available dishes require at least one unit.</small>
-        </label>
         <div className="choice-row field-wide">
           <button
             className={value.isVeg ? 'choice active' : 'choice'}
@@ -575,7 +557,6 @@ function MenuEditor({
                     onChange={(event) =>
                       updateVariant(variant.id, {
                         restaurant_price: Number(event.target.value || 0),
-                        price: Number(event.target.value || 0),
                       })
                     }
                     aria-label={`${variant.name} restaurant price`}
@@ -1065,7 +1046,6 @@ export default function App() {
       category: item.category,
       description: item.description,
       restaurantPrice: String(smallPrice),
-      stockCount: String(item.stock_count),
       image: item.image,
       isVeg: item.is_veg,
       inStock: item.in_stock,
@@ -1078,7 +1058,6 @@ export default function App() {
   async function saveMenuItem() {
     if (!restaurant || !menuEditor) return
     const restaurantPrice = Math.round(Number(menuEditor.restaurantPrice))
-    const stockCount = Number(menuEditor.stockCount)
     if (
       !menuEditor.name.trim() ||
       !menuEditor.category.trim() ||
@@ -1089,14 +1068,6 @@ export default function App() {
     }
     if (restaurantPrice < 0) {
       showToast('Restaurant price must be zero or more.')
-      return
-    }
-    if (!Number.isInteger(stockCount) || stockCount < 0) {
-      showToast('Stock units must be a non-negative whole number.')
-      return
-    }
-    if (menuEditor.inStock && stockCount <= 0) {
-      showToast('Enter at least one stock unit before making this dish available.')
       return
     }
     if (
@@ -1116,11 +1087,9 @@ export default function App() {
         category: menuEditor.category.trim(),
         description: menuEditor.description.trim() || null,
         restaurant_price: restaurantPrice,
-        price: restaurantPrice,
         image: menuEditor.image.trim() || null,
         is_veg: menuEditor.isVeg,
         in_stock: menuEditor.inStock,
-        stock_count: stockCount,
         unit: menuEditor.unit.trim() || null,
         hsn_sac_code: '996331',
         price_tax_mode: 'TAX_INCLUSIVE',
@@ -1128,7 +1097,6 @@ export default function App() {
           ? menuEditor.variants.map((variant, index) => ({
               ...variant,
               restaurant_price: Math.round(variant.restaurant_price),
-              price: Math.round(variant.restaurant_price),
               is_default: index === 0,
             }))
           : [],

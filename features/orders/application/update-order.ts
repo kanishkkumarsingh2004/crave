@@ -204,15 +204,24 @@ export async function updateOrder(input: UpdateOrderInput): Promise<UpdateOrderR
     return { success: false, error: 'No valid fields to update', statusCode: 400 }
   }
 
-  const allowed =
-    (hasStatusChange && canUpdateStatus) ||
-    (hasPaymentStatusChange && canUpdatePaymentStatus) ||
-    (hasDriverInfoChange && canUpdateDriverInfo) ||
-    (hasCoordinateChange && canUpdateCoordinates) ||
-    (hasItemsChange && canUpdateItems)
+  // CR-01 FIX: Validate each requested field independently
+  // Reject if any field is requested but not authorized
+  const fieldPermissions = [
+    [hasStatusChange, canUpdateStatus, 'status'],
+    [hasPaymentStatusChange, canUpdatePaymentStatus, 'payment_status'],
+    [hasDriverInfoChange, canUpdateDriverInfo, 'driver_info'],
+    [hasCoordinateChange, canUpdateCoordinates, 'coordinates'],
+    [hasItemsChange, canUpdateItems, 'items'],
+  ] as const
 
-  if (!allowed || (driver_lat != null && !canUpdateCoordinates)) {
-    return { success: false, error: 'You are not allowed to update this order', statusCode: 403 }
+  for (const [requested, permitted, fieldName] of fieldPermissions) {
+    if (requested && !permitted) {
+      return {
+        success: false,
+        error: `You are not allowed to update ${fieldName}`,
+        statusCode: 403,
+      }
+    }
   }
 
   // State machine transition rules

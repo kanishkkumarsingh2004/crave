@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { CSV_HEADERS, parseCsv, rowsToItems } from '../components/menu/BulkMenuImportModal'
+import {
+  CSV_HEADERS,
+  VENDOR_CSV_HEADERS,
+  parseCsv,
+  rowsToItems,
+} from '../components/menu/BulkMenuImportModal'
 
 const headers = [
   'name',
@@ -123,5 +128,41 @@ test('bulk menu CSV rejects an available item with zero stock', () => {
   assert.throws(
     () => rowsToItems(parseCsv([headers.join(','), values.join(',')].join('\n'))),
     /require at least one stock unit/i
+  )
+})
+
+test('restaurant bulk template excludes platform prices and numeric inventory', () => {
+  assert.equal((VENDOR_CSV_HEADERS as readonly string[]).includes('app_price'), false)
+  assert.equal((VENDOR_CSV_HEADERS as readonly string[]).includes('variant_app_prices'), false)
+  assert.equal((VENDOR_CSV_HEADERS as readonly string[]).includes('stock_count'), false)
+
+  const values = [
+    'Tea',
+    'Beverages',
+    '',
+    '20',
+    'true',
+    'true',
+    '1 cup',
+    '',
+    '',
+    '996331',
+    'TAX_INCLUSIVE',
+    '',
+    'Small|Large',
+    '20|35',
+    'Small',
+  ]
+  const [item] = rowsToItems(
+    parseCsv([[...VENDOR_CSV_HEADERS].join(','), values.join(',')].join('\n')),
+    'vendor'
+  )
+
+  assert.equal('price' in item, false)
+  assert.equal('stock_count' in item, false)
+  assert.equal(item.restaurant_price, 20)
+  assert.equal(
+    item.variants.every((variant) => !('price' in variant)),
+    true
   )
 })

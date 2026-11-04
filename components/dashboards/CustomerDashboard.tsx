@@ -364,7 +364,7 @@ export default function CustomerDashboard({
               inStock: availability.isOrderable,
               is_orderable: availability.isOrderable,
               availability_status: item.availability_status ?? availability.status,
-              stock_count: Number(item.stock_count),
+              stock_count: typeof item.stock_count === 'number' ? item.stock_count : null,
               bestseller: item.bestseller ?? item.price >= 250,
               variants: Array.isArray(item.variants)
                 ? item.variants.map((v: any) => ({
@@ -396,10 +396,7 @@ export default function CustomerDashboard({
         )
         return
       }
-      if (
-        typeof updatedItem.in_stock !== 'boolean' ||
-        typeof updatedItem.stock_count !== 'number'
-      ) {
+      if (typeof updatedItem.in_stock !== 'boolean') {
         return
       }
       const isNowOrderable = getMenuItemAvailability(updatedItem).isOrderable
@@ -414,7 +411,10 @@ export default function CustomerDashboard({
           return [
             {
               ...cartItem,
-              qty: Math.min(cartItem.qty, updatedItem.stock_count),
+              qty:
+                typeof updatedItem.stock_count === 'number'
+                  ? Math.min(cartItem.qty, updatedItem.stock_count)
+                  : cartItem.qty,
             },
           ]
         })

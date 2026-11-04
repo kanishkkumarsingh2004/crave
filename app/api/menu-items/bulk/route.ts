@@ -3,6 +3,7 @@ import { CacheKeys, cacheDel } from '@/lib/infra/cache'
 import { prisma } from '@/lib/infra/prisma'
 import { broadcast } from '@/lib/ws-server'
 import { validateMenuItemAvailability } from '@/lib/menu-availability'
+import { calculateMenuAppPrice, type MenuPricingSettings } from '@/lib/menu-pricing'
 import { NextResponse } from 'next/server'
 
 type BulkVariant = {
@@ -27,7 +28,7 @@ type BulkItem = {
   image: string | null
   is_veg: boolean
   unit: string | null
-  stock_count: number
+  stock_count: number | null
   sku_code: string | null
   hsn_sac_code: string
   price_tax_mode: 'TAX_INCLUSIVE' | 'TAX_EXCLUSIVE'
@@ -68,7 +69,8 @@ function optionalDate(value: unknown, field: string, row: number) {
 function normalizeItem(
   raw: Record<string, unknown>,
   index: number,
-  restaurantId: string
+  restaurantId: string,
+  calculatePrice?: (restaurantPrice: number) => number
 ): BulkItem {
   const row = index + 2
   const name = text(raw.name, 200)
@@ -98,7 +100,9 @@ function normalizeItem(
       `${variantName} restaurant price`,
       row
     ) as number
-    const price = wholeNumber(variant.price, `${variantName} app price`, row) as number
+    const price = calculatePrice
+      ? calculatePrice(restaurantPrice)
+      : (wholeNumber(variant.price, `${variantName} app price`, row) as number)
     if (price < restaurantPrice) {
       throw new BulkImportValidationError(
         `Row ${row}: ${variantName} app price cannot be below restaurant price.`
@@ -131,12 +135,18 @@ function normalizeItem(
     : (wholeNumber(raw.restaurant_price, 'restaurant_price', row) as number)
   const price = defaultVariant
     ? defaultVariant.price
-    : (wholeNumber(raw.price, 'app_price', row) as number)
+    : calculatePrice
+      ? calculatePrice(restaurantPrice)
+      : (wholeNumber(raw.price, 'app_price', row) as number)
   if (price < restaurantPrice) {
     throw new BulkImportValidationError(`Row ${row}: app_price cannot be below restaurant_price.`)
   }
 
-  const stockCount = wholeNumber(raw.stock_count ?? 0, 'stock_count', row) as number
+  const stockCount = calculatePrice
+    ? null
+    : raw.stock_count == null || raw.stock_count === ''
+      ? null
+      : (wholeNumber(raw.stock_count, 'stock_count', row) as number)
   const rawPriceTaxMode = text(raw.price_tax_mode, 30)?.toUpperCase() || 'TAX_INCLUSIVE'
   if (!['TAX_INCLUSIVE', 'TAX_EXCLUSIVE'].includes(rawPriceTaxMode)) {
     throw new BulkImportValidationError(
@@ -197,7 +207,28 @@ export async function POST(request: Request) {
 
     const restaurant = await prisma.restaurant.findUnique({
       where: { id: restaurantId },
-      select: { id: true, owner_id: true, name: true },
+      select: {
+        id: true,
+        owner_id: true,
+        name: true,
+        commercial_model: true,
+        commission_rate: true,
+        markup_rate: true,
+        fixed_commission: true,
+        fixed_markup: true,
+        commercial_contracts: {
+          where: { status: 'ACTIVE' },
+          orderBy: { effective_from: 'desc' },
+          take: 1,
+          select: {
+            commercial_model: true,
+            commission_rate: true,
+            markup_rate: true,
+            fixed_commission: true,
+            fixed_markup: true,
+          },
+        },
+      },
     })
     if (!restaurant) {
       return NextResponse.json({ error: 'Restaurant not found.' }, { status: 404 })
@@ -211,8 +242,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'You do not own this restaurant.' }, { status: 403 })
     }
 
+    const contract = restaurant.commercial_contracts[0]
+    const pricingSettings: MenuPricingSettings = {
+      commercialModel: contract?.commercial_model ?? restaurant.commercial_model,
+      commissionRate: Number(contract?.commission_rate ?? restaurant.commission_rate ?? 0),
+      markupRate: Number(contract?.markup_rate ?? restaurant.markup_rate ?? 0),
+      fixedCommission: Number(contract?.fixed_commission ?? restaurant.fixed_commission ?? 0),
+      fixedMarkup: Number(contract?.fixed_markup ?? restaurant.fixed_markup ?? 0),
+    }
+    const calculatePrice =
+      actorRole === 'admin'
+        ? undefined
+        : (restaurantPrice: number) => calculateMenuAppPrice(restaurantPrice, pricingSettings)
     const items: BulkItem[] = rawItems.map((item, index) =>
-      normalizeItem(item as Record<string, unknown>, index, restaurantId)
+      normalizeItem(item as Record<string, unknown>, index, restaurantId, calculatePrice)
     )
     const skuCodes = items.map((item) => item.sku_code).filter((sku): sku is string => Boolean(sku))
     const duplicateSku = skuCodes.find(

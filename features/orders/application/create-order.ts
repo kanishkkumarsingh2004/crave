@@ -25,7 +25,8 @@ import {
   completeIdempotency,
   hashPayload,
 } from '@/lib/idempotency'
-import { getMenuItemAvailability, withMenuItemAvailability } from '@/lib/menu-availability'
+import { getMenuItemAvailability } from '@/lib/menu-availability'
+import { toMenuItemRealtimeEvent } from '@/lib/menu-item-visibility'
 import { calculateMenuAppPrice } from '@/lib/menu-pricing'
 import { CRAVEXP_DARK_STORE_ID } from '@/lib/cravexp-grocery-catalog'
 import { invalidateOrdersCache } from '@/lib/dal/orders'
@@ -336,9 +337,12 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       }
     }
 
-    const hasInsufficientStock =
-      typeof menuItem.stock_count !== 'number' || menuItem.stock_count < quantity
-    if (isCraveXPOrder && (menuItem.in_stock === false || hasInsufficientStock)) {
+    const hasTrackedStock = typeof menuItem.stock_count === 'number'
+    const hasInsufficientStock = hasTrackedStock && menuItem.stock_count < quantity
+    if (
+      isCraveXPOrder &&
+      (menuItem.in_stock === false || !hasTrackedStock || hasInsufficientStock)
+    ) {
       if (idempotencyKey) {
         await releaseIdempotency(idempotencyKey, 'order_checkout', idempotencyFencingToken)
       }
@@ -1091,7 +1095,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         changedItems.map((item) =>
           broadcast('menu_items', {
             type: 'update',
-            item: withMenuItemAvailability(item),
+            item: toMenuItemRealtimeEvent(item),
             timestamp: new Date().toISOString(),
           })
         )

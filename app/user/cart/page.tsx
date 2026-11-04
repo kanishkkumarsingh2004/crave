@@ -673,13 +673,15 @@ export default function CartPage() {
                 ) {
                   return []
                 }
-                const availableQuantity = Number(menuItem.stock_count)
+                const availableQuantity =
+                  typeof menuItem.stock_count === 'number' ? menuItem.stock_count : null
                 return [
                   {
                     ...cartItem,
-                    qty: Number.isInteger(availableQuantity)
-                      ? Math.min(cartItem.qty, availableQuantity)
-                      : cartItem.qty,
+                    qty:
+                      availableQuantity != null && Number.isInteger(availableQuantity)
+                        ? Math.min(cartItem.qty, availableQuantity)
+                        : cartItem.qty,
                   },
                 ]
               })

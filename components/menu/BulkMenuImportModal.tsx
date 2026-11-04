@@ -9,9 +9,10 @@ type BulkMenuImportModalProps = {
   restaurantName: string
   onClose: () => void
   onImported: () => void | Promise<void>
+  mode?: 'admin' | 'vendor'
 }
 
-export const CSV_HEADERS = [
+export const ADMIN_CSV_HEADERS = [
   'name',
   'category',
   'description',
@@ -31,6 +32,26 @@ export const CSV_HEADERS = [
   'variant_app_prices',
   'default_variant',
 ] as const
+
+export const VENDOR_CSV_HEADERS = [
+  'name',
+  'category',
+  'description',
+  'restaurant_price',
+  'in_stock',
+  'is_veg',
+  'unit',
+  'sku_code',
+  'image_url',
+  'hsn_sac_code',
+  'price_tax_mode',
+  'expiry_date',
+  'variant_names',
+  'variant_restaurant_prices',
+  'default_variant',
+] as const
+
+export const CSV_HEADERS = ADMIN_CSV_HEADERS
 
 function escapeCsv(value: string | number | boolean) {
   const text = String(value)
@@ -85,21 +106,21 @@ function booleanValue(value: string, fallback: boolean) {
   throw new Error(`Invalid boolean value "${value}". Use true or false.`)
 }
 
-function optionalNumber(value: string) {
-  if (!value.trim()) return null
+function optionalNumber(value: string | undefined) {
+  if (!value?.trim()) return null
   const number = Number(value)
   if (!Number.isFinite(number)) throw new Error(`Invalid number "${value}".`)
   return number
 }
 
-function splitList(value: string) {
-  return value
+function splitList(value: string | undefined) {
+  return (value || '')
     .split('|')
     .map((part) => part.trim())
     .filter(Boolean)
 }
 
-export function rowsToItems(rows: string[][]) {
+export function rowsToItems(rows: string[][], mode: 'admin' | 'vendor' = 'admin') {
   if (rows.length < 2) throw new Error('The CSV does not contain any menu item rows.')
   const headers = rows[0].map((header) =>
     header
@@ -107,7 +128,8 @@ export function rowsToItems(rows: string[][]) {
       .trim()
       .toLowerCase()
   )
-  const missingHeaders = CSV_HEADERS.filter((header) => !headers.includes(header))
+  const expectedHeaders = mode === 'vendor' ? VENDOR_CSV_HEADERS : ADMIN_CSV_HEADERS
+  const missingHeaders = expectedHeaders.filter((header) => !headers.includes(header))
   if (missingHeaders.length > 0) {
     throw new Error(`Missing template columns: ${missingHeaders.join(', ')}`)
   }
@@ -121,8 +143,12 @@ export function rowsToItems(rows: string[][]) {
     const appPrice = optionalNumber(record.app_price)
     if (!name) throw new Error(`Row ${line}: name is required.`)
     if (!category) throw new Error(`Row ${line}: category is required.`)
-    if (restaurantPrice == null || appPrice == null) {
-      throw new Error(`Row ${line}: restaurant_price and app_price are required.`)
+    if (restaurantPrice == null || (mode === 'admin' && appPrice == null)) {
+      throw new Error(
+        mode === 'vendor'
+          ? `Row ${line}: restaurant_price is required.`
+          : `Row ${line}: restaurant_price and app_price are required.`
+      )
     }
 
     const variantNames = splitList(record.variant_names)
@@ -130,10 +156,12 @@ export function rowsToItems(rows: string[][]) {
     const variantAppPrices = splitList(record.variant_app_prices)
     if (
       variantNames.length !== variantRestaurantPrices.length ||
-      variantNames.length !== variantAppPrices.length
+      (mode === 'admin' && variantNames.length !== variantAppPrices.length)
     ) {
       throw new Error(
-        `Row ${line}: variant names and both variant price lists must contain the same number of values.`
+        mode === 'vendor'
+          ? `Row ${line}: variant names and restaurant price lists must contain the same number of values.`
+          : `Row ${line}: variant names and both variant price lists must contain the same number of values.`
       )
     }
 
@@ -148,8 +176,8 @@ export function rowsToItems(rows: string[][]) {
     }
 
     const inStock = booleanValue(record.in_stock, true)
-    const stockCount = optionalNumber(record.stock_count) ?? 0
-    if (inStock && stockCount <= 0) {
+    const stockCount = mode === 'vendor' ? null : (optionalNumber(record.stock_count) ?? 0)
+    if (mode === 'admin' && inStock && stockCount != null && stockCount <= 0) {
       throw new Error(`Row ${line}: available menu items require at least one stock unit.`)
     }
 
@@ -158,11 +186,11 @@ export function rowsToItems(rows: string[][]) {
       category,
       description: record.description.trim() || null,
       restaurant_price: restaurantPrice,
-      price: appPrice,
+      ...(mode === 'admin' ? { price: appPrice } : {}),
       in_stock: inStock,
       is_veg: booleanValue(record.is_veg, true),
       unit: record.unit.trim() || null,
-      stock_count: stockCount,
+      ...(mode === 'admin' ? { stock_count: stockCount } : {}),
       sku_code: record.sku_code.trim() || null,
       image: record.image_url.trim() || null,
       hsn_sac_code: record.hsn_sac_code.trim() || '996331',
@@ -171,7 +199,7 @@ export function rowsToItems(rows: string[][]) {
       variants: variantNames.map((variantName, index) => ({
         name: variantName,
         restaurant_price: Number(variantRestaurantPrices[index]),
-        price: Number(variantAppPrices[index]),
+        ...(mode === 'admin' ? { price: Number(variantAppPrices[index]) } : {}),
         in_stock: true,
         is_default:
           defaultVariant.length > 0 ? variantName.toLowerCase() === defaultVariant : index === 0,
@@ -186,6 +214,7 @@ export default function BulkMenuImportModal({
   restaurantName,
   onClose,
   onImported,
+  mode = 'admin',
 }: BulkMenuImportModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState('')
@@ -209,8 +238,8 @@ export default function BulkMenuImportModal({
   }
 
   function downloadTemplate() {
-    const rows: Array<Array<string | number | boolean>> = [
-      [...CSV_HEADERS],
+    const adminRows: Array<Array<string | number | boolean>> = [
+      [...ADMIN_CSV_HEADERS],
       [
         'Paneer Tikka',
         'Starters & Appetizers',
@@ -252,11 +281,50 @@ export default function BulkMenuImportModal({
         'Medium',
       ],
     ]
+    const vendorRows: Array<Array<string | number | boolean>> = [
+      [...VENDOR_CSV_HEADERS],
+      [
+        'Paneer Tikka',
+        'Starters & Appetizers',
+        'Smoky paneer tikka served with mint chutney',
+        100,
+        true,
+        true,
+        '1 Plate',
+        'PANEER-TIKKA-01',
+        'https://example.com/paneer-tikka.jpg',
+        '996331',
+        'TAX_INCLUSIVE',
+        '2026-12-31',
+        '',
+        '',
+        '',
+      ],
+      [
+        'Veg Pizza',
+        'Pizzas & Pasta',
+        'Fresh vegetable pizza with three sizes',
+        120,
+        true,
+        true,
+        '1 Pizza',
+        'VEG-PIZZA-01',
+        'https://example.com/veg-pizza.jpg',
+        '996331',
+        'TAX_INCLUSIVE',
+        '2026-12-31',
+        'Small|Medium|Large',
+        '120|170|220',
+        'Medium',
+      ],
+    ]
+    const rows = mode === 'vendor' ? vendorRows : adminRows
     const csv = rows.map((row) => row.map(escapeCsv).join(',')).join('\r\n')
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
     const link = document.createElement('a')
     link.href = url
-    link.download = 'crave-menu-import-template.csv'
+    link.download =
+      mode === 'vendor' ? 'crave-restaurant-menu-template.csv' : 'crave-menu-import-template.csv'
     link.click()
     URL.revokeObjectURL(url)
   }
@@ -276,7 +344,7 @@ export default function BulkMenuImportModal({
       return
     }
     try {
-      const parsedItems = rowsToItems(parseCsv(await file.text()))
+      const parsedItems = rowsToItems(parseCsv(await file.text()), mode)
       if (parsedItems.length > 500)
         throw new Error('A single import can contain at most 500 items.')
       setItems(parsedItems)
@@ -343,8 +411,9 @@ export default function BulkMenuImportModal({
           <FileSpreadsheet className="mx-auto size-9 text-stone-400 dark:text-stone-500" />
           <p className="mt-2 text-sm font-bold">Start with the official CSV template</p>
           <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-            Restaurant price is the MRP/restaurant amount. Keep column names unchanged; variant
-            lists use the | separator.
+            {mode === 'vendor'
+              ? 'Enter only your restaurant payout prices. Customer prices are calculated automatically, and food stock is controlled with availability.'
+              : 'Restaurant price is the MRP/restaurant amount. Keep column names unchanged; variant lists use the | separator.'}
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             <button

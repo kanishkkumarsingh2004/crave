@@ -20,7 +20,7 @@ export interface RecommendedItem {
   restaurantId: string
   restaurantName: string
   in_stock: boolean
-  stock_count: number
+  stock_count: number | null
   recommendationReason: string
   liftScore?: number
   confidenceScore?: number
@@ -158,7 +158,7 @@ export async function getCartCrossSellItems(params: {
         id: { in: cached.map((item) => item.id) },
         restaurant_id: restaurantId,
         in_stock: true,
-        stock_count: { gt: 0 },
+        OR: [{ stock_count: { gt: 0 } }, { stock_count: null }],
       },
       include: { variants: { select: { id: true, in_stock: true } } },
     })
@@ -178,7 +178,7 @@ export async function getCartCrossSellItems(params: {
     where: {
       restaurant_id: restaurantId,
       in_stock: true,
-      stock_count: { gt: 0 },
+      OR: [{ stock_count: { gt: 0 } }, { stock_count: null }],
       ...(isVegOnly ? { is_veg: true } : {}),
       id: { notIn: cartItemIds },
     },

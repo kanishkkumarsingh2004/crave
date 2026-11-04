@@ -33,14 +33,12 @@ export default function AddEditDishModal({
   const [category, setCategory] = useState('Biryani, Rice & Pulao')
   const [isCustomCategory, setIsCustomCategory] = useState(false)
   const [customCategory, setCustomCategory] = useState('')
-  const [price, setPrice] = useState<number | ''>('')
   const [restaurantPrice, setRestaurantPrice] = useState<number | ''>('')
   const [variants, setVariants] = useState<MenuItemVariantRecord[]>([])
   const [description, setDescription] = useState('')
   const [image, setImage] = useState('')
   const [isVeg, setIsVeg] = useState(true)
   const [inStock, setInStock] = useState(true)
-  const [stockCount, setStockCount] = useState<number | ''>('')
   const [unit, setUnit] = useState('Serves 1')
   const [skuCode, setSkuCode] = useState('')
   const [expiryDate, setExpiryDate] = useState('')
@@ -62,14 +60,12 @@ export default function AddEditDishModal({
         setIsCustomCategory(true)
         setCustomCategory(editingItem.category)
       }
-      setPrice(editingItem.price)
-      setRestaurantPrice(editingItem.restaurant_price ?? editingItem.price)
+      setRestaurantPrice(editingItem.restaurant_price)
       setVariants(editingItem.variants || [])
       setDescription(editingItem.description || '')
       setImage(editingItem.image || '')
       setIsVeg(editingItem.veg !== false)
       setInStock(editingItem.in_stock !== false)
-      setStockCount(editingItem.stock_count != null ? editingItem.stock_count : '')
       setUnit(editingItem.unit || '')
       setSkuCode(editingItem.sku_code || '')
       setHsnSac(editingItem.hsn_sac_code || '996331')
@@ -80,14 +76,12 @@ export default function AddEditDishModal({
       setCategory('Biryani, Rice & Pulao')
       setIsCustomCategory(false)
       setCustomCategory('')
-      setPrice('')
       setRestaurantPrice('')
       setVariants([])
       setDescription('')
       setImage('')
       setIsVeg(true)
       setInStock(true)
-      setStockCount('')
       setUnit('Serves 1')
       setSkuCode('')
       setHsnSac('996331')
@@ -101,13 +95,11 @@ export default function AddEditDishModal({
   const addStandardSizes = () => {
     if (variants.length > 0) return
     const baseRestPrice = Number(restaurantPrice || 0)
-    const baseAppPrice = Number(price || baseRestPrice)
     setVariants(
       ['Small', 'Medium', 'Large'].map((sName, idx) => ({
         id: crypto.randomUUID(),
         name: sName,
         restaurant_price: baseRestPrice,
-        price: baseAppPrice,
         in_stock: true,
         is_default: idx === 0,
       }))
@@ -128,30 +120,12 @@ export default function AddEditDishModal({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!name.trim() || price === '' || restaurantPrice === '' || !restaurantId) {
-      toast('Please provide dish name, restaurant price, and app price.', 'error')
+    if (!name.trim() || restaurantPrice === '' || !restaurantId) {
+      toast('Please provide a dish name and restaurant price.', 'error')
       return
     }
-    if (Number(price) < Number(restaurantPrice)) {
-      toast('App selling price cannot be lower than restaurant price.', 'error')
-      return
-    }
-    const normalizedStockCount = Number(stockCount)
-    if (!Number.isInteger(normalizedStockCount) || normalizedStockCount < 0) {
-      toast('Stock units must be a non-negative whole number.', 'error')
-      return
-    }
-    if (inStock && normalizedStockCount <= 0) {
-      toast('Enter at least one stock unit before marking this dish available.', 'error')
-      return
-    }
-    if (
-      variants.some((v) => !v.name.trim() || v.restaurant_price < 0 || v.price < v.restaurant_price)
-    ) {
-      toast(
-        'Every size needs a name and an app price at least equal to its restaurant price.',
-        'error'
-      )
+    if (variants.some((v) => !v.name.trim() || v.restaurant_price < 0)) {
+      toast('Every size needs a name and a valid restaurant price.', 'error')
       return
     }
 
@@ -168,14 +142,12 @@ export default function AddEditDishModal({
       restaurant_id: restaurantId,
       name: name.trim(),
       category: resolvedCat,
-      price: Number(price),
       restaurant_price: Number(restaurantPrice),
       description: description.trim(),
       in_stock: inStock,
       image: image.trim() || defaultImg,
       veg: isVeg,
       unit: unit.trim() || null,
-      stock_count: normalizedStockCount,
       sku_code: skuCode.trim() || null,
       hsn_sac_code: hsnSac.trim() || '996331',
       price_tax_mode: priceTaxMode,
@@ -192,7 +164,6 @@ export default function AddEditDishModal({
         restaurant_id: restaurantId,
         name: itemData.name,
         category: itemData.category,
-        price: itemData.price,
         restaurant_price: itemData.restaurant_price,
         description: itemData.description || null,
         image: itemData.image || null,
@@ -200,7 +171,6 @@ export default function AddEditDishModal({
         is_veg: itemData.veg ?? true,
         unit: itemData.unit || null,
         mrp: null,
-        stock_count: itemData.stock_count || 0,
         sku_code: itemData.sku_code || null,
         hsn_sac_code: itemData.hsn_sac_code || '996331',
         price_tax_mode: itemData.price_tax_mode || 'TAX_INCLUSIVE',
@@ -226,10 +196,8 @@ export default function AddEditDishModal({
       if (result.item) {
         savedItem = {
           ...itemData,
-          price: Number(result.item.price),
-          restaurant_price: Number(result.item.restaurant_price ?? result.item.price),
+          restaurant_price: Number(result.item.restaurant_price),
           in_stock: result.item.in_stock !== false,
-          stock_count: Number(result.item.stock_count),
           availability_status: result.item.availability_status,
           is_orderable: result.item.is_orderable,
           variants: Array.isArray(result.item.variants)
@@ -237,7 +205,6 @@ export default function AddEditDishModal({
                 id: v.id,
                 name: v.name,
                 restaurant_price: Number(v.restaurant_price),
-                price: Number(v.price),
                 in_stock: v.in_stock !== false,
                 is_default: v.is_default === true,
               }))
@@ -432,7 +399,7 @@ export default function AddEditDishModal({
           </div>
 
           {/* Pricing */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
             <div>
               <label className="font-semibold text-xs text-stone-700 dark:text-stone-200">
                 Restaurant Price / MRP (₹) <span className="text-rose-500">*</span>
@@ -453,24 +420,6 @@ export default function AddEditDishModal({
                 Restaurant amount used for payout
               </span>
             </div>
-            <div>
-              <label className="font-semibold text-xs text-stone-700 dark:text-stone-200">
-                App Selling Price (₹) <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="number"
-                required
-                min={1}
-                step={1}
-                placeholder="e.g. 110"
-                value={price}
-                onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                className="mt-1.5 w-full rounded-xl border border-stone-200/80 dark:border-white/10 bg-stone-50 dark:bg-white/5 p-3 font-semibold text-[#1D1D1F] dark:text-white outline-none focus:border-[#86a018] text-sm"
-              />
-              <span className="mt-1 block text-[10px] text-stone-400">
-                Customer price on the app
-              </span>
-            </div>
           </div>
 
           {/* Variants */}
@@ -481,7 +430,7 @@ export default function AddEditDishModal({
                   Sizes / Variants
                 </p>
                 <p className="text-[10px] text-stone-500 dark:text-stone-400">
-                  Optional. Each size has its own restaurant and app price.
+                  Optional. Set the restaurant payout price for each size.
                 </p>
               </div>
               <div className="flex gap-2">
@@ -503,7 +452,6 @@ export default function AddEditDishModal({
                         id: crypto.randomUUID(),
                         name: '',
                         restaurant_price: Number(restaurantPrice || 0),
-                        price: Number(price || restaurantPrice || 0),
                         in_stock: true,
                         is_default: cur.length === 0,
                       },
@@ -521,7 +469,7 @@ export default function AddEditDishModal({
                 {variants.map((variant) => (
                   <div
                     key={variant.id}
-                    className="grid grid-cols-1 gap-2 rounded-xl border border-stone-200 bg-white p-3 dark:border-[#28372e] dark:bg-[#121815] sm:grid-cols-[1fr_1fr_1fr_auto]"
+                    className="grid grid-cols-1 gap-2 rounded-xl border border-stone-200 bg-white p-3 dark:border-[#28372e] dark:bg-[#121815] sm:grid-cols-[1fr_1fr_auto]"
                   >
                     <input
                       placeholder="Size name"
@@ -539,15 +487,6 @@ export default function AddEditDishModal({
                       }
                       className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 font-bold text-[#121815] outline-none dark:border-[#233027] dark:bg-[#0d1210] dark:text-white"
                       placeholder="Restaurant ₹"
-                    />
-                    <input
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={variant.price}
-                      onChange={(e) => updateVariant(variant.id, { price: Number(e.target.value) })}
-                      className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 font-bold text-[#121815] outline-none dark:border-[#233027] dark:bg-[#0d1210] dark:text-white"
-                      placeholder="App ₹"
                     />
                     <div className="flex items-center justify-end gap-2">
                       <label className="flex items-center gap-1 text-[10px] font-bold text-stone-500 cursor-pointer">
@@ -584,8 +523,8 @@ export default function AddEditDishModal({
             )}
           </div>
 
-          {/* Commercial & Inventory */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Commercial details */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="font-bold text-stone-700 dark:text-gray-200">HSN/SAC Code</label>
               <input
@@ -594,18 +533,6 @@ export default function AddEditDishModal({
                 onChange={(e) => setHsnSac(e.target.value)}
                 className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-mono font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018]"
                 placeholder="996331"
-              />
-            </div>
-
-            <div>
-              <label className="font-bold text-stone-700 dark:text-gray-200">Stock Units</label>
-              <input
-                type="number"
-                min={0}
-                value={stockCount}
-                onChange={(e) => setStockCount(e.target.value === '' ? '' : Number(e.target.value))}
-                className="mt-1.5 w-full rounded-xl border border-stone-200 dark:border-[#233027] bg-stone-50 dark:bg-[#0d1210] p-3 font-bold text-[#121815] dark:text-white outline-none focus:border-[#86a018]"
-                placeholder="50"
               />
             </div>
 
