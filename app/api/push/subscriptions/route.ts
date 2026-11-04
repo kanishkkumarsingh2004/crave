@@ -1,5 +1,5 @@
-import { handleApiAuthError, requireAuthApi } from '@/lib/api-auth'
-import { prisma } from '@/lib/prisma'
+import { handleApiAuthError, requireAuthApi } from '@/lib/auth/api-auth'
+import { prisma } from '@/lib/infra/prisma'
 import { getWebPushPublicKey } from '@/lib/web-push'
 import { NextResponse } from 'next/server'
 

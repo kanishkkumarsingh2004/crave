@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import type { UserRole } from '@prisma/client'
 import webPush, { WebPushError, type PushSubscription } from 'web-push'
 

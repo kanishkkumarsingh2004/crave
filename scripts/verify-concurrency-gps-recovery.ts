@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { prisma } from '../lib/prisma'
+import { prisma } from '../lib/infra/prisma'
 import {
   claimOrderForDriverAtomic,
   transitionOrderStatusAtomic,
@@ -10,7 +10,7 @@ import {
   getDriverLocation,
   clearDriverSpatialIndex,
 } from '../lib/dispatch/driver-tracker'
-import { isValidTransition } from '../lib/order-state-machine'
+import { isValidTransition } from '../lib/catalog/order-state-machine'
 
 async function runVerification() {
   console.log('\n======================================================')

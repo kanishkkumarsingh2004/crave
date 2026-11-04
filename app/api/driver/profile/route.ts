@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { findUserById, updateUser } from '@/lib/dal/users'
-import { requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
+import { requireAuthApi, handleApiAuthError } from '@/lib/auth/api-auth'
 
 export async function GET(request: Request) {
   try {

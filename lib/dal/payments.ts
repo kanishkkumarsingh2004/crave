@@ -2,7 +2,7 @@
  * Database Access Layer — Payments, Settlements & Configs
  * Prisma ORM with Neon PostgreSQL
  */
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 
 // ─── Payment Reviews ────────────────────────────────────
 

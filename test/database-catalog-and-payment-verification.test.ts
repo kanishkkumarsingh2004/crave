@@ -6,7 +6,7 @@ import test, { before, after } from 'node:test'
 import { POST as createOrderPost } from '../app/api/orders/route'
 import { POST as razorpayOrderPost } from '../app/api/payments/razorpay/order/route'
 import { createTestRequest } from '../lib/auth/test-auth'
-import { prisma } from '../lib/prisma'
+import { prisma } from '../lib/infra/prisma'
 
 const TEST_CUSTOMER = {
   id: 'test_fixture_customer_01',

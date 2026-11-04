@@ -10,7 +10,7 @@
  * Exception: createUser, updateUser, deleteUser already threw; they are
  * unchanged in that respect.
  */
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import type { Prisma, User, UserRole } from '@prisma/client'
 
 export const PUBLIC_USER_SELECT = {

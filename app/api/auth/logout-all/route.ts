@@ -1,4 +1,4 @@
-import { handleAuthError, requireAuth } from '@/lib/auth-helpers'
+import { handleAuthError, requireAuth } from '@/lib/auth/auth-helpers'
 import { blacklistAllUserTokens } from '@/lib/jwt'
 import { NextResponse } from 'next/server'
 

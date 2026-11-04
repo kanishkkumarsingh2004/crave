@@ -1,6 +1,6 @@
-import { handleAuthError, requireRole } from '@/lib/auth-helpers'
+import { handleAuthError, requireRole } from '@/lib/auth/auth-helpers'
 import { generateCraveXPSku, normalizeCraveXPBarcode } from '@/lib/cravexp-product-code'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
 

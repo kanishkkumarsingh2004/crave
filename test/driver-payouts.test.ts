@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test, { after } from 'node:test'
-import { prisma } from '../lib/prisma'
+import { prisma } from '../lib/infra/prisma'
 import {
   createDriverPayoutIfWithinBalance,
   getDriverAvailableBalance,

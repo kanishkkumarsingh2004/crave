@@ -1,7 +1,7 @@
 /**
  * Database Access Layer — Customer Addresses
  */
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { Prisma } from '@prisma/client'
 
 export interface CustomerAddressDTO {

@@ -11,8 +11,8 @@
 
 import crypto from 'node:crypto'
 import { NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth-helpers'
-import { prisma } from '@/lib/prisma'
+import { requireAuth } from '@/lib/auth/auth-helpers'
+import { prisma } from '@/lib/infra/prisma'
 import { getRazorpayClient } from '@/lib/payments/razorpay-client'
 import { processPaymentVerificationTx } from '@/lib/finance/payment-service'
 

@@ -16,7 +16,7 @@ import {
   buildRefundInitiatedJournal,
   type CanonicalPriceResult,
 } from '@/lib/finance'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { sendNativePushToUsers } from '@/lib/notifications/driver-push'
 import { sendWebPushToUsers } from '@/lib/web-push'
 import { broadcast } from '@/lib/ws-server'

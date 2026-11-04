@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { MapPin, Phone, Store, Tag, User } from 'lucide-react'
-import { ImmutablePriceSnapshot } from '@/lib/commercial-engine'
+import { ImmutablePriceSnapshot } from '@/lib/finance/commercial-engine'
 
 interface TaxInvoiceViewProps {
   storeName: string

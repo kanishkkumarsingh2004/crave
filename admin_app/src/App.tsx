@@ -5,29 +5,8 @@ import { SplashScreen } from '@capacitor/splash-screen'
 import { AccessibleDialog } from '@crave/mobile-core'
 import { FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PullToRefresh } from './components/PullToRefresh'
-import {
-  Bell,
-  Camera,
-  Check,
-  ChevronRight,
-  Download,
-  Home,
-  IndianRupee,
-  Languages,
-  ListOrdered,
-  Lock,
-  LogOut,
-  Package,
-  RefreshCw,
-  Settings,
-  Store,
-  Truck,
-  Users,
-  Wifi,
-  WifiOff,
-  X,
-  type LucideIcon,
-} from 'lucide-react'
+import { Tab, IconName, icons, Icon } from './navigation/tabs'
+import { money, label, shortId } from '@crave/mobile-core'
 import appLogo from '../assets/logo.svg'
 import {
   ApiError,
@@ -53,29 +32,6 @@ import type { AddressMapPoint } from './AddressMap'
 
 const AddressMap = lazy(() => import('./AddressMap'))
 const BarcodeScanner = lazy(() => import('./BarcodeScanner'))
-
-type Tab = 'overview' | 'orders' | 'payments' | 'drivers' | 'partners' | 'xp-store' | 'settings'
-type IconName =
-  | 'home'
-  | 'orders'
-  | 'store'
-  | 'settings'
-  | 'refresh'
-  | 'wifi'
-  | 'offline'
-  | 'download'
-  | 'logout'
-  | 'users'
-  | 'money'
-  | 'bell'
-  | 'package'
-  | 'camera'
-  | 'lock'
-  | 'chevron'
-  | 'language'
-  | 'truck'
-  | 'close'
-  | 'check'
 
 interface AdminUser {
   id: string
@@ -231,43 +187,6 @@ interface DashboardData {
   stats: AdminStats
   orders: OrderRecord[]
   restaurants: RestaurantRecord[]
-}
-
-/** Every icon in the app comes from Lucide, so the set stays consistent. */
-const icons: Record<IconName, LucideIcon> = {
-  home: Home,
-  orders: ListOrdered,
-  store: Store,
-  settings: Settings,
-  refresh: RefreshCw,
-  wifi: Wifi,
-  offline: WifiOff,
-  download: Download,
-  logout: LogOut,
-  users: Users,
-  money: IndianRupee,
-  bell: Bell,
-  package: Package,
-  camera: Camera,
-  lock: Lock,
-  chevron: ChevronRight,
-  language: Languages,
-  close: X,
-  check: Check,
-  truck: Truck,
-}
-
-function Icon({ name }: { name: IconName }) {
-  const Glyph = icons[name]
-  return <Glyph strokeWidth={1.8} aria-hidden="true" />
-}
-
-function money(value: unknown): string {
-  return `₹${Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
-}
-
-function label(value = ''): string {
-  return value.replaceAll('_', ' ').replace(/\b\w/g, (character) => character.toUpperCase())
 }
 
 function LoginScreen({ onLogin }: { onLogin: (email: string, password: string) => Promise<void> }) {
@@ -1381,7 +1300,7 @@ export default function App() {
                     </div>
                     <div className="payment-details">
                       <span>
-                        Order <b>#{payment.order_id.slice(-8).toUpperCase()}</b>
+                        Order <b>#{shortId(payment.order_id)}</b>
                       </span>
                       <span>
                         Customer UPI <b>{payment.customer_vpa || 'Not provided'}</b>
@@ -2278,7 +2197,7 @@ function OrderCard({ order }: { order: OrderRecord }) {
   return (
     <article className="order-card">
       <div>
-        <span>{order.id.slice(-8).toUpperCase()}</span>
+        <span>{shortId(order.id)}</span>
         <h3>{order.restaurant_name || 'Restaurant order'}</h3>
         <p>{order.customer_name || 'Crave customer'}</p>
       </div>

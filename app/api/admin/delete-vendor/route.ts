@@ -1,9 +1,9 @@
 import { findUserByEmail } from '@/lib/dal'
 import { invalidateRestaurantCache } from '@/lib/dal/restaurants'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { verifyToken } from '@/lib/jwt'
 import { broadcast } from '@/lib/ws-server'
-import { AdminStatsCache } from '@/lib/cache'
+import { AdminStatsCache } from '@/lib/infra/cache'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { requireRole, handleAuthError } from '@/lib/auth/auth-helpers'
 import { broadcast } from '@/lib/ws-server'
 import { approveRefundRequestTx, processRefundTx } from '@/lib/finance/payment-service'

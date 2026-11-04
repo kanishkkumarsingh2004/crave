@@ -45,78 +45,15 @@ import { useLanguage, type SupportedLocale } from '../../dictionary/react'
 import type { AddressMapPoint } from './AddressMap'
 import { XPStorePage } from './XPStorePage'
 import type { Address, CartItem, MenuItem, Order, Restaurant, User, Variant } from './types'
+import { Tab, SWIPE_TABS, TAB_ORDER, getDirection } from './navigation/tabs'
+import { money, label as titleCase, shortId } from '@crave/mobile-core'
+import { rupees, RESTAURANT_FALLBACK_COUNT } from './utils/format'
+import { Logo } from './components/common/Logo'
+import { Spinner } from './components/common/Spinner'
+import { Empty } from './components/common/Empty'
+import { Toggle } from './components/common/Toggle'
 
-type Tab = 'home' | 'xp' | 'search' | 'orders' | 'cart' | 'account'
-const SWIPE_TABS: Tab[] = ['home', 'xp', 'orders', 'cart', 'account']
-/** Full ordered list used to derive slide direction for any tab change. */
-const TAB_ORDER: Tab[] = ['home', 'search', 'xp', 'orders', 'cart', 'account']
-const getDirection = (from: Tab, to: Tab): 'next' | 'prev' | null => {
-  const fromIdx = TAB_ORDER.indexOf(from)
-  const toIdx = TAB_ORDER.indexOf(to)
-  if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return null
-  return toIdx > fromIdx ? 'next' : 'prev'
-}
-const money = (value: number) => `₹${Math.round(Number(value) || 0)}`
-/** Rupees with paise only when there are paise. */
-const rupees = (value: number) => {
-  const amount = Number(value) || 0
-  return `₹${amount % 1 === 0 ? amount : amount.toFixed(2)}`
-}
-const titleCase = (value: string) =>
-  value.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-const RESTAURANT_FALLBACK_COUNT = 5
 const AddressMap = lazy(() => import('./AddressMap'))
-
-function Logo({ compact = false }: { compact?: boolean }) {
-  return (
-    <div
-      className={`flex items-center ${compact ? 'gap-0' : 'gap-[12px]'} font-manrope font-black text-[28px] tracking-[-1.5px] text-ink`}
-    >
-      <img
-        className={`block object-cover ${compact ? 'w-[43px] h-[43px] rounded-[14px]' : 'w-[48px] h-[48px] rounded-[15px]'}`}
-        src={appLogo}
-        alt="Crave"
-      />
-      {!compact && <span>CRAVE.</span>}
-    </div>
-  )
-}
-function Spinner() {
-  return (
-    <span className="inline-block w-[20px] h-[20px] border-2 border-current border-r-transparent rounded-full animate-[spin_0.7s_linear_infinite] [vertical-align:middle]" />
-  )
-}
-function Empty({
-  icon,
-  title,
-  text,
-}: {
-  icon: 'search' | 'orders' | 'cart'
-  title?: string
-  text?: string
-}) {
-  const { t } = useLanguage()
-  return (
-    <div className="empty">
-      <div className="empty-icon">
-        <Icon name={icon} />
-      </div>
-      <h3>{title ?? t.customer.noOrdersYet}</h3>
-      <p>{text ?? t.customer.noOrdersYetHint}</p>
-    </div>
-  )
-}
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      className={`toggle ${checked ? 'on' : ''}`}
-      onClick={() => onChange(!checked)}
-      aria-pressed={checked}
-    >
-      <span />
-    </button>
-  )
-}
 
 function Auth({ onDone }: { onDone: (u: User) => void }) {
   const [signup, setSignup] = useState(false),
@@ -1413,7 +1350,7 @@ function OrdersPage({
         <span>
           <h3>{o.restaurant_name || 'CRAVE order'}</h3>
           <p>
-            #{o.id.slice(-8).toUpperCase()} ·{' '}
+            #{shortId(o.id)} ·{' '}
             {o.created_at ? new Date(o.created_at).toLocaleDateString() : 'Just now'}
           </p>
         </span>
@@ -1623,7 +1560,7 @@ function InvoiceSheet({
             <h2 id="invoice-title" className="receipt-title">
               Order
             </h2>
-            <p className="receipt-sub">Receipt #{order.id.slice(-8).toUpperCase()}</p>
+            <p className="receipt-sub">Receipt #{shortId(order.id)}</p>
           </div>
           <div className="receipt-head-right">
             <p className="receipt-shop">{order.restaurant_name || 'CRAVE'}</p>

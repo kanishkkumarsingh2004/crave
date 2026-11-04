@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import crypto from 'node:crypto'
 import test, { after } from 'node:test'
-import { prisma } from '../lib/prisma'
+import { prisma } from '../lib/infra/prisma'
 import { checkAndIncrementCouponUsage } from '../lib/dal/coupons'
 import { acquireIdempotency, releaseIdempotency } from '../lib/idempotency'
 import { hashPassword } from '../lib/password'

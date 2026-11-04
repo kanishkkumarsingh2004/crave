@@ -1,11 +1,11 @@
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import {
   CRAVEXP_DARK_STORE_ID,
   CRAVEXP_DARK_STORE_INFO,
   type CraveXPGroceryItem,
 } from '@/lib/cravexp-grocery-catalog'
 import { NextResponse } from 'next/server'
-import { requireRole, handleAuthError } from '@/lib/auth-helpers'
+import { requireRole, handleAuthError } from '@/lib/auth/auth-helpers'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0

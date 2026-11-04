@@ -50,3 +50,9 @@ junit.xml
 **/android/.cxx/
 **/android/.externalNativeBuild
 **/android/local.properties
+
+# Generated build outputs — never treat as source code
+**/dist/
+**/build/
+*.apk
+a.out

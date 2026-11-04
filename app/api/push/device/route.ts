@@ -1,6 +1,6 @@
-import { handleApiAuthError, requireAuthApi } from '@/lib/api-auth'
+import { handleApiAuthError, requireAuthApi } from '@/lib/auth/api-auth'
 import { appRoleForUser } from '@/lib/notifications/native-device'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { NextResponse } from 'next/server'
 
 const ALLOWED_PLATFORMS = new Set(['ios', 'android'])

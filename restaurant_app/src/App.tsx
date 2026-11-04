@@ -33,6 +33,31 @@ import { checkForRestaurantUpdate, installRestaurantUpdate, type RestaurantUpdat
 import { applyTheme, loadTheme, saveTheme, type ThemeMode } from './theme'
 import { useLanguage, type SupportedLocale } from '../../dictionary/react'
 import { hasSeenPermissionSheet, markPermissionSheetSeen } from './permissions'
+import {
+  APP_NAME,
+  RESTAURANT_ROLES,
+  ACTIVE_STATUSES,
+  COMPLETED_STATUSES,
+} from './navigation/statuses'
+import { money, shortId, formatDate, label, formatStatus } from '@crave/mobile-core'
+
+const restaurantStatusLabels: Record<string, string> = {
+  payment_verified: 'Payment verified',
+  sent_to_vendor: 'New order',
+  new: 'New order',
+  accepted: 'Accepted',
+  preparing: 'Preparing',
+  cooking: 'Preparing',
+  packing: 'Packing',
+  ready: 'Ready',
+  ready_for_pickup: 'Ready for pickup',
+  rider_assigned: 'Rider assigned',
+  picked_up: 'Picked up',
+  out_for_delivery: 'Out for delivery',
+  delivered: 'Delivered',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+}
 import type {
   AppTab,
   MenuEditorValue,
@@ -44,23 +69,6 @@ import type {
   Settlement,
   SettlementSummary,
 } from './types'
-
-const APP_NAME = 'crave kitchen'
-const RESTAURANT_ROLES = new Set(['restaurant_vendor', 'cravexp_store_vendor', 'vendor'])
-const ACTIVE_STATUSES = new Set([
-  'payment_verified',
-  'sent_to_vendor',
-  'new',
-  'accepted',
-  'preparing',
-  'cooking',
-  'packing',
-  'ready',
-  'ready_for_pickup',
-  'rider_assigned',
-])
-
-const COMPLETED_STATUSES = new Set(['picked_up', 'out_for_delivery', 'delivered', 'completed'])
 
 /**
  * Rejects a promise after `ms` milliseconds so a native plugin (e.g. StatusBar or the
@@ -163,46 +171,6 @@ const EMPTY_EDITOR: MenuEditorValue = {
   unit: 'Serves 1',
   useSizes: false,
   variants: [],
-}
-
-function money(value: unknown): string {
-  return `₹${Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
-}
-
-function shortOrderId(id: string): string {
-  return `#${id.slice(-8).toUpperCase()}`
-}
-
-function orderTime(order: RestaurantOrder): string {
-  const value = order.created_at || order.createdAt
-  if (!value) return 'Just now'
-  return new Date(value).toLocaleString([], {
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-function statusLabel(status: string): string {
-  const labels: Record<string, string> = {
-    payment_verified: 'Payment verified',
-    sent_to_vendor: 'New order',
-    new: 'New order',
-    accepted: 'Accepted',
-    preparing: 'Preparing',
-    cooking: 'Preparing',
-    packing: 'Packing',
-    ready: 'Ready',
-    ready_for_pickup: 'Ready for pickup',
-    rider_assigned: 'Rider assigned',
-    picked_up: 'Picked up',
-    out_for_delivery: 'Out for delivery',
-    delivered: 'Delivered',
-    completed: 'Completed',
-    cancelled: 'Cancelled',
-  }
-  return labels[status] || status.replaceAll('_', ' ')
 }
 
 function parseOrderItems(order: RestaurantOrder) {
@@ -354,11 +322,13 @@ function OrderCard({
     <article className="order-card">
       <div className="order-card-head">
         <div>
-          <span className="order-id">{shortOrderId(order.id)}</span>
+          <span className="order-id">{shortId(order.id)}</span>
           <h3>{order.customer_name || 'Crave customer'}</h3>
-          <p>{orderTime(order)}</p>
+          <p>{formatDate(order.created_at || order.createdAt)}</p>
         </div>
-        <span className={`status-pill status-${order.status}`}>{statusLabel(order.status)}</span>
+        <span className={`status-pill status-${order.status}`}>
+          {formatStatus(order.status, restaurantStatusLabels)}
+        </span>
       </div>
       <div className="order-items">
         {items.map((item, index) => (
@@ -768,7 +738,7 @@ export default function App() {
               : [incoming, ...current]
           })
           if (!known && ACTIVE_STATUSES.has(incoming.status)) {
-            const title = `New paid order ${shortOrderId(incoming.id)}`
+            const title = `New paid order ${shortId(incoming.id)}`
             const body = `${incoming.customer_name || 'Customer'} · ${money(incoming.subtotal || incoming.total_amount)}`
             setAlert({ title, body })
             void showKitchenNotification({ id: incoming.id, title, body })
@@ -1035,7 +1005,7 @@ export default function App() {
           item.id === order.id ? { ...item, ...(result.order || {}), status } : item
         )
       )
-      showToast(`${shortOrderId(order.id)} moved to ${statusLabel(status)}.`)
+      showToast(`${shortId(order.id)} moved to ${formatStatus(status, restaurantStatusLabels)}.`)
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Unable to update order.')
     } finally {

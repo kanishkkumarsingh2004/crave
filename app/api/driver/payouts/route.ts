@@ -1,4 +1,4 @@
-import { handleApiAuthError, requireAuthApi } from '@/lib/api-auth'
+import { handleApiAuthError, requireAuthApi } from '@/lib/auth/api-auth'
 import {
   createDriverPayoutIfWithinBalance,
   getDriverAvailableBalance,

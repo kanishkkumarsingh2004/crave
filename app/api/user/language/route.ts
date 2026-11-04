@@ -14,7 +14,7 @@
 
 import { isSupportedLocale } from '@/dictionary'
 import { updateUser, findUserById } from '@/lib/dal'
-import { getAuthActor } from '@/lib/auth-helpers'
+import { getAuthActor } from '@/lib/auth/auth-helpers'
 import { NextResponse } from 'next/server'
 
 export async function PATCH(request: Request) {

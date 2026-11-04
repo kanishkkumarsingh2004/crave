@@ -1,7 +1,7 @@
-import { prisma } from '@/lib/prisma'
-import { isRedisAvailable, redis, resolveRedisConfig } from '@/lib/redis'
+import { prisma } from '@/lib/infra/prisma'
+import { isRedisAvailable, redis, resolveRedisConfig } from '@/lib/infra/redis'
 import { getWebPushPublicKey, isWebPushConfigured } from '@/lib/web-push'
-import { handleAuthError, requireRole } from '@/lib/auth-helpers'
+import { handleAuthError, requireRole } from '@/lib/auth/auth-helpers'
 import { NextResponse } from 'next/server'
 
 function formatUptime(seconds: number): string {

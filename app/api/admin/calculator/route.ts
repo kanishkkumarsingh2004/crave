@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { NextResponse } from 'next/server'
 import { getActivePaymentConfig } from '@/lib/dal/payments'
 import { DEFAULT_PAYMENT_CONFIG } from '@/lib/payment-config'

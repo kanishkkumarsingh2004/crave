@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma'
-import { isRedisAvailable, resolveRedisConfig } from '@/lib/redis'
+import { prisma } from '@/lib/infra/prisma'
+import { isRedisAvailable, resolveRedisConfig } from '@/lib/infra/redis'
 import { NextResponse } from 'next/server'
 
 /**

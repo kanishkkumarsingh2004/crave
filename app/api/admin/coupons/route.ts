@@ -1,7 +1,7 @@
 import { listCoupons, createCoupon, updateCoupon, deleteCoupon } from '@/lib/dal/coupons'
 import { verifyToken } from '@/lib/jwt'
 import { broadcast } from '@/lib/ws-server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { cookies } from 'next/headers'
 import type { DiscountType } from '@prisma/client'
 import { NextResponse } from 'next/server'

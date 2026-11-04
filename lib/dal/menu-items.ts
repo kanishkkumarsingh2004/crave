@@ -2,8 +2,8 @@
  * Database Access Layer — Menu Items
  * Prisma ORM with Neon PostgreSQL
  */
-import { cacheDel, cacheGet, CacheKeys, cacheSet, CacheTTL } from '@/lib/cache'
-import { prisma } from '@/lib/prisma'
+import { cacheDel, cacheGet, CacheKeys, cacheSet, CacheTTL } from '@/lib/infra/cache'
+import { prisma } from '@/lib/infra/prisma'
 import { getMenuItemAvailability, validateMenuItemAvailability } from '@/lib/menu-availability'
 
 // ─── Queries ─────────────────────────────────────────────

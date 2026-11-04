@@ -1,7 +1,7 @@
 import { createDispatchOffers, DispatchRequestError } from '@/lib/dispatch/create-dispatch-offers'
 import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/infra/rate-limit'
 import { verifyToken } from '@/lib/jwt'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { getTestUser, isTestRequest, MOCK_TEST_VENDOR } from '@/lib/test-auth'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'

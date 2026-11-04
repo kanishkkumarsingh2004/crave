@@ -1,5 +1,5 @@
 import http from 'http'
-import { redis, isRedisAvailable } from '@/lib/redis'
+import { redis, isRedisAvailable } from '@/lib/infra/redis'
 
 export const WS_BROADCAST_ENDPOINT = '/__ws/broadcast'
 export const WS_BROADCAST_PORT = process.env.WS_BROADCAST_PORT || 8000

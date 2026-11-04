@@ -23,8 +23,8 @@ import {
   type OrderPriceInput,
 } from '@/lib/finance'
 import { DEFAULT_PAYMENT_CONFIG } from '@/lib/payment-config'
-import { prisma } from '@/lib/prisma'
-import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
+import { prisma } from '@/lib/infra/prisma'
+import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/infra/rate-limit'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'

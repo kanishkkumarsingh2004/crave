@@ -1,4 +1,4 @@
-import { redis, isRedisAvailable } from '@/lib/redis'
+import { redis, isRedisAvailable } from '@/lib/infra/redis'
 
 /**
  * Generic cache utilities with JSON serialization and TTL support

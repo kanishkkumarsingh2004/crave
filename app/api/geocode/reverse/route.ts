@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { getClientIp, checkRateLimit, rateLimitResponse } from '@/lib/infra/rate-limit'
 
 export async function GET(request: Request) {
   // P1-F: Rate limit per IP

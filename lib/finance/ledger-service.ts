@@ -23,7 +23,7 @@
  *   DELIVERY_REVENUE          — net delivery revenue retained by platform
  */
 
-import { prisma } from '../prisma'
+import { prisma } from '../infra/prisma'
 import type { CanonicalPriceResult } from './pricing-engine'
 
 // ─── Account Codes (Chart of Accounts) ────────────────────────────────────────

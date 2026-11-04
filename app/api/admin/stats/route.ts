@@ -1,4 +1,4 @@
-import { AdminStatsCache } from '@/lib/cache'
+import { AdminStatsCache } from '@/lib/infra/cache'
 import { countOrders, listOrders } from '@/lib/dal/orders'
 import { listVendorSettlements } from '@/lib/dal/payments'
 import { listRestaurants } from '@/lib/dal/restaurants'

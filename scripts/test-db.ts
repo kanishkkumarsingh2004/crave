@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { prisma } from '../lib/prisma'
+import { prisma } from '../lib/infra/prisma'
 
 async function check() {
   console.log('🔍 Testing Database Connection...\n')

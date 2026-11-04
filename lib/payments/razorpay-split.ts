@@ -38,7 +38,7 @@
  * provider call. No per-transfer idempotency header is needed.
  */
 
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { getRazorpayClient, isRouteEnabled } from '@/lib/payments/razorpay-client'
 import crypto from 'node:crypto'
 

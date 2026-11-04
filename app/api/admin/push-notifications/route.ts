@@ -1,4 +1,4 @@
-import { handleApiAuthError, requireAdmin } from '@/lib/api-auth'
+import { handleApiAuthError, requireAdmin } from '@/lib/auth/api-auth'
 import { sendNativePushToRoles, type NativeAppRole } from '@/lib/notifications/driver-push'
 import { isWebPushConfigured, sendWebPushToRoles } from '@/lib/web-push'
 import type { UserRole } from '@prisma/client'

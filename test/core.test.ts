@@ -9,9 +9,13 @@ import { normalizeEmail } from '../lib/email'
 import { calculateOrderPrice } from '../lib/finance/pricing-engine'
 import { Money } from '../lib/finance/money'
 import { processPaymentVerificationTx } from '../lib/finance/payment-service'
-import { OrderStatus, assertValidTransition, isValidTransition } from '../lib/order-state-machine'
+import {
+  OrderStatus,
+  assertValidTransition,
+  isValidTransition,
+} from '../lib/catalog/order-state-machine'
 import { hashPassword, validatePassword, verifyPassword } from '../lib/password'
-import { prisma } from '../lib/prisma'
+import { prisma } from '../lib/infra/prisma'
 
 after(async () => {
   if (prisma) await prisma.$disconnect()

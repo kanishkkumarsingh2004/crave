@@ -40,8 +40,8 @@
  *   'conflict'   – key exists with a different payload hash; caller must return 422.
  */
 
-import { prisma } from '@/lib/prisma'
-import { redis, isRedisAvailable } from '@/lib/redis'
+import { prisma } from '@/lib/infra/prisma'
+import { redis, isRedisAvailable } from '@/lib/infra/redis'
 import crypto from 'crypto'
 
 /**

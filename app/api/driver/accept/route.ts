@@ -1,11 +1,11 @@
-import { handleApiAuthError, requireAuthApi } from '@/lib/api-auth'
+import { handleApiAuthError, requireAuthApi } from '@/lib/auth/api-auth'
 import { sanitizeOrderForActor, stripOrderSecrets } from '@/lib/auth/order-access'
 import { claimOrderForDriverAtomic, dispatchPendingOutboxEvents } from '@/lib/dal'
 import { acquireDriverOfferLock, releaseDriverLock } from '@/lib/dispatch/atomic-lock'
 import { getDriverLocationDistributed, updateDriverLocation } from '@/lib/dispatch/driver-tracker'
-import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
+import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/infra/rate-limit'
 import { broadcast } from '@/lib/ws-server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {

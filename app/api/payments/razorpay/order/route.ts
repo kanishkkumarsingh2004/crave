@@ -15,8 +15,8 @@
  */
 
 import { NextResponse } from 'next/server'
-import { requireAuth, handleAuthError } from '@/lib/auth-helpers'
-import { prisma } from '@/lib/prisma'
+import { requireAuth, handleAuthError } from '@/lib/auth/auth-helpers'
+import { prisma } from '@/lib/infra/prisma'
 import { getRazorpayClient } from '@/lib/payments/razorpay-client'
 import { CRAVEXP_DARK_STORE_ID } from '@/lib/cravexp-grocery-catalog'
 

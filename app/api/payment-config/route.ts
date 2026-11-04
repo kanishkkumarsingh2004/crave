@@ -1,6 +1,6 @@
 import { getActivePaymentConfig, upsertPaymentConfig } from '@/lib/dal/payments'
 import { NextResponse } from 'next/server'
-import { getApiActor, requireAdmin, handleApiAuthError } from '@/lib/api-auth'
+import { getApiActor, requireAdmin, handleApiAuthError } from '@/lib/auth/api-auth'
 import { DEFAULT_PAYMENT_CONFIG, type PaymentConfig } from '@/lib/payment-config'
 
 export const dynamic = 'force-dynamic'

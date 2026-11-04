@@ -1,5 +1,5 @@
 import { getCartCrossSellItems, getUserReorderHistory } from '@/lib/dal/recommendations'
-import { handleAuthError, requireRole } from '@/lib/auth-helpers'
+import { handleAuthError, requireRole } from '@/lib/auth/auth-helpers'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {

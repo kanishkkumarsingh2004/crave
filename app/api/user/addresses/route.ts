@@ -5,7 +5,7 @@ import {
   setDefaultAddress,
   updateCustomerAddress,
 } from '@/lib/dal'
-import { getAuthActor } from '@/lib/auth-helpers'
+import { getAuthActor } from '@/lib/auth/auth-helpers'
 import { broadcast } from '@/lib/ws-server'
 import { toAddressRealtimeDto } from '@/lib/realtime/safe-dtos'
 import { NextResponse } from 'next/server'

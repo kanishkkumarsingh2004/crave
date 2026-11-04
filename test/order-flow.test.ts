@@ -2,7 +2,7 @@ import 'dotenv/config'
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { isValidTransition, OrderStatus } from '../lib/order-state-machine'
+import { isValidTransition, OrderStatus } from '../lib/catalog/order-state-machine'
 import { rankCandidateDriver } from '../lib/dispatch/h3-dispatch'
 import crypto from 'node:crypto'
 

@@ -2,9 +2,9 @@
  * Database Access Layer — Coupons
  * Prisma ORM with Neon PostgreSQL
  */
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import type { DiscountType } from '@prisma/client'
-import { redis, isRedisAvailable } from '@/lib/redis'
+import { redis, isRedisAvailable } from '@/lib/infra/redis'
 
 // ─── Queries ─────────────────────────────────────────────
 

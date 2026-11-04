@@ -2,7 +2,7 @@ import crypto from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { reconcileStaleTransfers } from '@/lib/payments/razorpay-split'
 import { createRouteSplits } from '@/lib/payments/razorpay-split'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

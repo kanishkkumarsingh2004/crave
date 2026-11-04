@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from 'jose'
-import { redis, isRedisAvailable } from '@/lib/redis'
+import { redis, isRedisAvailable } from '@/lib/infra/redis'
 
 // In-memory fallback sets for single-process resiliency when Redis is unavailable or unconfigured
 const inMemoryBlacklist = new Set<string>()

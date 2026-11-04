@@ -1,5 +1,5 @@
-import { cacheDel, cacheGet, CacheKeys, cacheSet, CacheTTL } from '@/lib/cache'
-import { prisma } from '@/lib/prisma'
+import { cacheDel, cacheGet, CacheKeys, cacheSet, CacheTTL } from '@/lib/infra/cache'
+import { prisma } from '@/lib/infra/prisma'
 import type { Restaurant } from '@prisma/client'
 
 // ─── Listing fields ───────────────────────────────────────

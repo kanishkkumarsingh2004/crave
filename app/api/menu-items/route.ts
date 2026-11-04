@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { calculateMenuAppPrice, type MenuPricingSettings } from '@/lib/menu-pricing'
 import { validateMenuItemAvailability, withMenuItemAvailability } from '@/lib/menu-availability'
 import { broadcast } from '@/lib/ws-server'
@@ -326,7 +326,7 @@ export async function POST(request: Request) {
 
     if (body.restaurant_id) {
       try {
-        const { cacheDel, CacheKeys } = await import('@/lib/cache')
+        const { cacheDel, CacheKeys } = await import('@/lib/infra/cache')
         await cacheDel(CacheKeys.menus.byRestaurant(body.restaurant_id))
       } catch (cacheError) {
         console.error('[POST /api/menu-items] Cache invalidation failed:', cacheError)
@@ -537,7 +537,7 @@ export async function PATCH(request: Request) {
 
     if (item.restaurant_id) {
       try {
-        const { cacheDel, CacheKeys } = await import('@/lib/cache')
+        const { cacheDel, CacheKeys } = await import('@/lib/infra/cache')
         await cacheDel(CacheKeys.menus.byRestaurant(item.restaurant_id))
       } catch (cacheError) {
         console.error('[PATCH /api/menu-items] Cache invalidation failed:', cacheError)
@@ -625,7 +625,7 @@ export async function DELETE(request: Request) {
 
     if (existingItem.restaurant_id) {
       try {
-        const { cacheDel, CacheKeys } = await import('@/lib/cache')
+        const { cacheDel, CacheKeys } = await import('@/lib/infra/cache')
         await cacheDel(CacheKeys.menus.byRestaurant(existingItem.restaurant_id))
       } catch (cacheError) {
         console.error('[DELETE /api/menu-items] Cache invalidation failed:', cacheError)

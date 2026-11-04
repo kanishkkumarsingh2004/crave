@@ -54,7 +54,7 @@ export async function getAuthActor(request: Request): Promise<JWTPayload | null>
  */
 export async function revalidateActorRole(actor: JWTPayload): Promise<boolean> {
   try {
-    const { prisma } = await import('@/lib/prisma')
+    const { prisma } = await import('@/lib/infra/prisma')
     const dbUser = await prisma.user.findUnique({
       where: { id: actor.id },
       select: { role: true },

@@ -5,8 +5,8 @@ import {
 } from '@/lib/dal/restaurants'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getAuthActor } from '@/lib/auth-helpers'
+import { prisma } from '@/lib/infra/prisma'
+import { getAuthActor } from '@/lib/auth/auth-helpers'
 
 export async function GET(request: Request) {
   try {

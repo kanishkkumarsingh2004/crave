@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { getDriverLocationDistributed } from '@/lib/dispatch/driver-tracker'
-import { handleAuthError, requireAuth } from '@/lib/auth-helpers'
+import { handleAuthError, requireAuth } from '@/lib/auth/auth-helpers'
 import { canReadOrder, getCustomerOrderScope, sanitizeOrderForActor } from '@/lib/auth/order-access'
 import { SAFE_ORDER_RESTAURANT_SELECT } from '@/lib/dal/orders'
 

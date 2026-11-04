@@ -5,8 +5,8 @@
  * time-decayed re-order scoring for customer dashboards, and cold-start fallbacks.
  */
 
-import { cacheGet, cacheSet } from '@/lib/cache'
-import { prisma } from '@/lib/prisma'
+import { cacheGet, cacheSet } from '@/lib/infra/cache'
+import { prisma } from '@/lib/infra/prisma'
 import { getMenuItemAvailability } from '@/lib/menu-availability'
 
 export interface RecommendedItem {

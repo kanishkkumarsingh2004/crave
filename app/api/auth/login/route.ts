@@ -1,7 +1,7 @@
 import { createToken, type JWTPayload, type JWTRole } from '@/lib/jwt'
 import { findUserByEmail as findUserInDb, updateUser } from '@/lib/dal'
 import { normalizeEmail } from '@/lib/email'
-import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
+import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/infra/rate-limit'
 import { hashPassword, verifyPassword } from '@/lib/password'
 import { NextResponse } from 'next/server'
 
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
       (userPayload.role as string) === 'vendor'
     ) {
       try {
-        const { prisma } = await import('@/lib/prisma')
+        const { prisma } = await import('@/lib/infra/prisma')
         const rest = await prisma.restaurant.findFirst({
           where: { owner_id: profile.id },
         })

@@ -51,18 +51,18 @@ import type {
   UpiAccount,
 } from './types'
 
-const ACTIVE_STATUSES = new Set([
-  'ready_for_pickup',
-  'rider_assigned',
-  'picked_up',
-  'out_for_delivery',
-])
-const AVAILABLE_OFFER_STATUSES = new Set([
-  'sent_to_vendor',
-  'preparing',
-  'packing',
-  'ready_for_pickup',
-])
+import { ACTIVE_STATUSES, AVAILABLE_OFFER_STATUSES } from './navigation/statuses'
+import { money, shortId, formatDate, label, formatStatus } from '@crave/mobile-core'
+
+const driverStatusLabels: Record<string, string> = {
+  ready_for_pickup: 'Ready for pickup',
+  rider_assigned: 'Go to restaurant',
+  picked_up: 'Order picked up',
+  out_for_delivery: 'At customer location',
+  delivered: 'Delivered',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+}
 
 function toDriverOffer(order: DriverOrder): DriverOffer {
   let items: any[] = []
@@ -90,37 +90,6 @@ function toDriverOffer(order: DriverOrder): DriverOffer {
     tip: Number(order.tip || 0),
     createdAt: order.created_at,
   }
-}
-
-function money(value: unknown): string {
-  return `₹${Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
-}
-
-function shortId(id: string): string {
-  return `#${id.slice(-8).toUpperCase()}`
-}
-
-function dateTime(value?: string): string {
-  if (!value) return 'Just now'
-  return new Date(value).toLocaleString([], {
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-function statusLabel(status: string): string {
-  const labels: Record<string, string> = {
-    ready_for_pickup: 'Ready for pickup',
-    rider_assigned: 'Go to restaurant',
-    picked_up: 'Order picked up',
-    out_for_delivery: 'At customer location',
-    delivered: 'Delivered',
-    completed: 'Completed',
-    cancelled: 'Cancelled',
-  }
-  return labels[status] || status.replaceAll('_', ' ')
 }
 
 function driverPay(order: DriverOrder): number {
@@ -224,7 +193,7 @@ function OfferCard({
             <i /> Live offer
           </span>
           <h3>{offer.restaurantName}</h3>
-          <p>{dateTime(offer.createdAt)}</p>
+          <p>{formatDate(offer.createdAt)}</p>
         </div>
         <div className="offer-pay">
           <span>You earn</span>
@@ -423,10 +392,10 @@ function TripsPage({
                   <div>
                     <strong>{order.restaurant_name}</strong>
                     <span>
-                      {shortId(order.id)} · {dateTime(order.created_at)}
+                      {shortId(order.id)} · {formatDate(order.created_at)}
                     </span>
                   </div>
-                  <p>{statusLabel(order.status)}</p>
+                  <p>{formatStatus(order.status, driverStatusLabels)}</p>
                 </div>
                 <strong className="history-pay">{money(driverPay(order))}</strong>
               </article>

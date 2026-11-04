@@ -1,4 +1,4 @@
-import { handleApiAuthError, requireAuthApi } from '@/lib/api-auth'
+import { handleApiAuthError, requireAuthApi } from '@/lib/auth/api-auth'
 import { listPendingDriverPayouts, updateDriverPayoutStatus } from '@/lib/dal/payments'
 import { NextResponse } from 'next/server'
 

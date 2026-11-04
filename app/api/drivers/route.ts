@@ -1,6 +1,6 @@
 import { listUsersByRole } from '@/lib/dal/users'
 import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/api-auth'
+import { requireAdmin } from '@/lib/auth/api-auth'
 
 export async function GET(request: Request) {
   try {

@@ -1,8 +1,8 @@
 import { findUserById, updateUser } from '@/lib/dal'
 import { blacklistAllUserTokens } from '@/lib/jwt'
-import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { checkRateLimit, rateLimitResponse } from '@/lib/infra/rate-limit'
 import { hashPassword, verifyPassword } from '@/lib/password'
-import { getAuthActor } from '@/lib/auth-helpers'
+import { getAuthActor } from '@/lib/auth/auth-helpers'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {

@@ -1,6 +1,6 @@
 import { failRefundFromProviderTx, processRefundTx } from '@/lib/finance/payment-service'
 import { getRazorpayClient } from '@/lib/payments/razorpay-client'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { broadcast } from '@/lib/ws-server'
 import { sendWebPushToUsers } from '@/lib/web-push'
 

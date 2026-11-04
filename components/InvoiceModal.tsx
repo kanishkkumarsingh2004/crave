@@ -6,7 +6,7 @@ import {
   calculateOrderPriceSnapshot,
   ImmutablePriceSnapshot,
   PriceTaxMode,
-} from '@/lib/commercial-engine'
+} from '@/lib/finance/commercial-engine'
 import { InvoiceOrderData } from './invoice/types'
 import { TaxInvoiceView } from './invoice/TaxInvoiceView'
 import { CommissionInvoiceView } from './invoice/CommissionInvoiceView'

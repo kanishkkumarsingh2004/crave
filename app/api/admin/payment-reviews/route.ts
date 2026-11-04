@@ -1,6 +1,6 @@
 import { withTiming } from '@/lib/instrumentation'
 import { verifyToken } from '@/lib/jwt'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { broadcast } from '@/lib/ws-server'
 import { PaymentStatus } from '@prisma/client'
 import { cookies } from 'next/headers'

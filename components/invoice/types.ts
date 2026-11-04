@@ -1,4 +1,4 @@
-import { PriceTaxMode } from '@/lib/commercial-engine'
+import { PriceTaxMode } from '@/lib/finance/commercial-engine'
 
 export interface InvoiceOrderData {
   id: string

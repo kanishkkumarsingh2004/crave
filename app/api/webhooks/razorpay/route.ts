@@ -10,7 +10,7 @@
 
 import crypto from 'node:crypto'
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { processPaymentVerificationTx } from '@/lib/finance/payment-service'
 
 export const runtime = 'nodejs'

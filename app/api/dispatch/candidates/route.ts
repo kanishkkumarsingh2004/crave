@@ -4,7 +4,7 @@ import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
 import { getTestUser, isTestRequest, MOCK_TEST_VENDOR } from '@/lib/test-auth'
 import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/infra/rate-limit'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 
 export async function GET(request: Request) {
   try {

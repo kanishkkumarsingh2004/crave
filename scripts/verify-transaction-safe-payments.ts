@@ -17,7 +17,7 @@ import {
 } from '../lib/finance/payment-service'
 import { calculateOrderPrice } from '../lib/finance/pricing-engine'
 import { acquireIdempotency, completeIdempotency, hashPayload } from '../lib/idempotency'
-import { prisma } from '../lib/prisma'
+import { prisma } from '../lib/infra/prisma'
 
 async function runVerification() {
   console.log('🧪 Starting Transaction-Safe Order & Payment Processing Verification...\n')

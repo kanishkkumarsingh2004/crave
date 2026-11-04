@@ -1,8 +1,8 @@
 import 'dotenv/config'
-import { prisma } from '../lib/prisma'
+import { prisma } from '../lib/infra/prisma'
 import { hashPassword } from '../lib/password'
-import { cacheDelPattern } from '../lib/cache'
-import { closeRedisClient } from '../lib/redis'
+import { cacheDelPattern } from '../lib/infra/cache'
+import { closeRedisClient } from '../lib/infra/redis'
 
 const DEFAULT_PASSWORD = '123456789'
 

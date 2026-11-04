@@ -1,4 +1,4 @@
-import { handleAuthError, requireRole } from '@/lib/auth-helpers'
+import { handleAuthError, requireRole } from '@/lib/auth/auth-helpers'
 import { randomUUID } from 'crypto'
 import fs from 'fs/promises'
 import { NextResponse } from 'next/server'

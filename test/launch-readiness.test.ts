@@ -16,7 +16,7 @@ import {
 import { calculateOrderPrice } from '../lib/finance/pricing-engine'
 import { applyVerifiedRazorpayRefundEntity } from '../lib/payments/razorpay-refunds'
 import { isOrderSettlementEligible } from '../lib/payments/razorpay-split'
-import { prisma } from '../lib/prisma'
+import { prisma } from '../lib/infra/prisma'
 import { createTestRequest } from '../lib/auth/test-auth'
 
 const dbEnabled = process.env.ALLOW_DATABASE_TESTS === 'true'

@@ -3,8 +3,8 @@ import { updateDriverLocation } from '@/lib/dispatch/driver-tracker'
 import { broadcast } from '@/lib/ws-server'
 import { verifyToken } from '@/lib/jwt'
 import { cookies } from 'next/headers'
-import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
-import { prisma } from '@/lib/prisma'
+import { checkRateLimit, rateLimitResponse } from '@/lib/infra/rate-limit'
+import { prisma } from '@/lib/infra/prisma'
 
 export async function POST(request: Request) {
   try {
@@ -175,7 +175,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'driverId or orderId parameter required' }, { status: 400 })
     }
 
-    const { prisma } = await import('@/lib/prisma')
+    const { prisma } = await import('@/lib/infra/prisma')
     let order = orderId
       ? await prisma.order.findUnique({
           where: { id: orderId },

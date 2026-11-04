@@ -103,7 +103,7 @@ export async function GET(request: Request) {
     // Security Hardening: Verify that the user still exists in the database.
     // Prevents zombie / stale sessions if an account was deleted, scrubbed, or deactivated.
     try {
-      const { prisma } = await import('@/lib/prisma')
+      const { prisma } = await import('@/lib/infra/prisma')
       const dbUser = await prisma.user.findUnique({
         where: { id: payload.id },
         select: {
@@ -166,7 +166,7 @@ export async function GET(request: Request) {
         (payload.role as string) === 'vendor')
     ) {
       try {
-        const { prisma } = await import('@/lib/prisma')
+        const { prisma } = await import('@/lib/infra/prisma')
         const rest = await prisma.restaurant.findFirst({
           where: {
             OR: [

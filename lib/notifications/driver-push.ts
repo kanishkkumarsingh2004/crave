@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { connect } from 'node:http2'
 import { importPKCS8, SignJWT } from 'jose'
 

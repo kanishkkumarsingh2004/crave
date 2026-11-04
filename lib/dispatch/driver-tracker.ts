@@ -1,6 +1,6 @@
 import * as h3 from 'h3-js'
-import { prisma } from '@/lib/prisma'
-import { redis, isRedisAvailable } from '@/lib/redis'
+import { prisma } from '@/lib/infra/prisma'
+import { redis, isRedisAvailable } from '@/lib/infra/redis'
 
 export interface DriverLocationState {
   driverId: string

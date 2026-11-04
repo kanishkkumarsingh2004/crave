@@ -1,4 +1,4 @@
-import { redis, isRedisAvailable } from '@/lib/redis'
+import { redis, isRedisAvailable } from '@/lib/infra/redis'
 
 export interface OfferLock {
   driverId: string

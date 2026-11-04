@@ -1,8 +1,8 @@
 export const runtime = 'nodejs'
 
 import { NextResponse } from 'next/server'
-import { handleApiAuthError, requireAdmin } from '@/lib/api-auth'
-import { prisma } from '@/lib/prisma'
+import { handleApiAuthError, requireAdmin } from '@/lib/auth/api-auth'
+import { prisma } from '@/lib/infra/prisma'
 
 const ENTITY_TYPES = new Set(['RESTAURANT', 'DRIVER'])
 const STATUSES = new Set(['pending', 'active', 'rejected', 'disabled'])

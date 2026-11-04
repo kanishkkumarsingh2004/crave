@@ -10,7 +10,7 @@ import {
 } from '../lib/auth/order-access'
 import type { JWTPayload } from '../lib/jwt'
 import { hashPassword, validatePassword, verifyPassword } from '../lib/password'
-import { resolveClientIp } from '../lib/rate-limit'
+import { resolveClientIp } from '../lib/infra/rate-limit'
 import { buildDriverOrderVisibilityFilter, buildRestaurantOrderFilter } from '../lib/dal/orders'
 import { appRoleForUser } from '../lib/notifications/native-device'
 

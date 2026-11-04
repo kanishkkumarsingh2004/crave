@@ -2,10 +2,9 @@
  * Database Access Layer — Orders
  * Requires Prisma PostgreSQL connection to be available.
  */
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import type { Prisma, OrderStatus } from '@prisma/client'
-import { isValidTransition } from '@/lib/order-state-machine'
-import { broadcast } from '@/lib/ws-server'
+import { isValidTransition } from '@/lib/catalog/order-state-machine'
 
 // ─── Queries ─────────────────────────────────────────────
 
@@ -680,59 +679,7 @@ export async function transitionOrderStatusAtomic(params: {
   }
 }
 
-/**
- * Dispatches pending outbox events across WebSocket & Redis Pub/Sub,
- * updating outbox statuses atomically in PostgreSQL.
- */
-export async function dispatchPendingOutboxEvents(batchSize: number = 25): Promise<number> {
-  try {
-    const pendingEvents = await prisma.orderOutbox.findMany({
-      where: { status: 'pending' },
-      orderBy: { created_at: 'asc' },
-      take: batchSize,
-    })
-
-    if (pendingEvents.length === 0) return 0
-
-    let dispatchedCount = 0
-
-    for (const evt of pendingEvents) {
-      try {
-        const payload = typeof evt.payload === 'string' ? JSON.parse(evt.payload) : evt.payload
-        if (evt.event_type === 'dispatch_requested') {
-          const { createDispatchOffers } = await import('@/lib/dispatch/create-dispatch-offers')
-          const result = await createDispatchOffers({ orderId: evt.order_id })
-          if (!result.success) throw new Error(result.message)
-        } else {
-          await broadcast(evt.event_type, payload)
-        }
-
-        await prisma.orderOutbox.update({
-          where: { id: evt.id },
-          data: {
-            status: 'sent',
-            processed_at: new Date(),
-          },
-        })
-        dispatchedCount++
-      } catch (sendErr: any) {
-        await prisma.orderOutbox.update({
-          where: { id: evt.id },
-          data: {
-            attempts: { increment: 1 },
-            last_error: sendErr?.message || String(sendErr),
-            status: evt.attempts >= 4 ? 'failed' : 'pending',
-          },
-        })
-      }
-    }
-
-    return dispatchedCount
-  } catch (err) {
-    console.warn('[dispatchPendingOutboxEvents] Warning:', err)
-    return 0
-  }
-}
+export { dispatchPendingOutboxEvents } from '@/features/orders/infrastructure/order-event-publisher'
 
 // ─── Aggregations ────────────────────────────────────────
 

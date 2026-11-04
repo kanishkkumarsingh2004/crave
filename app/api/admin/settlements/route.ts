@@ -1,5 +1,5 @@
 import { verifyToken, type JWTPayload } from '@/lib/jwt'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { broadcast } from '@/lib/ws-server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'

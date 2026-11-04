@@ -1,6 +1,6 @@
 import { createToken, JWTPayload } from '@/lib/jwt'
 import { createUser, findUserByEmail, createCustomerAddress, deleteUser } from '@/lib/dal'
-import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
+import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/infra/rate-limit'
 import { broadcast } from '@/lib/ws-server'
 import { normalizeEmail } from '@/lib/email'
 import { NextResponse } from 'next/server'

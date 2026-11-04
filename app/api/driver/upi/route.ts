@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createDriverUpiAccount, listDriverUpiAccounts } from '@/lib/dal/payments'
-import { prisma } from '@/lib/prisma'
-import { requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
+import { prisma } from '@/lib/infra/prisma'
+import { requireAuthApi, handleApiAuthError } from '@/lib/auth/api-auth'
 import crypto from 'crypto'
 
 export async function GET(request: Request) {

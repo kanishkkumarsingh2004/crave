@@ -2,7 +2,7 @@ import crypto from 'node:crypto'
 import { releaseDriverLock } from '@/lib/dispatch/atomic-lock'
 import { findGeofencedCandidateDrivers } from '@/lib/dispatch/h3-dispatch'
 import { sendDriverPushToUsers } from '@/lib/notifications/driver-push'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/infra/prisma'
 import { broadcast } from '@/lib/ws-server'
 
 const MAX_OFFER_TTL_SECONDS = 300

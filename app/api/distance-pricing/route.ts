@@ -3,7 +3,7 @@ import { fetchOSRMDrivingDistanceKm, calculateCheckoutPricing } from '@/lib/dist
 import { fetchOSRMDrivingRoutes } from '@/lib/route-service'
 import { getActivePaymentConfig } from '@/lib/dal/payments'
 import { DEFAULT_PAYMENT_CONFIG } from '@/lib/payment-config'
-import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
+import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/infra/rate-limit'
 
 export const revalidate = 0
 

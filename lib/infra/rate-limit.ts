@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { redis, isRedisAvailable } from '@/lib/redis'
+import { redis, isRedisAvailable } from '@/lib/infra/redis'
 
 // ─── Rate Limit Tiers ─────────────────────────────────────────
 export const RateLimitTier = {

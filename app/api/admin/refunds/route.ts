@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireRole, handleAuthError } from '@/lib/auth-helpers'
+import { requireRole, handleAuthError } from '@/lib/auth/auth-helpers'
 import { processRefundTx } from '@/lib/finance/payment-service'
 import { withTiming } from '@/lib/instrumentation'
 import { verifyManualRazorpayRefund } from '@/lib/payments/razorpay-refunds'

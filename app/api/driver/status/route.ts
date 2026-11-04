@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { updateDriverLocation, getDriverLocationDistributed } from '@/lib/dispatch/driver-tracker'
 import { broadcast } from '@/lib/ws-server'
-import { requireAuthApi, handleApiAuthError } from '@/lib/api-auth'
+import { requireAuthApi, handleApiAuthError } from '@/lib/auth/api-auth'
 
 export async function POST(request: Request) {
   try {
