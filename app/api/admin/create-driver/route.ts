@@ -1,18 +1,13 @@
 import { createUser, findUserByEmail } from '@/lib/dal'
-import { verifyToken } from '@/lib/jwt'
+import { getAuthActor } from '@/lib/auth/auth-helpers'
 import { broadcast } from '@/lib/ws-server'
 import { hashPassword } from '@/lib/password'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
-    const authHeader = request.headers?.get ? request.headers.get('authorization') : null
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
-
-    const payload = token ? await verifyToken(token) : null
-    if (!payload || payload.role !== 'admin') {
+    const actor = await getAuthActor(request)
+    if (!actor || actor.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 

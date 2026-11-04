@@ -1,8 +1,7 @@
 import { listCoupons, createCoupon, updateCoupon, deleteCoupon } from '@/lib/dal/coupons'
-import { verifyToken } from '@/lib/jwt'
+import { getAuthActor } from '@/lib/auth/auth-helpers'
 import { broadcast } from '@/lib/ws-server'
 import { prisma } from '@/lib/infra/prisma'
-import { cookies } from 'next/headers'
 import type { DiscountType } from '@prisma/client'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
@@ -10,22 +9,18 @@ import crypto from 'crypto'
 export const dynamic = 'force-dynamic'
 
 async function checkAdminOrVendorAuth(request: Request) {
-  const authHeader = request.headers.get('authorization')
-  let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-  if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
-
-  const payload = token ? await verifyToken(token) : null
-  if (!payload) {
+  const actor = await getAuthActor(request)
+  if (!actor) {
     return { authorized: false, status: 401, error: 'Authentication required' }
   }
   if (
-    payload.role !== 'admin' &&
-    payload.role !== 'restaurant_vendor' &&
-    payload.role !== 'cravexp_store_vendor'
+    actor.role !== 'admin' &&
+    actor.role !== 'restaurant_vendor' &&
+    actor.role !== 'cravexp_store_vendor'
   ) {
     return { authorized: false, status: 403, error: 'Admin or Vendor access required' }
   }
-  return { authorized: true, status: 200, actor: payload }
+  return { authorized: true, status: 200, actor }
 }
 
 const FUNDING_SOURCES = new Set(['RESTAURANT', 'PLATFORM', 'SHARED', 'BANK'])

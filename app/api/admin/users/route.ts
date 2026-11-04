@@ -1,6 +1,5 @@
-import { verifyToken, type JWTPayload } from '@/lib/jwt'
+import { getAuthActor } from '@/lib/auth/auth-helpers'
 import { prisma } from '@/lib/infra/prisma'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 const DEFAULT_PAGE_SIZE = 50
@@ -8,22 +7,11 @@ const MAX_PAGE_SIZE = 200
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) {
-      const cookieStore = await cookies()
-      token =
-        cookieStore.get('crave_auth_token')?.value ||
-        cookieStore.get('drop_auth_token')?.value ||
-        cookieStore.get('crave_token')?.value ||
-        ''
-    }
-
-    const payload = token ? await verifyToken(token) : null
-    if (!payload) {
+    const actor = await getAuthActor(request)
+    if (!actor) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
-    if (payload.role !== 'admin') {
+    if (actor.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 

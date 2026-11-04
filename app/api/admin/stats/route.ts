@@ -3,21 +3,16 @@ import { countOrders, listOrders } from '@/lib/dal/orders'
 import { listVendorSettlements } from '@/lib/dal/payments'
 import { listRestaurants } from '@/lib/dal/restaurants'
 import { listUsersByRole } from '@/lib/dal/users'
-import { verifyToken } from '@/lib/jwt'
-import { cookies } from 'next/headers'
+import { getAuthActor } from '@/lib/auth/auth-helpers'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
-
-    const payload = token ? await verifyToken(token) : null
-    if (!payload) {
+    const actor = await getAuthActor(request)
+    if (!actor) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
-    if (payload.role !== 'admin') {
+    if (actor.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 

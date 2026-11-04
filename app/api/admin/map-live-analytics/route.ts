@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/infra/prisma'
-import { verifyToken } from '@/lib/jwt'
-import { cookies } from 'next/headers'
+import { getAuthActor } from '@/lib/auth/auth-helpers'
 import { NextResponse } from 'next/server'
 import { OrderStatus, UserRole } from '@prisma/client'
 import {
@@ -11,26 +10,6 @@ import {
   type DriverLocationState,
 } from '@/lib/dispatch/driver-tracker'
 import { withTiming } from '@/lib/instrumentation'
-
-async function verifyAdminAuth(request: Request): Promise<boolean> {
-  let token = ''
-  const authHeader =
-    typeof request.headers?.get === 'function' ? request.headers.get('authorization') : null
-  if (authHeader?.startsWith('Bearer ')) {
-    token = authHeader.slice(7)
-  }
-
-  if (!token) {
-    const cookieStore = await cookies()
-    const cookie = cookieStore.get('crave_auth_token') ?? cookieStore.get('drop_auth_token')
-    if (cookie) token = cookie.value
-  }
-
-  if (!token) return false
-
-  const payload = await verifyToken(token)
-  return payload?.role === 'admin'
-}
 
 // Active order statuses relevant to the live map.
 // Delivered, completed, and cancelled orders are excluded to keep the
@@ -54,8 +33,8 @@ const RECENT_DRIVER_HISTORY_FALLBACK_MS = 15 * 60 * 1000
 
 export async function GET(request: Request) {
   return withTiming('GET /api/admin/map-live-analytics', async (mark) => {
-    const isAdmin = await verifyAdminAuth(request)
-    if (!isAdmin) {
+    const actor = await getAuthActor(request)
+    if (!actor || actor.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized admin access' }, { status: 401 })
     }
     mark('auth')

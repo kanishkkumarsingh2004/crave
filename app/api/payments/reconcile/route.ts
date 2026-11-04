@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { reconcilePendingOrders } from '@/lib/finance/payment-service'
-import { verifyToken } from '@/lib/jwt'
-import { cookies } from 'next/headers'
+import { getAuthActor } from '@/lib/auth/auth-helpers'
 
 /**
  * POST /api/payments/reconcile
@@ -18,16 +17,13 @@ export async function POST(request: Request) {
   try {
     const authHeader = request.headers.get('authorization')
     let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) {
-      token = (await cookies()).get('crave_auth_token')?.value || ''
-    }
-
     const cronSecret = process.env.CRON_SECRET || process.env.WS_INTERNAL_SECRET
     const isCronAuthorized = cronSecret && token === cronSecret
 
+    let actor = null
     if (!isCronAuthorized) {
-      const payload = token ? await verifyToken(token) : null
-      if (!payload || payload.role !== 'admin') {
+      actor = await getAuthActor(request)
+      if (!actor || actor.role !== 'admin') {
         return NextResponse.json(
           { error: 'Unauthorized: Admin role or Cron Secret required' },
           { status: 403 }

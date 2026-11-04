@@ -1,26 +1,13 @@
 import { createDispatchOffers, DispatchRequestError } from '@/lib/dispatch/create-dispatch-offers'
 import { checkRateLimit, getRateLimitKey, rateLimitResponse } from '@/lib/infra/rate-limit'
-import { verifyToken } from '@/lib/jwt'
+import { getAuthActor } from '@/lib/auth/auth-helpers'
 import { prisma } from '@/lib/infra/prisma'
 import { getTestUser, isTestRequest, MOCK_TEST_VENDOR } from '@/lib/test-auth'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) {
-      try {
-        const cookieStore = await cookies()
-        token =
-          cookieStore.get('crave_auth_token')?.value ||
-          cookieStore.get('drop_auth_token')?.value ||
-          ''
-      } catch {}
-    }
-
-    let actor = token ? await verifyToken(token) : null
+    let actor = await getAuthActor(request)
     if (!actor && process.env.NODE_ENV === 'test' && isTestRequest(request)) {
       actor = getTestUser(request) || MOCK_TEST_VENDOR
     }

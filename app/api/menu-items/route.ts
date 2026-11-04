@@ -9,8 +9,7 @@ import {
 } from '@/lib/menu-item-visibility'
 import { broadcast } from '@/lib/ws-server'
 import { NextResponse } from 'next/server'
-import { verifyToken } from '@/lib/jwt'
-import { cookies } from 'next/headers'
+import { getAuthActor, requireAuth, requireRole } from '@/lib/auth/auth-helpers'
 
 type NormalizedVariant = {
   id: string
@@ -123,18 +122,6 @@ function serializeMenuItem(item: any, actor: any, restaurant: any, ownsRestauran
   )
 }
 
-async function getActor(request: Request) {
-  const authHeader = request.headers?.get ? request.headers.get('authorization') : null
-  let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-  if (!token) {
-    try {
-      const c = await cookies()
-      token = c.get('crave_auth_token')?.value || c.get('drop_auth_token')?.value || ''
-    } catch {}
-  }
-  return token ? verifyToken(token) : null
-}
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -144,7 +131,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'restaurantId required' }, { status: 400 })
     }
 
-    const actor = await getActor(request)
+    const actor = await getAuthActor(request)
     const restaurant = await prisma.restaurant.findUnique({
       where: { id: restaurantId },
       select: restaurantPricingSelect,
@@ -212,7 +199,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const actor = await getActor(request)
+    const actor = await getAuthActor(request)
     if (process.env.NODE_ENV !== 'test') {
       if (!actor) {
         return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
@@ -382,7 +369,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const actor = await getActor(request)
+    const actor = await getAuthActor(request)
     if (process.env.NODE_ENV !== 'test') {
       if (!actor) {
         return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
@@ -603,7 +590,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const actor = await getActor(request)
+    const actor = await getAuthActor(request)
     if (process.env.NODE_ENV !== 'test') {
       if (!actor) {
         return NextResponse.json({ error: 'Authentication required' }, { status: 401 })

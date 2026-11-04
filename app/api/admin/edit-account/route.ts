@@ -1,12 +1,11 @@
 import { invalidateRestaurantCache, updateRestaurant } from '@/lib/dal/restaurants'
 import { findUserById, updateUser } from '@/lib/dal/users'
-import { verifyToken } from '@/lib/jwt'
+import { getAuthActor } from '@/lib/auth/auth-helpers'
 import { hashPassword } from '@/lib/password'
 import { prisma } from '@/lib/infra/prisma'
 import { broadcast } from '@/lib/ws-server'
 import { AdminStatsCache } from '@/lib/infra/cache'
 import { calculateMenuAppPrice } from '@/lib/menu-pricing'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -78,12 +77,8 @@ async function repriceRestaurantMenu(db: any, restaurantId: string) {
 
 export async function POST(request: Request) {
   try {
-    const authHeader = request.headers?.get ? request.headers.get('authorization') : null
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
-
-    const payload = token ? await verifyToken(token) : null
-    if (!payload || payload.role !== 'admin') {
+    const actor = await getAuthActor(request)
+    if (!actor || actor.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 

@@ -1,22 +1,13 @@
 import { NextResponse } from 'next/server'
 import { stripOrderSecrets } from '@/lib/auth/order-access'
 import { listOrders } from '@/lib/dal/orders'
-import { verifyToken } from '@/lib/jwt'
-import { cookies } from 'next/headers'
+import { getAuthActor, requireRole } from '@/lib/auth/auth-helpers'
 import { calculateFullBreakdown } from '@/lib/calculator'
 import { getTestUser, isTestRequest, MOCK_TEST_DRIVER } from '@/lib/test-auth'
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) {
-      try {
-        const c = await cookies()
-        token = c.get('crave_auth_token')?.value || c.get('drop_auth_token')?.value || ''
-      } catch {}
-    }
-    let actor = token ? await verifyToken(token) : null
+    let actor = await getAuthActor(request)
 
     if (!actor && process.env.NODE_ENV === 'test' && isTestRequest(request)) {
       actor = getTestUser(request) || MOCK_TEST_DRIVER

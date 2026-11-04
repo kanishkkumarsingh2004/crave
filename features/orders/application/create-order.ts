@@ -99,9 +99,11 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   // Idempotency
   let idempotencyFencingToken: string | undefined
   const idempotencyRequestHash = idempotencyKey ? hashPayload(body) : ''
+  let idempotencyAcquired = false
   if (idempotencyKey) {
     const idemCheck = await acquireIdempotency(idempotencyKey, 'order_checkout', body)
     idempotencyFencingToken = idemCheck.fencingToken
+    idempotencyAcquired = true
     if (idemCheck.status === 'completed') {
       return {
         success: true,
@@ -128,6 +130,17 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
   }
 
+  // Helper to release idempotency lease on early exit
+  const releaseLease = async () => {
+    if (idempotencyAcquired && idempotencyKey && idempotencyFencingToken) {
+      await releaseIdempotency(idempotencyKey, 'order_checkout', idempotencyFencingToken)
+      idempotencyAcquired = false
+    }
+  }
+
+  // Ensure lease is released on any early return or error
+  try {
+
   // Check existing order by ID
   if (body.id && typeof prisma?.order?.findUnique === 'function') {
     try {
@@ -136,9 +149,21 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       })
       if (existingOrderById) {
         if (existingOrderById.customer_id !== finalCustomerId) {
+          await releaseLease()
           return { success: false, error: 'Order not found', statusCode: 404 }
         }
         if (!['delivered', 'completed', 'cancelled'].includes(existingOrderById.status)) {
+          if (idempotencyAcquired && idempotencyKey && idempotencyFencingToken) {
+            await completeIdempotency(
+              idempotencyKey,
+              'order_checkout',
+              200,
+              { success: true, order: existingOrderById, orderId: existingOrderById.id, message: 'Order already processed (idempotent)' },
+              idempotencyFencingToken,
+              idempotencyRequestHash
+            )
+            idempotencyAcquired = false
+          }
           return {
             success: true,
             order: existingOrderById,
@@ -163,6 +188,17 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         } as any,
       })
       if (existingByIdempotency) {
+        if (idempotencyAcquired && idempotencyKey && idempotencyFencingToken) {
+          await completeIdempotency(
+            idempotencyKey,
+            'order_checkout',
+            200,
+            { success: true, order: existingByIdempotency, orderId: existingByIdempotency.id, message: 'Order already processed (idempotent)' },
+            idempotencyFencingToken,
+            idempotencyRequestHash
+          )
+          idempotencyAcquired = false
+        }
         return {
           success: true,
           order: existingByIdempotency,
@@ -190,6 +226,17 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         orderBy: { created_at: 'desc' },
       })
       if (existingOrderWithUtr) {
+        if (idempotencyAcquired && idempotencyKey && idempotencyFencingToken) {
+          await completeIdempotency(
+            idempotencyKey,
+            'order_checkout',
+            200,
+            { success: true, order: existingOrderWithUtr, orderId: existingOrderWithUtr.id, message: 'Order already received and processing (deduplicated)' },
+            idempotencyFencingToken,
+            idempotencyRequestHash
+          )
+          idempotencyAcquired = false
+        }
         return {
           success: true,
           order: existingOrderWithUtr,
@@ -211,6 +258,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       restaurant = null
     }
     if (!restaurant) {
+      await releaseLease()
       return {
         success: false,
         error: `Restaurant not found: ${restaurant_id}`,
@@ -233,6 +281,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       : []
 
   if (rawItems.length === 0) {
+    await releaseLease()
     return { success: false, error: 'At least one item is required', statusCode: 400 }
   }
 
@@ -251,6 +300,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     const rawQuantity = itemRecord.quantity || itemRecord.qty || 1
 
     if (!itemId) {
+      await releaseLease()
       return {
         success: false,
         error: 'Each item must have an itemId/menuItemId',
@@ -260,6 +310,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
     const quantity = Math.floor(Number(rawQuantity))
     if (!Number.isInteger(quantity) || quantity < 1) {
+      await releaseLease()
       return {
         success: false,
         error: `Quantity must be a positive integer for item ${itemId}`,
@@ -267,6 +318,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       }
     }
     if (quantity > 100) {
+      await releaseLease()
       return {
         success: false,
         error: `Quantity exceeds maximum allowed (100) for item ${itemId}`,
@@ -322,6 +374,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   for (const { itemId, variantId, quantity } of validatedRaw) {
     let menuItem = menuItemMap.get(itemId)
     if (!menuItem) {
+      await releaseLease()
       return {
         success: false,
         error: `${isCraveXPOrder ? 'XP product' : 'Menu item'} not found: ${itemId}`,
@@ -330,6 +383,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
 
     if (restaurant && menuItem.restaurant_id !== restaurant.id) {
+      await releaseLease()
       return {
         success: false,
         error: `Item ${itemId} not available at this restaurant`,
@@ -362,9 +416,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
             variants.find((variant: any) => variant.in_stock !== false)
         : null
     if (variants.length > 0 && !selectedVariant) {
-      if (idempotencyKey) {
-        await releaseIdempotency(idempotencyKey, 'order_checkout', idempotencyFencingToken)
-      }
+      await releaseLease()
       return {
         success: false,
         error: {
@@ -375,9 +427,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       }
     }
     if (selectedVariant?.in_stock === false) {
-      if (idempotencyKey) {
-        await releaseIdempotency(idempotencyKey, 'order_checkout', idempotencyFencingToken)
-      }
+      await releaseLease()
       return {
         success: false,
         error: `${menuItem.name} (${selectedVariant.name}) is out of stock`,
@@ -388,9 +438,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       !isCraveXPOrder &&
       (!getMenuItemAvailability(menuItem, selectedVariant?.id).isOrderable || hasInsufficientStock)
     ) {
-      if (idempotencyKey) {
-        await releaseIdempotency(idempotencyKey, 'order_checkout', idempotencyFencingToken)
-      }
+      await releaseLease()
       return {
         success: false,
         error: {
@@ -426,6 +474,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       restaurantPrice < 0 ||
       price < restaurantPrice
     ) {
+      await releaseLease()
       return {
         success: false,
         error: `Invalid pricing configuration for ${menuItem.name}`,
@@ -470,6 +519,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   if (!finalRestaurantId) {
     const restaurantIds = new Set(itemsList.map((i) => i._menuItem.restaurant_id).filter(Boolean))
     if (restaurantIds.size !== 1) {
+      await releaseLease()
       return {
         success: false,
         error: 'All items must belong to the same restaurant',
@@ -506,6 +556,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         longitude: 77.475,
       }
     } else {
+      await releaseLease()
       return {
         success: false,
         error: 'Restaurant not found or unavailable',
@@ -529,6 +580,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       finalRestaurantId
     )
     if (!couponResult.valid) {
+      await releaseLease()
       return {
         success: false,
         error: couponResult.error || 'Invalid coupon',
@@ -551,6 +603,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
   if (targetAddressId) {
     if (typeof prisma?.customerAddress?.findFirst !== 'function') {
+      await releaseLease()
       return {
         success: false,
         error: 'Address lookup unavailable. Please try again.',
@@ -570,6 +623,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     })
 
     if (!requestedAddress) {
+      await releaseLease()
       return {
         success: false,
         error: 'Selected delivery address not found. Please choose a valid address.',
@@ -585,6 +639,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       !Number.isFinite(addrLat) ||
       !Number.isFinite(addrLng)
     ) {
+      await releaseLease()
       return {
         success: false,
         error:
@@ -662,6 +717,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       typeof body.customer_address === 'string' &&
       body.customer_address.trim()
     ) {
+      await releaseLease()
       return {
         success: false,
         error:
@@ -671,6 +727,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
 
     if (customerLat === null || customerLng === null) {
+      await releaseLease()
       return {
         success: false,
         error:
@@ -994,9 +1051,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     })
     inventoryCommitted = true
   } catch (txErr: any) {
-    if (idempotencyKey) {
-      await releaseIdempotency(idempotencyKey, 'order_checkout', idempotencyFencingToken)
-    }
+    await releaseLease()
 
     if (txErr?.message?.startsWith('INSUFFICIENT_STOCK:')) {
       const itemName = txErr.message.split(':')[1]
@@ -1033,6 +1088,17 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           orderBy: { created_at: 'desc' },
         })
         if (recoveredOrder) {
+          if (idempotencyAcquired && idempotencyKey && idempotencyFencingToken) {
+            await completeIdempotency(
+              idempotencyKey,
+              'order_checkout',
+              200,
+              { success: true, order: recoveredOrder, orderId: recoveredOrder.id, message: 'Order already processed (idempotent recovery)' },
+              idempotencyFencingToken,
+              idempotencyRequestHash
+            )
+            idempotencyAcquired = false
+          }
           return {
             success: true,
             order: recoveredOrder,
@@ -1170,6 +1236,12 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     order: order,
     orderId: order.id,
     billing: billingBreakdown,
+  }
+  } finally {
+    // Release idempotency lease if still acquired (not completed or released)
+    if (idempotencyAcquired && idempotencyKey && idempotencyFencingToken) {
+      await releaseIdempotency(idempotencyKey, 'order_checkout', idempotencyFencingToken).catch(() => {})
+    }
   }
 }
 

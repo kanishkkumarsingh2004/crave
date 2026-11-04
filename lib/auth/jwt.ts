@@ -11,6 +11,8 @@ function redisRevocationIsRequired(): boolean {
   return Boolean(process.env.REDIS_URL && process.env.REDIS_DISABLED !== 'true')
 }
 
+export { redisRevocationIsRequired }
+
 function getJwtSecretKey(): Uint8Array {
   const secret = process.env.JWT_SECRET
   if (!secret) {

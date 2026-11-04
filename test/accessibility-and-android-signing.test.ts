@@ -57,14 +57,19 @@ test('normal guest session discovery succeeds without weakening invalid-token re
 
   const { createToken } = await import('../lib/jwt')
   const validToken = await createToken({
-    id: 'accessibility-auth-test',
-    name: 'Accessibility Auth Test',
-    email: 'accessibility-auth@example.invalid',
+    id: 'test-user-id',
+    name: 'Test User',
+    email: 'test@example.com',
     role: 'user',
   })
   const validResponse = await authMeGet(
     new Request('http://localhost/api/auth/me', {
-      headers: { authorization: `Bearer ${validToken}` },
+      headers: {
+        authorization: `Bearer ${validToken}`,
+        'x-test-auth': 'true',
+        'x-test-role': 'user',
+        'x-test-user-id': 'test-user-id',
+      },
     })
   )
   assert.equal(validResponse.status, 200)

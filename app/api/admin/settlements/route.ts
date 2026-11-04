@@ -1,7 +1,6 @@
-import { verifyToken, type JWTPayload } from '@/lib/jwt'
+import { getAuthActor } from '@/lib/auth/auth-helpers'
 import { prisma } from '@/lib/infra/prisma'
 import { broadcast } from '@/lib/ws-server'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { VendorSettlementStatus } from '@prisma/client'
 import { toSettlementRealtimeDto } from '@/lib/realtime/safe-dtos'
@@ -14,26 +13,18 @@ export async function GET(request: Request) {
     const restaurantId =
       searchParams.get('restaurantId') || searchParams.get('vendorId') || undefined
 
-    const authHeader = request.headers.get('authorization')
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token)
-      token =
-        (await cookies()).get('crave_auth_token')?.value ||
-        (await cookies()).get('drop_auth_token')?.value ||
-        ''
-
-    const payload = token ? await verifyToken(token) : null
+    const actor = await getAuthActor(request)
     if (process.env.NODE_ENV !== 'test') {
-      if (!payload) {
+      if (!actor) {
         return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
       }
-      if (payload.role !== 'admin') {
+      if (actor.role !== 'admin') {
         // Non-admin can only view their own store settlements
         const isVendor =
-          payload.role === 'restaurant_vendor' ||
-          payload.role === 'cravexp_store_vendor' ||
-          (payload.role as string) === 'vendor'
-        const vendorStoreId = payload.restaurantId || (payload as JWTPayload).restaurant_id
+          actor.role === 'restaurant_vendor' ||
+          actor.role === 'cravexp_store_vendor' ||
+          (actor.role as string) === 'vendor'
+        const vendorStoreId = actor.restaurantId || (actor as any).restaurant_id
         if (!isVendor || !vendorStoreId || !restaurantId || restaurantId !== vendorStoreId) {
           return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
         }
@@ -168,7 +159,7 @@ export async function GET(request: Request) {
 
     const reconciliationIssues = await prisma.razorpayTransfer.findMany({
       where: {
-        ...(payload?.role === 'admin' && !restaurantId ? {} : { order_id: { in: scopeOrderIds } }),
+        ...(actor?.role === 'admin' && !restaurantId ? {} : { order_id: { in: scopeOrderIds } }),
         OR: [
           { status: { in: ['unknown', 'failed'] } },
           {
@@ -268,12 +259,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
-
-    const payload = token ? await verifyToken(token) : null
-    if (!payload || payload.role !== 'admin') {
+    const actor = await getAuthActor(request)
+    if (!actor || actor.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
@@ -304,7 +291,7 @@ export async function POST(request: Request) {
       if (!existingApproval) {
         await prisma.adminOverrideLog.create({
           data: {
-            admin_id: payload.id,
+            admin_id: actor.id,
             order_id: orderId.trim(),
             action: 'settlement_approved',
             reason: typeof reason === 'string' ? reason : null,

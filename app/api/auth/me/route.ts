@@ -1,4 +1,4 @@
-import { verifyToken } from '@/lib/jwt'
+import { getAuthActor } from '@/lib/auth/auth-helpers'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -85,7 +85,8 @@ export async function GET(request: Request) {
       return res
     }
 
-    const payload = await verifyToken(token)
+    // Use central auth helper for role revalidation
+    const payload = await getAuthActor(request)
     if (!payload) {
       const res = NextResponse.json(
         { authenticated: false, user: null, message: 'Invalid or expired JWT' },

@@ -1,19 +1,14 @@
 import { NextResponse } from 'next/server'
 import { updateDriverLocation } from '@/lib/dispatch/driver-tracker'
 import { broadcast } from '@/lib/ws-server'
-import { verifyToken } from '@/lib/jwt'
-import { cookies } from 'next/headers'
+import { getAuthActor, requireRole } from '@/lib/auth/auth-helpers'
 import { checkRateLimit, rateLimitResponse } from '@/lib/infra/rate-limit'
 import { prisma } from '@/lib/infra/prisma'
 
 export async function POST(request: Request) {
   try {
     // Step 1: authenticate — resolve actor before touching any untrusted body field.
-    const authHeader = request.headers.get('authorization')
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
-
-    const actor = token ? await verifyToken(token) : null
+    const actor = await getAuthActor(request)
     if (!actor) {
       return NextResponse.json({ error: 'Authentication token required' }, { status: 401 })
     }
@@ -159,10 +154,7 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
-    const actor = token ? await verifyToken(token) : null
+    const actor = await getAuthActor(request)
     if (!actor) {
       return NextResponse.json({ error: 'Authentication token required' }, { status: 401 })
     }

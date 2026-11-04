@@ -1,5 +1,5 @@
 import { findUserById, updateUser } from '@/lib/dal'
-import { blacklistAllUserTokens } from '@/lib/jwt'
+import { blacklistAllUserTokens, redisRevocationIsRequired } from '@/lib/jwt'
 import { checkRateLimit, rateLimitResponse } from '@/lib/infra/rate-limit'
 import { hashPassword, verifyPassword } from '@/lib/password'
 import { getAuthActor } from '@/lib/auth/auth-helpers'
@@ -77,7 +77,20 @@ export async function POST(request: Request) {
     await updateUser(userId, {
       password_hash: hashPassword(newPassword),
     })
-    await blacklistAllUserTokens(userId)
+    const revocationSucceeded = await blacklistAllUserTokens(userId)
+    if (!revocationSucceeded && redisRevocationIsRequired()) {
+      // Password was updated but distributed revocation failed.
+      // This is a security concern - old sessions may still be valid.
+      // We return an error so the client knows the rotation may be incomplete.
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'Password updated but session revocation failed. Please contact support if you suspect unauthorized access.',
+        },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
       success: true,

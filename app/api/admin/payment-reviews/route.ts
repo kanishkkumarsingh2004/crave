@@ -1,23 +1,15 @@
 import { withTiming } from '@/lib/instrumentation'
-import { verifyToken } from '@/lib/jwt'
+import { getAuthActor } from '@/lib/auth/auth-helpers'
 import { prisma } from '@/lib/infra/prisma'
 import { broadcast } from '@/lib/ws-server'
 import { PaymentStatus } from '@prisma/client'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token)
-      token =
-        (await cookies()).get('crave_auth_token')?.value ||
-        (await cookies()).get('crave_token')?.value ||
-        ''
-    const payload = token ? await verifyToken(token) : null
+    const actor = await getAuthActor(request)
 
-    if (!payload || payload.role !== 'admin') {
+    if (!actor || actor.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
@@ -58,16 +50,9 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   return withTiming('PATCH /api/admin/payment-reviews', async (mark) => {
     try {
-      const authHeader = request.headers.get('authorization')
-      let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-      if (!token)
-        token =
-          (await cookies()).get('crave_auth_token')?.value ||
-          (await cookies()).get('crave_token')?.value ||
-          ''
-      const payload = token ? await verifyToken(token) : null
+      const actor = await getAuthActor(request)
 
-      if (!payload || payload.role !== 'admin') {
+      if (!actor || actor.role !== 'admin') {
         return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
       }
       mark('auth')
@@ -115,7 +100,7 @@ export async function PATCH(request: Request) {
           orderId: finalOrderId,
           gatewayPaymentId: review?.utr_ref || targetOrder?.utr_ref || `UTR_${Date.now()}`,
           amount: review?.amount || targetOrder?.total_amount,
-          actorId: payload.id,
+          actorId: actor.id,
           gateway: 'UPI_MANUAL',
           idempotencyKey: `admin_verify_${review?.id || finalOrderId}_${Date.now()}`,
         })
@@ -125,7 +110,7 @@ export async function PATCH(request: Request) {
         const outcome = await processPaymentRejectionTx({
           orderId: finalOrderId,
           reason: body.reason || 'Admin rejected payment review',
-          actorId: payload.id,
+          actorId: actor.id,
           idempotencyKey: `admin_reject_${review?.id || finalOrderId}_${Date.now()}`,
         })
         updatedOrder = outcome.order

@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server'
 import { listDriverIncentives } from '@/lib/dal/payments'
-import { verifyToken } from '@/lib/jwt'
-import { cookies } from 'next/headers'
+import { getAuthActor } from '@/lib/auth/auth-helpers'
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    if (!token) token = (await cookies()).get('crave_auth_token')?.value || ''
-    const actor = token ? await verifyToken(token) : null
+    const actor = await getAuthActor(request)
     if (!actor) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
