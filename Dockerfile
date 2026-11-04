@@ -5,7 +5,8 @@ RUN apk add --no-cache libc6-compat openssl
 RUN addgroup -S -g 1001 cravegroup && \
     adduser -S -u 1001 -G cravegroup -H -D -s /bin/sh craveuser
 WORKDIR /app
-ENV NODE_ENV=production
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
 
 FROM base AS builder
 WORKDIR /app
@@ -31,7 +32,8 @@ RUN pnpm run build
 
 FROM base AS runner
 WORKDIR /app
-ENV NODE_ENV=production
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
 
 # CR-09 FIX: Copy artifacts as the non-root user so the runtime user owns them.
 COPY --from=builder --chown=craveuser:cravegroup /app/.next ./.next

@@ -1,5 +1,35 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { verifyToken } from '@/lib/jwt'
+import {
+  buildContentSecurityPolicy,
+  createContentSecurityPolicyNonce,
+} from '@/lib/security/content-security-policy'
+
+function continueWithSecurityHeaders(
+  request: NextRequest,
+  nonce: string,
+  contentSecurityPolicy: string
+): NextResponse {
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-nonce', nonce)
+  requestHeaders.set('Content-Security-Policy', contentSecurityPolicy)
+
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
+  response.headers.set('Content-Security-Policy', contentSecurityPolicy)
+  return response
+}
+
+function withContentSecurityPolicy(
+  response: NextResponse,
+  contentSecurityPolicy: string
+): NextResponse {
+  response.headers.set('Content-Security-Policy', contentSecurityPolicy)
+  return response
+}
 
 function getDashboardForRole(role: string): string {
   switch (role) {
@@ -47,6 +77,11 @@ function clearAuthCookies(response: NextResponse, isSecure: boolean) {
 export async function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
   const method = request.method.toUpperCase()
+  const nonce = createContentSecurityPolicyNonce()
+  const contentSecurityPolicy = buildContentSecurityPolicy(
+    nonce,
+    process.env.NODE_ENV !== 'production'
+  )
 
   // Browser mutations authenticated by cookies must originate from this site.
   // Requests without an Origin header remain available to native/server clients.
@@ -61,7 +96,10 @@ export async function proxy(request: NextRequest) {
           : request.nextUrl.origin
 
       if (origin !== expectedOrigin) {
-        return NextResponse.json({ error: 'Cross-origin request blocked' }, { status: 403 })
+        return withContentSecurityPolicy(
+          NextResponse.json({ error: 'Cross-origin request blocked' }, { status: 403 }),
+          contentSecurityPolicy
+        )
       }
     }
   }
@@ -87,7 +125,7 @@ export async function proxy(request: NextRequest) {
 
   // If user navigated with logout/switch/error intent, wipe any lingering cookies
   if (isAuthPage && isExplicitLogout) {
-    const res = NextResponse.next()
+    const res = continueWithSecurityHeaders(request, nonce, contentSecurityPolicy)
     clearAuthCookies(res, isSecure)
     return res
   }
@@ -96,7 +134,7 @@ export async function proxy(request: NextRequest) {
   // signature. Let the client page query /api/auth/me to verify user exists in DB, preventing
   // infinite redirect loops if the user account was scrubbed or deleted.
   if (isAuthPage) {
-    return NextResponse.next()
+    return continueWithSecurityHeaders(request, nonce, contentSecurityPolicy)
   }
 
   const isAdminPath = pathname.startsWith('/admin')
@@ -105,12 +143,12 @@ export async function proxy(request: NextRequest) {
   const isUserPath = pathname.startsWith('/user')
 
   if (!isAdminPath && !isVendorPath && !isDriverPath && !isUserPath) {
-    return NextResponse.next()
+    return continueWithSecurityHeaders(request, nonce, contentSecurityPolicy)
   }
 
   if (!token) {
     const loginUrl = new URL('/login', request.url)
-    const res = NextResponse.redirect(loginUrl)
+    const res = withContentSecurityPolicy(NextResponse.redirect(loginUrl), contentSecurityPolicy)
     clearAuthCookies(res, isSecure)
     return res
   }
@@ -118,7 +156,7 @@ export async function proxy(request: NextRequest) {
   const payload = await verifyToken(token)
   if (!payload) {
     const loginUrl = new URL('/login', request.url)
-    const res = NextResponse.redirect(loginUrl)
+    const res = withContentSecurityPolicy(NextResponse.redirect(loginUrl), contentSecurityPolicy)
     clearAuthCookies(res, isSecure)
     return res
   }
@@ -126,7 +164,10 @@ export async function proxy(request: NextRequest) {
   const role = payload.role as string
 
   if (isAdminPath && role !== 'admin') {
-    return NextResponse.redirect(new URL('/forbidden', request.url))
+    return withContentSecurityPolicy(
+      NextResponse.redirect(new URL('/forbidden', request.url)),
+      contentSecurityPolicy
+    )
   }
 
   if (
@@ -136,14 +177,20 @@ export async function proxy(request: NextRequest) {
     role !== 'vendor' &&
     role !== 'admin'
   ) {
-    return NextResponse.redirect(new URL('/forbidden', request.url))
+    return withContentSecurityPolicy(
+      NextResponse.redirect(new URL('/forbidden', request.url)),
+      contentSecurityPolicy
+    )
   }
 
   if (isDriverPath && role !== 'rider' && role !== 'driver' && role !== 'admin') {
-    return NextResponse.redirect(new URL('/forbidden', request.url))
+    return withContentSecurityPolicy(
+      NextResponse.redirect(new URL('/forbidden', request.url)),
+      contentSecurityPolicy
+    )
   }
 
-  return NextResponse.next()
+  return continueWithSecurityHeaders(request, nonce, contentSecurityPolicy)
 }
 
 export const middleware = proxy
@@ -151,12 +198,8 @@ export default proxy
 
 export const config = {
   matcher: [
-    '/admin/:path*',
-    '/vendor/:path*',
-    '/driver/:path*',
-    '/user/:path*',
-    '/login',
-    '/signup',
-    '/api/:path*',
+    {
+      source: '/((?!_next/static|_next/image|favicon.ico|icons/|sw.js).*)',
+    },
   ],
 }

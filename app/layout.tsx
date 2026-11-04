@@ -9,6 +9,8 @@ import WebPushPrompt from '@/components/WebPushPrompt'
 import { cn } from '@/lib/utils'
 import type { Metadata, Viewport } from 'next'
 import { Inter, Manrope } from 'next/font/google'
+import { headers } from 'next/headers'
+import { connection } from 'next/server'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
@@ -49,11 +51,14 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  await connection()
+  const nonce = (await headers()).get('x-nonce') ?? undefined
+
   return (
     <html
       lang="en"
@@ -75,12 +80,14 @@ export default function RootLayout({
         <meta name="application-name" content="crave." />
         <script
           id="theme-initializer"
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('crave_theme_preference');if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.classList.remove('light');document.documentElement.setAttribute('data-theme','dark');document.documentElement.style.colorScheme='dark';}else{document.documentElement.classList.add('light');document.documentElement.classList.remove('dark');document.documentElement.setAttribute('data-theme','light');document.documentElement.style.colorScheme='light';}}catch(e){}})();`,
           }}
         />
         <script
           id="client-security-guard"
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `(function(){
               try {
