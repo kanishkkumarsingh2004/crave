@@ -2,8 +2,7 @@ import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor, CapacitorHttp, registerPlugin } from '@capacitor/core'
 import { checksumsDiffer, getInstalledChecksum } from '../../lib/native/app-checksum'
 
-const MANIFEST =
-  'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/version.json'
+const MANIFEST = '/api/downloads/version'
 interface UpdatePlugin {
   downloadAndInstall(options: {
     url: string
@@ -47,14 +46,13 @@ export async function checkForCustomerUpdate(): Promise<CustomerUpdate | null> {
   const raw = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
   const update = raw?.apps?.customer
   if (!update) return null
+
   const url = new URL(update.androidUrl)
   const sha = String(update.sha256 || '').toLowerCase()
   if (
     !/^[a-f0-9]{64}$/.test(sha) ||
-    url.protocol !== 'https:' ||
-    url.hostname !== 'raw.githubusercontent.com' ||
-    url.pathname !== '/kanishkkumarsingh2004/crave/main/android-builds/crave-customer-debug.apk' ||
-    url.searchParams.get('sha256') !== sha
+    url.protocol !== 'https:' &&
+    url.protocol !== 'http:'
   )
     throw new Error('The update file is not trusted.')
 

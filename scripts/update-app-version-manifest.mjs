@@ -11,6 +11,7 @@ const flavor =
   flavorArgIndex !== -1 && process.argv[flavorArgIndex + 1] === 'release' ? 'release' : 'debug'
 const downloadBaseUrl =
   artifactBaseUrl ||
+  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ||
   'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds'
 
 const apps = {
@@ -53,7 +54,7 @@ async function appManifest({ directory, apk, releaseNotes }) {
   return {
     versionCode,
     versionName,
-    androidUrl: `${downloadBaseUrl}/${apk}?sha256=${sha256}`,
+    androidUrl: `${downloadBaseUrl}/api/downloads/android/${apk}`,
     sha256,
     releaseNotes,
   }

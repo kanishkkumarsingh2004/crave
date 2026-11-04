@@ -54,5 +54,4 @@ junit.xml
 # Generated build outputs — never treat as source code
 **/dist/
 **/build/
-*.apk
 a.out

@@ -2,8 +2,7 @@ import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor, CapacitorHttp, registerPlugin } from '@capacitor/core'
 import { checksumsDiffer, getInstalledChecksum } from '../../lib/native/app-checksum'
 
-const DEFAULT_MANIFEST_URL =
-  'https://raw.githubusercontent.com/kanishkkumarsingh2004/crave/main/android-builds/version.json'
+const DEFAULT_MANIFEST_URL = '/api/downloads/version'
 
 interface AppUpdatePlugin {
   downloadAndInstall(options: { url: string; sha256: string }): Promise<{
@@ -26,11 +25,8 @@ function isTrustedApkUrl(value: string, sha256: string): boolean {
   try {
     const url = new URL(value)
     return (
-      url.protocol === 'https:' &&
-      url.hostname === 'raw.githubusercontent.com' &&
-      url.pathname ===
-        '/kanishkkumarsingh2004/crave/main/android-builds/crave-restaurant-debug.apk' &&
-      url.searchParams.size === 1 &&
+      (url.protocol === 'https:' || url.protocol === 'http:') &&
+      url.pathname.includes('/api/downloads/android/') &&
       url.searchParams.get('sha256') === sha256.toLowerCase()
     )
   } catch {

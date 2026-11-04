@@ -36,17 +36,18 @@ ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
 # CR-09 FIX: Copy artifacts as the non-root user so the runtime user owns them.
-COPY --from=builder --chown=craveuser:cravegroup /app/.next ./.next
-COPY --from=builder --chown=craveuser:cravegroup /app/node_modules ./node_modules
-COPY --from=builder --chown=craveuser:cravegroup /app/prisma ./prisma
-COPY --from=builder --chown=craveuser:cravegroup /app/prisma.config.ts ./prisma.config.ts
-COPY --from=builder --chown=craveuser:cravegroup /app/server.js ./server.js
-COPY --from=builder --chown=craveuser:cravegroup /app/ws-server.js ./ws-server.js
-COPY --from=builder --chown=craveuser:cravegroup /app/lib/realtime/channel-scope.js ./lib/realtime/channel-scope.js
-COPY --from=builder --chown=craveuser:cravegroup /app/next.config.mjs ./next.config.mjs
-COPY --from=builder --chown=craveuser:cravegroup /app/next-env.d.ts ./next-env.d.ts
-COPY --from=builder --chown=craveuser:cravegroup /app/package.json ./package.json
-COPY --from=builder --chown=craveuser:cravegroup /app/public ./public
+  COPY --from=builder --chown=craveuser:cravegroup /app/.next ./.next
+  COPY --from=builder --chown=craveuser:cravegroup /app/node_modules ./node_modules
+  COPY --from=builder --chown=craveuser:cravegroup /app/prisma ./prisma
+  COPY --from=builder --chown=craveuser:cravegroup /app/prisma.config.ts ./prisma.config.ts
+  COPY --from=builder --chown=craveuser:cravegroup /app/server.js ./server.js
+  COPY --from=builder --chown=craveuser:cravegroup /app/ws-server.js ./ws-server.js
+  COPY --from=builder --chown=craveuser:cravegroup /app/lib/realtime/channel-scope.js ./lib/realtime/channel-scope.js
+  COPY --from=builder --chown=craveuser:cravegroup /app/next.config.mjs ./next.config.mjs
+  COPY --from=builder --chown=craveuser:cravegroup /app/next-env.d.ts ./next-env.d.ts
+  COPY --from=builder --chown=craveuser:cravegroup /app/package.json ./package.json
+  COPY --from=builder --chown=craveuser:cravegroup /app/public ./public
+  COPY --from=builder --chown=craveuser:cravegroup /app/android-builds ./android-builds
 
 # CR-09 FIX: Create writable directories for the non-root user.
 # Next.js writes to .next/cache and the app may need a tmp directory.
